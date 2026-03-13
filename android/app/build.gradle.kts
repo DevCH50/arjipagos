@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.arjipagos"
+    namespace = "mx.moriah.arjipagos"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -31,7 +31,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.arjipagos"
+        applicationId = "mx.moriah.arjipagos"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -53,8 +53,15 @@ android {
         getByName("release") {
             // Indica que el build de release use la firma que configuramos arriba
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false // Puedes cambiarlo a true para proteger tu código
-            isShrinkResources = false
+            // R8: Ofuscación y optimización de código
+            isMinifyEnabled = true
+            // Eliminar recursos no utilizados
+            isShrinkResources = true
+            // Reglas de ProGuard para Flutter
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

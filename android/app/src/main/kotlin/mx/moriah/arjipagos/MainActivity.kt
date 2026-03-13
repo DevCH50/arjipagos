@@ -1,4 +1,4 @@
-package com.example.arjipagos
+package mx.moriah.arjipagos
 
 import io.flutter.embedding.android.FlutterActivity
 
