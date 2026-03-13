@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Círculo blanco de fondo -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <size android:width="240dp" android:height="240dp"/>
+        </shape>
+    </item>
+    <!-- Logo centrado -->
+    <item
+        android:drawable="@drawable/splash_logo"
+        android:gravity="center"
+        android:width="160dp"
+        android:height="160dp"/>
+</layer-list>

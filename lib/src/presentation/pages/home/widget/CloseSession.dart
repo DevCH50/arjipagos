@@ -1,0 +1,97 @@
+import 'package:flutter/material.dart';
+
+/// Widget reutilizable para diálogos de confirmación
+class CloseSession extends StatelessWidget {
+  final String title;
+  final String message;
+  final IconData? icon;
+  final Color? iconColor;
+  final String confirmText;
+  final String cancelText;
+  final Color? confirmButtonColor;
+  final Color? confirmTextColor;
+  final VoidCallback? onConfirm;
+  final VoidCallback? onCancel;
+
+  const CloseSession({
+    super.key,
+    required this.title,
+    required this.message,
+    this.icon,
+    this.iconColor,
+    this.confirmText = 'Confirmar',
+    this.cancelText = 'Cancelar',
+    this.confirmButtonColor,
+    this.confirmTextColor,
+    this.onConfirm,
+    this.onCancel,
+  });
+
+  /// Método estático para mostrar el diálogo y obtener resultado
+  static Future<bool> show({
+    required BuildContext context,
+    required String title,
+    required String message,
+    IconData? icon,
+    Color? iconColor,
+    String confirmText = 'Confirmar',
+    String cancelText = 'Cancelar',
+    Color? confirmButtonColor,
+    Color? confirmTextColor,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => CloseSession(
+        title: title,
+        message: message,
+        icon: icon,
+        iconColor: iconColor,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        confirmButtonColor: confirmButtonColor,
+        confirmTextColor: confirmTextColor,
+      ),
+    );
+    return result ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: Text(title)),
+        ],
+      ),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () {
+            onCancel?.call();
+            Navigator.pop(context, false);
+          },
+          child: Text(cancelText),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            onConfirm?.call();
+            Navigator.pop(context, true);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: confirmButtonColor ?? Theme.of(context).primaryColor,
+          ),
+          child: Text(
+            confirmText,
+            style: TextStyle(
+              color: confirmTextColor ?? Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
