@@ -43,10 +43,12 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     # Forzar deployment target mínimo a 13.0 en todos los pods
     # para evitar warnings de linking con Flutter que requiere iOS 13.0
+    # Forzar generación de dSYM en todos los pods para App Store Connect
     target.build_configurations.each do |config|
       if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       end
+      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
     end
   end
 end
