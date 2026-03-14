@@ -38,7 +38,6 @@ dependencies:
   injectable: ^2.7.1+4
   equatable: ^2.0.5
   rxdart: ^0.28.0
-  fluttertoast: ^9.0.0
   http: ^1.6.0
   shared_preferences: ^2.4.0
   flutter_secure_storage: ^9.2.2

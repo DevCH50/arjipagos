@@ -11,7 +11,6 @@ import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show MultiBlocProvider;
-import 'package:fluttertoast/fluttertoast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,13 +36,11 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         builder: (context, child) {
           // Preservar el tamaño de fuente del sistema (accesibilidad)
-          // y aplicar FToastBuilder
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              // Respetar configuración de fuente del sistema
               textScaler: MediaQuery.of(context).textScaler,
             ),
-            child: FToastBuilder()(context, child),
+            child: child!,
           );
         },
         debugShowCheckedModeBanner: false,

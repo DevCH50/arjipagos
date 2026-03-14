@@ -623,6 +623,93 @@
   - ✅ Progreso en ARJIPAGOS_PROGRESS.md
   - ✅ CLAUDE.md solo con instrucciones
 
+### 2026-03-13
+
+- **Preparación para Google Play Store:**
+  - Cambio de paquete de `com.example.arjipagos` a `mx.moriah.arjipagos`
+  - Actualizado `android/app/build.gradle.kts` (namespace y applicationId)
+  - Movido `MainActivity.kt` a nueva estructura de carpetas `mx/moriah/arjipagos/`
+
+- **Activación de R8 (ofuscación y optimización):**
+  - `isMinifyEnabled = true` - Ofuscación de código
+  - `isShrinkResources = true` - Eliminación de recursos no usados
+  - Creado `android/app/proguard-rules.pro` con reglas para:
+    - Flutter y plugins
+    - WebView
+    - Google Play Core (dontwarn para clases no usadas)
+  - Reducción de tamaño: AAB 78.8 MB → 75.4 MB (-4.3%), APK 89.4 MB → 84.7 MB (-5.3%)
+  - Archivo de mapping generado para crash reports en Play Console
+
+- **Versión actualizada:**
+  - `1.0.0+1` → `1.0.0+3`
+
+- **Builds generados y firmados:**
+  - AAB: `build/app/outputs/bundle/release/app-release.aab` (75.4 MB)
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (84.7 MB)
+  - Mapping: `build/app/outputs/mapping/release/mapping.txt`
+
+---
+
+### 2026-03-13 (sesión 2) - Corrección de warnings de build iOS (Mac)
+
+> **Contexto:** Esta Mac se usa solo para builds iOS y subida a App Store. El proyecto real está en Linux.
+> Replicar estos cambios en Linux.
+
+#### Fix 1: Warning "All interface orientations must be supported"
+- **Causa:** La app solo soporta portrait pero no declara `UIRequiresFullScreen`.
+- **Fix:** Agregar `UIRequiresFullScreen = true` en `ios/Runner/Info.plist` antes de `UIStatusBarHidden`.
+- **Archivo:** `ios/Runner/Info.plist`
+```xml
+<key>UIRequiresFullScreen</key>
+<true/>
+```
+- **Estado:** ✅ Resuelto
+
+#### Fix 2: iOS Deployment Target 9.0 en Pods
+- **Pods afectados:** `fluttertoast_privacy`, `flutter_native_splash_privacy`, `flutter_secure_storage`
+- **Causa:** Esos pods declaran `IPHONEOS_DEPLOYMENT_TARGET = 9.0`, mínimo soportado es 12.0.
+- **Fix:** Agregar en `ios/Podfile` dentro del bloque `post_install`:
+```ruby
+target.build_configurations.each do |config|
+  if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 12.0
+    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+  end
+end
+```
+- **Estado:** ✅ Resuelto
+
+#### Fix 3: Eliminar dependencia `fluttertoast` (deprecated en iOS 13)
+- **Causa:** `UIActivityIndicatorViewStyleWhiteLarge` deprecated, y la regla del proyecto dice usar SnackBar.
+- **Fix aplicado:**
+  - `pubspec.yaml` — Eliminada línea `fluttertoast: ^9.0.0`
+  - `lib/main.dart` — Eliminado `import 'package:fluttertoast/fluttertoast.dart'`
+  - `lib/main.dart` — Reemplazado `FToastBuilder()(context, child)` por `child!`
+- **Estado:** ✅ Resuelto
+
+#### Fix 4: Lint removido `avoid_returning_null_for_future`
+- **Causa:** La regla fue removida en Dart 3.3.0 y generaba warning en `flutter analyze`.
+- **Fix:** Eliminar `avoid_returning_null_for_future: true` de `analysis_options.yaml`
+- **Estado:** ✅ Resuelto
+
+**Verificación:** `flutter analyze` → No issues found
+
+#### Fix 5: Podfile - Agregar platform y suprimir warning de master specs repo
+- **Causa:** CocoaPods asignaba automáticamente `iOS 13.0` y generaba warning de master specs.
+- **Fix en `ios/Podfile`:**
+  - Descomentar `platform :ios, '13.0'`
+  - Agregar `install! 'cocoapods', :warn_for_unused_master_specs_repo => false`
+- **Estado:** ✅ Resuelto
+
+#### Fix 6: Crear `ios/Flutter/Profile.xcconfig`
+- **Causa:** CocoaPods advertía que no podía establecer base configuration para el target `Profile`.
+- **Fix:** Crear `ios/Flutter/Profile.xcconfig` con contenido:
+  ```
+  #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
+  #include "Generated.xcconfig"
+  ```
+- **Nota:** El warning de `base configuration` en `pod install` persiste — es un issue conocido de Flutter + CocoaPods que **no afecta el build ni la subida a App Store**.
+- **Estado:** ✅ Resuelto (parcialmente — warning cosmético restante no bloquea nada)
+
 ---
 
 ## Próximas tareas
