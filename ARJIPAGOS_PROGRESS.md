@@ -710,6 +710,37 @@ end
 - **Nota:** El warning de `base configuration` en `pod install` persiste — es un issue conocido de Flutter + CocoaPods que **no afecta el build ni la subida a App Store**.
 - **Estado:** ✅ Resuelto (parcialmente — warning cosmético restante no bloquea nada)
 
+### 2026-03-13 (sesión 3) - Primera subida a Apple App Store
+
+- **App subida exitosamente a Apple App Store Connect**
+  - Build: `1.0.0+6`
+  - Certificado: `Apple Distribution: Carlos Hidalgo (CF6C8Z3W44)`
+  - Estado: **Uploaded to Apple** ✅
+
+- **Problemas resueltos durante el proceso:**
+  - Bundle version debe ser mayor al último subido (era 5, subido a 6)
+  - Warning dSYM de `objective_c.framework` — cosmético, no bloquea el upload
+  - Certificado `Apple Distribution` instalado en Mac (antes solo había Development)
+
+- **Flujo para futuros uploads a App Store:**
+  1. Incrementar build number en `pubspec.yaml` (siempre mayor al último subido)
+  2. `flutter build ios --release`
+  3. Xcode → `Product → Clean Build Folder` → `Product → Archive`
+  4. Xcode Organizer → `Distribute App` → `App Store Connect` → `Upload`
+  5. En App Store Connect: seleccionar build → completar info → Submit for Review
+
+- **Próximos pasos en App Store Connect:**
+  - Seleccionar build `1.0.0 (6)`
+  - Completar descripción, capturas de pantalla, categoría
+  - Agregar URL de política de privacidad (obligatoria)
+  - Calificación de edad
+  - Submit for Review (Apple tarda 1-3 días)
+
+- **Nota sobre el dSYM warning:**
+  - `objective_c.framework` es un binario pre-compilado de Dart FFI sin debug symbols
+  - Apple siempre mostrará el warning pero nunca bloqueará el upload
+  - Workaround documentado: `xcrun dsymutil` para generar dSYM con UUID correcto y copiarlo al archive
+
 ---
 
 ## Próximas tareas
@@ -717,3 +748,4 @@ end
 - Página de Facturas
 - Tests de widgets
 - Manejo automático de token expirado (refresh token o logout automático)
+- Completar información en App Store Connect y enviar a revisión
