@@ -743,6 +743,22 @@ end
 
 ---
 
+### 2026-03-16
+
+- **Assets de imágenes para iPad e iPhone:**
+  - Añadidas 6 imágenes redimensionadas para iPad (`assets/arji/iloveimg-resized-ipad/`)
+  - Añadidas 6 imágenes redimensionadas para iPhone (`assets/arji/iloveimg-resized-iphone/`)
+  - Actualizado `pubspec.lock`
+
+- **Actualización de .gitignore:**
+  - Añadida regla `assets/arji/*.zip` para ignorar archivos zip temporales
+  - Añadida regla `assets/arji/WhatsApp*/` para ignorar carpetas de WhatsApp temporales
+
+- **Commit:** `df2b895` - Assets: añadir imágenes redimensionadas para iPad e iPhone
+- **Push:** Subido a `origin/main`
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
