@@ -757,11 +757,24 @@ end
 - **Commit:** `df2b895` - Assets: añadir imágenes redimensionadas para iPad e iPhone
 - **Push:** Subido a `origin/main`
 
+- **Tests de widgets creados (52 tests nuevos):**
+  - **Estructura de carpetas:** `test/widgets/common/`, `test/widgets/edo_cta/`, `test/widgets/carrito/`
+  - **Widgets comunes:**
+    - `primary_elevated_button_test.dart` (6 tests) - Renderizado, onPressed, colores, estilos
+    - `glass_container_test.dart` (11 tests) - Dimensiones, scroll, estilos, maxWidth/maxHeight
+    - `default_text_field_test.dart` (17 tests) - Label, ícono, onChanged, errores, contraseña, keyboardType, validador
+  - **Widgets EdoCta:**
+    - `estado_pago_chip_test.dart` (7 tests) - Estados pendiente/vencido, tema claro/oscuro
+    - `loading_widget_test.dart` (4 tests) - CircularProgressIndicator, mensaje, estructura
+  - **Widgets Carrito:**
+    - `carrito_empty_widget_test.dart` (7 tests) - Ícono, título, mensaje, botón volver, navegación
+  - **Actualizado `widget_test.dart`** para importar todos los tests de widgets
+  - **Total tests del proyecto:** 251 pasando
+
 ---
 
 ## Próximas tareas
 
 - Página de Facturas
-- Tests de widgets
 - Manejo automático de token expirado (refresh token o logout automático)
 - Completar información en App Store Connect y enviar a revisión
