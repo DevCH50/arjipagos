@@ -67,6 +67,43 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 - `ApiConfig.isProduction = true`
 - Permiso INTERNET en AndroidManifest.xml
 
+## iOS — Archive & Distribute (App Store)
+
+### Checklist antes de Archive
+
+1. Verificar `ApiConfig.isProduction = true`
+2. Correr `pod install` en `ios/` si hubo cambios en dependencias
+3. Abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`)
+4. Menú: **Product → Archive**
+5. En Organizer: **Distribute App → App Store Connect**
+
+### Configuración crítica — NO modificar sin revisar
+
+| Archivo | Valor fijo | Motivo |
+|---|---|---|
+| `project.pbxproj` | `LastUpgradeCheck = 1510` | Xcode beta lo sube a 2630; revertir si cambia |
+| `Runner.xcscheme` | `LastUpgradeVersion = "1510"` | Mismo motivo |
+| `Runner.xcscheme` | `LaunchAction buildConfiguration = "Release"` | Necesario para Archive/Distribute |
+| `Podfile` | `objective_c` usa `dwarf` | XCFramework precompilado — no puede generar dSYM |
+
+### Advertencia — Xcode beta / actualizaciones de Xcode
+
+Si Xcode muestra el dialogo **"Update to recommended settings"** al abrir el proyecto:
+- **RECHAZAR** (click en "Later" o "Don't Update")
+- Si se acepta, `LastUpgradeCheck` y `LastUpgradeVersion` subirán a 2630+
+- Revertir con: `git checkout ios/Runner.xcodeproj/project.pbxproj ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme`
+
+### Errores conocidos y soluciones
+
+**Error: "Missing dSYM" al subir a App Store Connect**
+- Causa: pod `objective_c` es XCFramework precompilado, no puede generar dSYM
+- Solución: ya está en `Podfile` — el pod usa `dwarf` en vez de `dwarf-with-dsym`
+- Si reaparece, verificar que el bloque `if target.name == 'objective_c'` siga en el Podfile y correr `pod install`
+
+**Error: Archive genera configuración Debug en vez de Release**
+- Causa: `LaunchAction` en `Runner.xcscheme` apunta a Debug
+- Solución: asegurar `buildConfiguration = "Release"` y `selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"` en `LaunchAction`
+
 ## Arquitectura
 
 Clean Architecture con BLoC pattern:
