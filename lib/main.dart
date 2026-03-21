@@ -21,6 +21,19 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Barra de estado transparente con iconos claros para el splash/auth (fondo oscuro).
+  // Las páginas con AppBar la sobreescriben automáticamente vía AppBarTheme.
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light, // Android
+      statusBarBrightness: Brightness.dark, // iOS
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+    ),
+  );
+
   // await configureDependencies();
   runApp(const MyApp());
 }

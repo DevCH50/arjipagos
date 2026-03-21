@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:arjipagos/src/core/theme/theme.dart';
 
 /// Tema centralizado de la aplicación ArjiPagos.
@@ -42,6 +44,16 @@ class AppTheme {
   // CONSTRUCTOR DE TEMA
   // ============================================================================
 
+  /// TextTheme con Roboto Flex (cuerpo y display), coloreado según el esquema.
+  /// Sigue el mismo patrón de util.dart del tema cafecito.
+  static TextTheme _buildTextTheme(ColorScheme colorScheme) {
+    final base = GoogleFonts.robotoFlexTextTheme();
+    return base.apply(
+      bodyColor: colorScheme.onSurface,
+      displayColor: colorScheme.onSurface,
+    );
+  }
+
   /// Construye un ThemeData completo a partir de un ColorScheme.
   /// Respeta el tamaño de fuente del sistema.
   static ThemeData _buildTheme(ColorScheme colorScheme) {
@@ -49,10 +61,13 @@ class AppTheme {
       useMaterial3: true,
       brightness: colorScheme.brightness,
       colorScheme: colorScheme,
+      textTheme: _buildTextTheme(colorScheme),
       scaffoldBackgroundColor: colorScheme.surface,
       canvasColor: colorScheme.surface,
 
-      // AppBar
+      // AppBar — systemOverlayStyle adapta la barra de estado según el tema.
+      // En claro: iconos oscuros (superficie cálida clara).
+      // En oscuro: iconos claros (superficie marrón oscura).
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
@@ -60,6 +75,23 @@ class AppTheme {
         foregroundColor: colorScheme.onSurface,
         surfaceTintColor: colorScheme.surfaceTint,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
+        systemOverlayStyle: colorScheme.brightness == Brightness.light
+            ? const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark, // Android
+                statusBarBrightness: Brightness.light, // iOS
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness: Brightness.dark,
+                systemNavigationBarContrastEnforced: false,
+              )
+            : const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light, // Android
+                statusBarBrightness: Brightness.dark, // iOS
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness: Brightness.light,
+                systemNavigationBarContrastEnforced: false,
+              ),
       ),
 
       // Elevated Button

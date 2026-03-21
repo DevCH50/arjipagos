@@ -1,0 +1,81 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.claude
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Keystore y credenciales de firma (NO subir al repositorio)
+/android/key.properties
+/android/app/firma/
+*.jks
+*.keystore
+
+mygit_0.sh
+mygit_1.sh
+
+# Claude Code (configuración local — no compartir)
+.claude.json
+.claude.json?
+.claude/settings.local.json
+.claudeignore
+# .claude/settings.json SÍ se comparte con el equipo (ver .claude/settings.json)
+
+# Carpeta otros (archivos locales)
+otros/
+
+# Archivos temporales de assets (zips y carpetas de WhatsApp)
+assets/arji/*.zip
+assets/arji/WhatsApp*/
+
+# Scripts locales de git
+mygit_*.sh
+
+# Archivos de configuración local (no subir al remoto)
+/.gitignore
+/android/.gitignore
+/ios/.gitignore
+/linux/.gitignore
+/macos/.gitignore
+/windows/.gitignore
+/.idea/.gitignore

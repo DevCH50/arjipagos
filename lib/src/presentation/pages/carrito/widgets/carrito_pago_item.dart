@@ -27,7 +27,7 @@ class CarritoPagoItem extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(
-        pago.descripcionCorta,
+        pago.descripcionAbreviada,
         style: theme.textTheme.bodyLarge,
       ),
       subtitle: Row(

@@ -105,20 +105,9 @@ class LoginContent extends StatelessWidget {
                         );
                       }
                     },
-                    color: const Color.fromARGB(255, 181, 211, 5),
                   ),
                 ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: () {
-                    // TODO: Implementar recuperación de contraseña
-                  },
-                  child: const Text(
-                    '¿Olvidaste tu contraseña?',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 const NoTienesCuentaAun(
                   color: Color.fromARGB(111, 65, 34, 5),
                   mensaje:

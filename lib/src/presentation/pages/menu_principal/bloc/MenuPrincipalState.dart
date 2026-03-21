@@ -62,7 +62,7 @@ class MenuPrincipalState extends Equatable {
     if (alumnos.isEmpty) {
       return 'Sin alumnos';
     }
-    final nombres = alumnos.map((a) => a.alumno.split(' ').first).join(', ');
+    final nombres = alumnos.map((a) => a.nombre).join(', ');
     final cantidad = alumnos.length;
     return '$cantidad ${cantidad == 1 ? 'alumno' : 'alumnos'}: $nombres';
   }

@@ -1,28 +1,36 @@
 import 'package:flutter/material.dart';
 
+/// Botón primario elevado reutilizable.
+///
+/// Usa el color primario del tema (cafecito) por defecto.
+/// Se puede sobreescribir con [color] para casos especiales.
 class PrimaryElevatedButton extends StatelessWidget {
   final String text;
-  final Color color;
+  final Color? color; // null = usa el color primario del tema
   final Function() onPressed;
 
-  const PrimaryElevatedButton({super.key, 
-    required this.text, 
+  const PrimaryElevatedButton({
+    super.key,
+    required this.text,
     required this.onPressed,
-    this.color = const Color.fromARGB(255, 181, 211, 5), // Button color    
-    });
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgColor = color ?? colorScheme.primary;
+    // Si usa color personalizado, texto oscuro; si usa el tema, usa onPrimary
+    final textColor = color != null ? Colors.black54 : colorScheme.onPrimary;
+
     return ElevatedButton(
-      onPressed: () {
-        onPressed();
-      },
+      onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
+        backgroundColor: bgColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 18, color: Colors.black54)),
+      child: Text(text, style: TextStyle(fontSize: 18, color: textColor)),
     );
   }
 }

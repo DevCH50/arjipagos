@@ -27,6 +27,34 @@ class EstadoDeCuenta {
         required this.facturaXml,
     });
 
+    /// Descripción con abreviaciones específicas por nivel/materia.
+    String get descripcionAbreviada {
+      const frases = {
+        '1RO DE INGLES': '1º ING',
+        'SEGURO ESCOLAR': 'SEG ESC',
+        };
+      const palabras = {
+        'PRIMARIA': 'PRIM',
+        'SECUNDARIA': 'SEC',
+        'PREPARATORIA': 'PREPA',
+        'PREESCOLAR': 'KIND',
+        'COLEGIATURA': 'COL',
+        'INSCRIPCION': 'INS',
+        'REINSCRIPCION': 'REINS',
+        'CUOTA FAMILIAR': 'CF',
+      };
+
+      var desc = descripcionCorta.toUpperCase();
+
+      // Reemplazar frases completas primero
+      for (final entry in frases.entries) {
+        desc = desc.replaceAll(entry.key, entry.value);
+      }
+
+      // Reemplazar palabras individuales
+      return desc.split(' ').map((w) => palabras[w] ?? w).join(' ');
+    }
+
     factory EstadoDeCuenta.fromJson(Map<String, dynamic> json) => EstadoDeCuenta(
         id: json['id'] ?? 0,
         descripcionCorta: json['descripcion_corta']?.toString() ?? '',

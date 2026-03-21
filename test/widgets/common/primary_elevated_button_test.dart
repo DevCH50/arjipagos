@@ -65,12 +65,9 @@ void main() {
       expect(fuePresionado, isTrue);
     });
 
-    /// Test 3: Verifica que usa el color por defecto cuando no se especifica.
+    /// Test 3: Verifica que usa el color primario del tema cuando no se especifica.
     testWidgets('usa el color por defecto cuando no se especifica',
         (WidgetTester tester) async {
-      // Arrange
-      const colorPorDefecto = Color.fromARGB(255, 181, 211, 5);
-
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -83,15 +80,13 @@ void main() {
         ),
       );
 
-      // Assert
-      // Busca el ElevatedButton y verifica su estilo
+      // Assert — El color de fondo debe ser el primary del tema por defecto
       final boton = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
       final estilo = boton.style;
-
-      // Obtiene el color de fondo del botón
       final colorFondo = estilo?.backgroundColor?.resolve({});
 
-      expect(colorFondo, equals(colorPorDefecto));
+      // Sin color personalizado se usa colorScheme.primary del tema activo
+      expect(colorFondo, equals(ThemeData().colorScheme.primary));
     });
 
     /// Test 4: Verifica que usa el color personalizado cuando se especifica.
@@ -154,6 +149,7 @@ void main() {
     });
 
     /// Test adicional: Verifica que el texto tiene el estilo correcto.
+    /// Sin color personalizado, usa onPrimary del tema (blanco por defecto).
     testWidgets('el texto tiene el estilo correcto',
         (WidgetTester tester) async {
       // Arrange
@@ -171,10 +167,10 @@ void main() {
         ),
       );
 
-      // Assert
+      // Assert — fontSize siempre 18; color = onPrimary del tema (blanco)
       final texto = tester.widget<Text>(find.text(textoBoton));
       expect(texto.style?.fontSize, equals(18));
-      expect(texto.style?.color, equals(Colors.black54));
+      expect(texto.style?.color, equals(ThemeData().colorScheme.onPrimary));
     });
   });
 }

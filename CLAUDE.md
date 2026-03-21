@@ -47,19 +47,23 @@ flutter build appbundle --release
 ```
 
 **Después de los builds, instalar en dispositivo:**
+
 ```bash
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
 **Si especifica versión** (ej: "nueva versión 1.3.0"):
+
 1. Editar `pubspec.yaml` línea `version:` → `version: 1.3.0+N` (incrementar N)
 2. Ejecutar builds e instalar
 
 **Rutas de salida:**
+
 - APK: `build/app/outputs/flutter-apk/app-release.apk`
 - AAB: `build/app/outputs/bundle/release/app-release.aab`
 
 **Verificar antes de release a producción:**
+
 - `ApiConfig.isProduction = true`
 - Permiso INTERNET en AndroidManifest.xml
 
@@ -103,5 +107,20 @@ lib/src/
 - Si tienes dudas, pregunta, antes de proceder
 - Si tienes que crear un nuevo archivo, asegúrate de que esté bien comentado y que esté bien estructurado
 - No Toast, utiliza SnackBar para mostrar mensajes de error o éxito
-- Quita del git, todo aquello que no debe ir o que es peligroso que este en git. Me refiero al        
-  remoto. Incluye la carpeta "otros".   
+- Quita del git, todo aquello que no debe ir o que es peligroso que este en git. Me refiero al  
+  remoto. Incluye la carpeta "otros".
+- No uses emojis en los nombres de los archivos
+- No uses emojis en los nombres de las carpetas
+- No uses emojis en los nombres de los widgets
+- No uses emojis en los nombres de los eventos
+- No uses emojis en los nombres de los estados
+- No uses emojis en los nombres de los repositorios
+- No uses emojis en los nombres de los casos de uso
+- No uses emojis en los nombres de los modelos
+- No uses emojis en los nombres de las entidades
+- No uses emojis en los nombres de las interfaces
+- No uses emojis en los nombres de los servicios
+- No uses emojis en los nombres de las utilidades
+- No uses emojis en los nombres de los archivos de configuración
+- No uses emojis en los nombres de los archivos de prueba
+- Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.

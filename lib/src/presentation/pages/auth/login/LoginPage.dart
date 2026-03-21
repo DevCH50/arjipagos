@@ -36,12 +36,12 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           const BackgroundImage(),
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  top: 16,
-                  bottom: bottomInset > 0 ? 20 : 16,
-                ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                top: 16,
+                bottom: bottomInset > 0 ? 20 : 16,
+              ),
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,

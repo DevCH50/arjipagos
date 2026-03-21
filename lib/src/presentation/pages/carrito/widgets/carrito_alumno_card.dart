@@ -41,13 +41,13 @@ class CarritoAlumnoCard extends StatelessWidget {
     return ListTile(
       leading: UserAvatar(
         urlPhoto: ApiConfig.buildUri(item.alumno.urlPhoto).toString(),
-        nombre: item.alumno.alumno,
+        nombre: item.alumno.nombre,
         esBaja: item.alumno.esBaja,
         radius: 24,
         showBorder: true,
       ),
       title: Text(
-        item.alumno.alumno,
+        item.alumno.nombre,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(

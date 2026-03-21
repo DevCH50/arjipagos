@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../main.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeState.dart';
-import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
-import 'package:arjipagos/src/presentation/pages/home/widget/Drawer.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/HomeLoadingWidget.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/HomeErrorWidget.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/HomeEmptyWidget.dart';
@@ -26,48 +23,12 @@ class HomesPage extends StatefulWidget {
 class _HomesPageState extends State<HomesPage> {
   HomeBloc? bloc;
 
-  /// Maneja el proceso de cierre de sesión.
-  ///
-  /// Muestra un diálogo de confirmación y, si el usuario acepta,
-  /// dispara el evento de logout y navega a la pantalla inicial.
-  void _handleLogout() async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CloseSession(
-        title: 'Cerrar Sesión',
-        message: '¿Estás seguro que deseas cerrar sesión?',
-        icon: Icons.logout,
-        iconColor: Colors.orange,
-        confirmText: 'Cerrar Sesión',
-        cancelText: 'Cancelar',
-        confirmButtonColor: Colors.red,
-        confirmTextColor: Colors.white,
-        onConfirm: () {},
-        onCancel: () {},
-      ),
-    );
-
-    if (shouldLogout == true && mounted) {
-      bloc?.add(const HomeLogoutEvent());
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MyApp()),
-        (route) => false,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     bloc = BlocProvider.of<HomeBloc>(context);
 
     return Scaffold(
       appBar: _buildAppBar(),
-      drawer: HomeDrawer(
-        authUseCases: bloc!.authUseCases,
-        onLogout: _handleLogout,
-      ),
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) => _buildBody(state),
       ),

@@ -86,7 +86,7 @@ class PagoItem extends StatelessWidget {
   /// Construye el título del pago.
   Widget _buildTitulo(ThemeData theme) {
     return Text(
-      pago.descripcionCorta,
+      pago.descripcionAbreviada,
       style: theme.textTheme.bodyLarge?.copyWith(
         fontWeight: FontWeight.w500,
       ),

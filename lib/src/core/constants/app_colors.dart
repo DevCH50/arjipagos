@@ -86,20 +86,30 @@ class AppColors {
   static Color alumnoBajaTextDark = const Color(0xFFEF9A9A);
 
   // ============================================================================
-  // COLORES DE HEADER HOME (TEMA CLARO)
+  // COLORES DE HEADER HOME (TEMA CLARO — cafecito)
   // ============================================================================
 
-  static Color homeHeaderBackground = Colors.blue.shade50;
-  static Color homeHeaderIcon = Colors.blue.shade700;
-  static Color homeHeaderText = Colors.blue.shade900;
+  /// Fondo cálido claro (surfaceContainerLow del esquema cafecito)
+  static const Color homeHeaderBackground = Color(0xFFFCF2EE);
+
+  /// Icono café primary claro
+  static const Color homeHeaderIcon = Color(0xFF734C35);
+
+  /// Texto sobre superficie clara
+  static const Color homeHeaderText = Color(0xFF1F1B19);
 
   // ============================================================================
-  // COLORES DE HEADER HOME (TEMA OSCURO)
+  // COLORES DE HEADER HOME (TEMA OSCURO — cafecito)
   // ============================================================================
 
-  static const Color homeHeaderBackgroundDark = Color(0xFF1E1E1E);
-  static const Color homeHeaderIconDark = Color(0xFF90CAF9);
-  static const Color homeHeaderTextDark = Color(0xFFBBDEFB);
+  /// Fondo oscuro cálido (surfaceContainer del esquema cafecito)
+  static const Color homeHeaderBackgroundDark = Color(0xFF231F1D);
+
+  /// Icono primary oscuro (primary del esquema cafecito dark)
+  static const Color homeHeaderIconDark = Color(0xFFF0BB9E);
+
+  /// Texto sobre superficie oscura
+  static const Color homeHeaderTextDark = Color(0xFFEAE1DD);
 
   // ============================================================================
   // COLORES DE DIÁLOGOS (TEMA CLARO)

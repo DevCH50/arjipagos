@@ -26,7 +26,7 @@ class AlumnoCard extends StatelessWidget {
           initiallyExpanded: true,
           leading: UserAvatar(
             urlPhoto: ApiConfig.buildUri(alumno.urlPhoto).toString(),
-            nombre: alumno.alumno,
+            nombre: alumno.nombre,
             esBaja: alumno.esBaja,
             radius: 24,
             showBorder: true,
@@ -35,7 +35,7 @@ class AlumnoCard extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: alumno.alumno,
+                  text: alumno.nombre,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const TextSpan(text: ' '),
