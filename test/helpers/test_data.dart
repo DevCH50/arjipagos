@@ -91,7 +91,10 @@ class TestEstadoDeCuenta {
 class TestAlumno {
   static Alumno get activo => Alumno(
         alumnoId: 1,
-        alumno: 'María López',
+        alumno: 'LOPEZ GARCIA MARIA',
+        apPaterno: 'López',
+        apMaterno: 'García',
+        nombre: 'María',
         becaSep: 'Sí',
         becaArji: 'No',
         becaBach: 'No',
@@ -105,7 +108,10 @@ class TestAlumno {
 
   static Alumno get baja => Alumno(
         alumnoId: 2,
-        alumno: 'Pedro Sánchez',
+        alumno: 'SANCHEZ MARTINEZ PEDRO',
+        apPaterno: 'Sánchez',
+        apMaterno: 'Martínez',
+        nombre: 'Pedro',
         becaSep: 'No',
         becaArji: 'Sí',
         becaBach: 'No',
@@ -119,7 +125,10 @@ class TestAlumno {
 
   static Map<String, dynamic> get activoJson => {
         'alumno_id': 1,
-        'alumno': 'María López',
+        'alumno': 'LOPEZ GARCIA MARIA',
+        'ap_paterno': 'López',
+        'ap_materno': 'García',
+        'nombre': 'María',
         'beca_sep': 'Sí',
         'beca_arji': 'No',
         'beca_bach': 'No',
@@ -162,7 +171,10 @@ class TestAlumno {
 
   static Map<String, dynamic> get bajaJson => {
         'alumno_id': 2,
-        'alumno': 'Pedro Sánchez',
+        'alumno': 'SANCHEZ MARTINEZ PEDRO',
+        'ap_paterno': 'Sánchez',
+        'ap_materno': 'Martínez',
+        'nombre': 'Pedro',
         'beca_sep': 'No',
         'beca_arji': 'Sí',
         'beca_bach': 'No',

@@ -18,7 +18,10 @@ void main() {
 
         // Assert
         expect(alumno.alumnoId, equals(1));
-        expect(alumno.alumno, equals('María López'));
+        expect(alumno.alumno, equals('LOPEZ GARCIA MARIA'));
+        expect(alumno.nombre, equals('María'));
+        expect(alumno.apPaterno, equals('López'));
+        expect(alumno.apMaterno, equals('García'));
         expect(alumno.becaSep, equals('Sí'));
         expect(alumno.becaArji, equals('No'));
         expect(alumno.esBaja, isFalse);
@@ -36,7 +39,8 @@ void main() {
 
         // Assert
         expect(alumno.alumnoId, equals(2));
-        expect(alumno.alumno, equals('Pedro Sánchez'));
+        expect(alumno.alumno, equals('SANCHEZ MARTINEZ PEDRO'));
+        expect(alumno.nombre, equals('Pedro'));
         expect(alumno.esBaja, isTrue);
         expect(alumno.becaArji, equals('Sí'));
         expect(alumno.urlPhoto, isEmpty);
@@ -79,7 +83,8 @@ void main() {
 
         // Assert
         expect(json['alumno_id'], equals(1));
-        expect(json['alumno'], equals('María López'));
+        expect(json['alumno'], equals('LOPEZ GARCIA MARIA'));
+        expect(json['nombre'], equals('María'));
         expect(json['beca_sep'], equals('Sí'));
         expect(json['es_baja'], isFalse);
         expect(json['grupo'], equals('3ro A'));

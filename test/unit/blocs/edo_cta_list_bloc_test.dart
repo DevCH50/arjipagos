@@ -32,16 +32,18 @@ void main() {
   }
 
   group('EdoCtaListBloc', () {
+    // Alumno de prueba disponible en todos los subgrupos
+    final alumnoTest = TestAlumno.activo;
+
     test('estado inicial es correcto', () {
       bloc = createBloc();
       expect(bloc.state, const EdoCtaListState());
-      expect(bloc.state.isLoading, true);
+      expect(bloc.state.isLoading, false);
       expect(bloc.state.alumnos, null);
       expect(bloc.state.pagosSeleccionados, isEmpty);
     });
 
     group('EdoCtaListInitialEvent', () {
-      final alumnoTest = TestAlumno.activo;
 
       blocTest<EdoCtaListBloc, EdoCtaListState>(
         'emite estado con alumnos cuando la carga es exitosa',
@@ -58,6 +60,10 @@ void main() {
         },
         act: (bloc) => bloc.add(const EdoCtaListInitialEvent()),
         expect: () => [
+          // Primer estado: isLoading = true (inicio de carga)
+          isA<EdoCtaListState>()
+              .having((s) => s.isLoading, 'isLoading', true),
+          // Segundo estado: datos cargados con alumnos
           isA<EdoCtaListState>()
               .having((s) => s.isLoading, 'isLoading', false)
               .having((s) => s.alumnos, 'alumnos', isNotNull)
@@ -75,6 +81,10 @@ void main() {
         },
         act: (bloc) => bloc.add(const EdoCtaListInitialEvent()),
         expect: () => [
+          // Primer estado: isLoading = true (inicio de carga)
+          isA<EdoCtaListState>()
+              .having((s) => s.isLoading, 'isLoading', true),
+          // Segundo estado: error con mensaje
           isA<EdoCtaListState>()
               .having((s) => s.isLoading, 'isLoading', false)
               .having((s) => s.errorMessage, 'errorMessage', 'Error de conexión'),
@@ -86,19 +96,20 @@ void main() {
       blocTest<EdoCtaListBloc, EdoCtaListState>(
         'selecciona un pago correctamente',
         build: () => createBloc(),
-        seed: () => const EdoCtaListState(
+        seed: () => EdoCtaListState(
           isLoading: false,
-          pagosSeleccionados: {},
+          alumnos: [alumnoTest], // alumno con pagoId=1 (aceptaPagosDiversos=true)
+          pagosSeleccionados: const {},
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
           alumnoId: 1,
-          pagoId: 100,
+          pagoId: 1, // primer pago del alumno
         )),
         expect: () => [
           isA<EdoCtaListState>().having(
             (s) => s.pagosSeleccionados,
             'pagosSeleccionados',
-            {1: [100]},
+            {1: [1]},
           ),
         ],
       );
@@ -106,13 +117,14 @@ void main() {
       blocTest<EdoCtaListBloc, EdoCtaListState>(
         'deselecciona un pago correctamente',
         build: () => createBloc(),
-        seed: () => const EdoCtaListState(
+        seed: () => EdoCtaListState(
           isLoading: false,
-          pagosSeleccionados: {1: [100]},
+          alumnos: [alumnoTest], // alumno con pagos id=1 e id=2
+          pagosSeleccionados: const {1: [1]},
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
           alumnoId: 1,
-          pagoId: 100,
+          pagoId: 1,
         )),
         expect: () => [
           isA<EdoCtaListState>().having(

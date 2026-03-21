@@ -212,7 +212,8 @@ void main() {
         alumnos: [testAlumno],
         pagosSeleccionados: const {1: [1, 2]},
       );
-      expect(state.totalAPagar, 3000.0);
+      // pago id=1: 5000.0, pago id=2: 4500.0
+      expect(state.totalAPagar, 9500.0);
     });
 
     test('cantidadPagos cuenta correctamente', () {

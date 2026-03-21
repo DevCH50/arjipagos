@@ -45,9 +45,9 @@ void main() {
         final response = AlumnoResponse.fromJson(json);
 
         // Assert
-        expect(response.alumnos[0].alumno, equals('María López'));
+        expect(response.alumnos[0].alumno, equals('LOPEZ GARCIA MARIA'));
         expect(response.alumnos[0].esBaja, isFalse);
-        expect(response.alumnos[1].alumno, equals('Pedro Sánchez'));
+        expect(response.alumnos[1].alumno, equals('SANCHEZ MARTINEZ PEDRO'));
         expect(response.alumnos[1].esBaja, isTrue);
       });
 
@@ -89,8 +89,8 @@ void main() {
         final alumnosJson = json['alumnos'] as List;
 
         // Assert
-        expect(alumnosJson[0]['alumno'], equals('María López'));
-        expect(alumnosJson[1]['alumno'], equals('Pedro Sánchez'));
+        expect(alumnosJson[0]['alumno'], equals('LOPEZ GARCIA MARIA'));
+        expect(alumnosJson[1]['alumno'], equals('SANCHEZ MARTINEZ PEDRO'));
       });
 
       test('fromJson y toJson deben ser operaciones inversas', () {
@@ -131,7 +131,7 @@ void main() {
 
         // Assert
         expect(alumnosActivos, hasLength(1));
-        expect(alumnosActivos.first.alumno, equals('María López'));
+        expect(alumnosActivos.first.alumno, equals('LOPEZ GARCIA MARIA'));
       });
 
       test('debe poder filtrar alumnos dados de baja', () {
@@ -143,7 +143,7 @@ void main() {
 
         // Assert
         expect(alumnosBaja, hasLength(1));
-        expect(alumnosBaja.first.alumno, equals('Pedro Sánchez'));
+        expect(alumnosBaja.first.alumno, equals('SANCHEZ MARTINEZ PEDRO'));
       });
     });
   });
