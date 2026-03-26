@@ -41,6 +41,7 @@ void main() {
       getUserSession: mockGetUserSessionUseCase,
       logout: mockLogoutUseCase,
       register: mockRegisterUseCase,
+      cambiarContrasena: MockCambiarContrasenaUseCase(),
     );
 
     loginBloc = LoginBloc(authUseCases);

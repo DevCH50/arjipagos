@@ -8,6 +8,7 @@ import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
@@ -59,6 +60,13 @@ class MockGetAlumnosUseCase extends Mock implements GetAlumnosUseCase {}
 // FACTORIES DE USE CASES CON MOCKS
 // ============================================================================
 
+/// Mock del caso de uso de registro.
+class MockRegisterUseCase extends Mock implements RegisterUseCase {}
+
+/// Mock del caso de uso de cambio de contraseña.
+class MockCambiarContrasenaUseCase extends Mock
+    implements CambiarContrasenaUseCase {}
+
 /// Crea un AuthUseCases con todos los use cases mockeados.
 AuthUseCases createMockAuthUseCases({
   MockLoginUseCase? login,
@@ -66,6 +74,7 @@ AuthUseCases createMockAuthUseCases({
   MockGetUserSessionUseCase? getUserSession,
   MockLogoutUseCase? logout,
   MockRegisterUseCase? register,
+  MockCambiarContrasenaUseCase? cambiarContrasena,
 }) {
   return AuthUseCases(
     login: login ?? MockLoginUseCase(),
@@ -73,11 +82,9 @@ AuthUseCases createMockAuthUseCases({
     getUserSession: getUserSession ?? MockGetUserSessionUseCase(),
     logout: logout ?? MockLogoutUseCase(),
     register: register ?? MockRegisterUseCase(),
+    cambiarContrasena: cambiarContrasena ?? MockCambiarContrasenaUseCase(),
   );
 }
-
-/// Mock del caso de uso de registro.
-class MockRegisterUseCase extends Mock implements RegisterUseCase {}
 
 /// Crea un HomeUseCases con todos los use cases mockeados.
 HomeUseCases createMockHomeUseCases({MockGetAlumnosUseCase? getAlumnos}) {

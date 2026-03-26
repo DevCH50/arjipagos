@@ -40,6 +40,7 @@ void main() {
       getUserSession: mockGetUserSessionUseCase,
       logout: mockLogoutUseCase,
       register: mockRegisterUseCase,
+      cambiarContrasena: MockCambiarContrasenaUseCase(),
     );
 
     homeBloc = HomeBloc(homeUseCases, authUseCases);

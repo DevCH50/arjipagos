@@ -2,6 +2,7 @@ import 'package:arjipagos/src/blocProvider.dart';
 import 'package:arjipagos/src/core/theme/app_theme.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/RegisterPage.dart';
+import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/EdoCtaPage.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
@@ -70,6 +71,8 @@ class MyApp extends StatelessWidget {
           'edo_cta': (BuildContext context) => const EdoCtaPage(),
           'carrito': (BuildContext context) => const CarritoPage(),
           'pago_webview': (BuildContext context) => const PagoWebViewPage(),
+          'cambiar_contrasena': (BuildContext context) =>
+              const CambiarContrasenaPage(),
         },
         initialRoute: 'splash',
       ),

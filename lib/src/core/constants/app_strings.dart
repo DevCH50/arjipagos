@@ -88,6 +88,7 @@ class AppStrings {
   static const String errorUnexpected = 'Error inesperado';
   static const String errorInvalidCredentials = 'Credenciales incorrectas';
   static const String errorTimeout = 'La solicitud tardó demasiado. Intenta de nuevo.';
+  static const String errorUnauthorized = 'No autorizado. Inicia sesión de nuevo.';
 
   // ============================================================================
   // ALUMNO

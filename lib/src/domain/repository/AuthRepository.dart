@@ -17,4 +17,10 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+
+  /// Cambia la contraseña del usuario autenticado.
+  Future<Resource> cambiarContrasena({
+    required String passwordActual,
+    required String passwordNuevo,
+  });
 }

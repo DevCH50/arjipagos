@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart';
@@ -62,6 +63,32 @@ class AuthRepositoryImpl implements AuthRepository {
 
     // Guardar el token de acceso por separado para uso rápido
     await secureStorage.saveAccessToken(authResponse.accessToken);
+  }
+
+  @override
+  Future<Resource> cambiarContrasena({
+    required String passwordActual,
+    required String passwordNuevo,
+  }) async {
+    // Obtener el token de acceso desde el almacenamiento seguro
+    final String? token = await secureStorage.getAccessToken();
+    if (token == null || token.isEmpty) {
+      return Error(AppStrings.errorNoToken);
+    }
+
+    // Obtener el user_id desde la sesión almacenada
+    final sessionData = await secureStorage.getUserSession();
+    final int? userId = sessionData?['user']?['id'] as int?;
+    if (userId == null) {
+      return Error(AppStrings.errorNoToken);
+    }
+
+    return authService.cambiarContrasena(
+      token: token,
+      userId: userId,
+      passwordActual: passwordActual,
+      passwordNuevo: passwordNuevo,
+    );
   }
 
   @override

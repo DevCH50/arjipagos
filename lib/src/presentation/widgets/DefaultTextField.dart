@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// Campo de texto genérico reutilizable con soporte para tema claro y oscuro.
+///
+/// Por defecto usa colores blancos (para fondos con imagen o dark, como Login).
+/// Pasar [useThemeColors] = true para usar los colores del tema activo
+/// (tema claro u oscuro estándar, como en CambiarContrasena).
 class DefaultTextField extends StatefulWidget {
   final String label;
   final String? errorText;
@@ -8,8 +13,12 @@ class DefaultTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final Function(String text) onChanged;
   final String? Function(String?)? validator;
-  
-  // ✅ Parámetros para personalizar el estilo del error
+
+  /// Si es true, los colores se toman del tema activo (claro u oscuro).
+  /// Si es false (por defecto), usa Colors.white — para fondos oscuros/imagen.
+  final bool useThemeColors;
+
+  // Parámetros para personalizar el estilo del error (aplican en modo dark/imagen)
   final Color errorColor;
   final double errorFontSize;
   final FontWeight errorFontWeight;
@@ -26,7 +35,8 @@ class DefaultTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     required this.onChanged,
     this.validator,
-    // ✅ Valores por defecto personalizables
+    this.useThemeColors = false,
+    // Valores por defecto para fondos oscuros/imagen
     this.errorColor = Colors.yellowAccent,
     this.errorFontSize = 14.0,
     this.errorFontWeight = FontWeight.w500,
@@ -56,17 +66,80 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.useThemeColors) {
+      return _buildWithThemeColors(context);
+    }
+    return _buildWithWhiteColors();
+  }
+
+  /// Campo con colores del tema activo (compatible con claro y oscuro).
+  Widget _buildWithThemeColors(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return TextFormField(
-      onChanged: (text) {
-        widget.onChanged(text);
-      },
+      onChanged: widget.onChanged,
       validator: widget.validator,
       keyboardType: widget.keyboardType,
+      obscureText: _obscureText,
+      style: TextStyle(color: colorScheme.onSurface),
+      cursorColor: colorScheme.primary,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        errorText: widget.errorText,
+        errorMaxLines: widget.errorMaxLines,
+        prefixIcon: Icon(widget.icon, color: colorScheme.onSurfaceVariant),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscureText
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                onPressed: _togglePasswordVisibility,
+                tooltip: _obscureText ? 'Mostrar contraseña' : 'Ocultar contraseña',
+              )
+            : null,
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
+      ),
+    );
+  }
+
+  /// Campo con colores blancos para fondos oscuros o con imagen (Login, Register).
+  Widget _buildWithWhiteColors() {
+    return TextFormField(
+      onChanged: widget.onChanged,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      obscureText: _obscureText,
+      style: const TextStyle(color: Colors.white),
+      cursorColor: Colors.white,
       decoration: InputDecoration(
         filled: false,
         label: Text(widget.label, style: const TextStyle(color: Colors.white)),
         errorText: widget.errorText,
-        // ✅ Estilo de error personalizable
         errorStyle: TextStyle(
           color: widget.errorColor,
           fontSize: widget.errorFontSize,
@@ -91,9 +164,7 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
                   color: Colors.white70,
                 ),
                 onPressed: _togglePasswordVisibility,
-                tooltip: _obscureText
-                    ? 'Mostrar contraseña'
-                    : 'Ocultar contraseña',
+                tooltip: _obscureText ? 'Mostrar contraseña' : 'Ocultar contraseña',
               )
             : null,
         enabledBorder: const UnderlineInputBorder(
@@ -109,33 +180,21 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
           borderSide: BorderSide(color: widget.errorBorderColor, width: 2),
         ),
       ),
-      style: const TextStyle(color: Colors.white),
-      cursorColor: Colors.white,
-      obscureText: _obscureText,
     );
   }
 }
 
 
-// Para fondos Oscuros
-
-// errorColor: Colors.yellowAccent,
-// errorFontSize: 14.0,
-// errorFontWeight: FontWeight.w600,
-// errorWithShadow: true,
-
-
-// Para fondos Claros
-
-// errorColor: Colors.red.shade700,
-// errorFontSize: 13.0,
-// errorFontWeight: FontWeight.w500,
-// errorWithShadow: false,
-
-
-// Fondo con Imagen
-
-// errorColor: Colors.white,
-// errorFontSize: 15.0,
-// errorFontWeight: FontWeight.bold,
-// errorWithShadow: true,
+// ─── Referencia de configuración por contexto ───────────────────────────────
+//
+// Para fondos Oscuros / con imagen (Login, Register):
+//   useThemeColors: false   ← default
+//   errorColor: Colors.yellowAccent
+//   errorFontSize: 14.0
+//   errorFontWeight: FontWeight.w600
+//   errorWithShadow: true
+//
+// Para fondos Claros (Scaffold normal, CambiarContrasena, etc.):
+//   useThemeColors: true    ← usa colores del tema activo automáticamente
+//
+// ────────────────────────────────────────────────────────────────────────────

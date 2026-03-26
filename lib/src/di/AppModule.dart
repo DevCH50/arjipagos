@@ -12,6 +12,7 @@ import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
@@ -51,6 +52,7 @@ abstract class AppModule {
     getUserSession: GetUserSessionUseCase(authRepository),
     logout: LogoutUseCase(authRepository),
     register: RegisterUseCase(authRepository),
+    cambiarContrasena: CambiarContrasenaUseCase(authRepository),
   );
 
   @injectable

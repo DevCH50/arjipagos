@@ -76,6 +76,90 @@ class AuthService {
     }
   }
 
+  /// Cambia la contraseña del usuario autenticado.
+  ///
+  /// [token] - Token de acceso JWT del usuario.
+  /// [userId] - ID del usuario autenticado.
+  /// [passwordActual] - Contraseña actual del usuario.
+  /// [passwordNuevo] - Nueva contraseña deseada.
+  /// Retorna [Success] con mensaje de éxito o [Error] con mensaje.
+  Future<Resource<String>> cambiarContrasena({
+    required String token,
+    required int userId,
+    required String passwordActual,
+    required String passwordNuevo,
+  }) async {
+    final Uri url = ApiConfig.buildUri(Endpoints.cambiarContrasena);
+
+    AppLogger.httpRequest('POST', url.toString());
+
+    try {
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final String bodyParams = json.encode({
+        'user_id': userId,
+        'password_actual': passwordActual,
+        'password': passwordNuevo,
+        'password_confirmation': passwordNuevo,
+      });
+
+      final response = await http
+          .post(url, headers: headers, body: bodyParams)
+          .timeout(AppDurations.httpTimeout);
+
+      AppLogger.httpResponse(response.statusCode, url.toString());
+
+      // Verificar que la respuesta sea JSON antes de intentar parsear
+      final contentType = response.headers['content-type'] ?? '';
+      if (!contentType.contains('application/json') &&
+          response.body.trimLeft().startsWith('<')) {
+        AppLogger.error(
+          'Respuesta no-JSON (HTTP ${response.statusCode}): servidor devolvió HTML',
+          tag: 'Auth',
+        );
+        return Error('Error del servidor (${response.statusCode}). Intenta más tarde.');
+      }
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // El servidor puede devolver 200 con status:0 para errores lógicos
+        if (data['status'] == 0) {
+          final errorMsg = ListToString(
+            data['message'] ?? data['msg'] ?? data['error'] ?? 'Error al cambiar contraseña',
+          );
+          AppLogger.warning('Error lógico del servidor: $errorMsg', tag: 'Auth');
+          return Error(errorMsg.isNotEmpty ? errorMsg : 'Error al cambiar contraseña');
+        }
+
+        final String message =
+            data['message'] ?? data['msg'] ?? 'Contraseña actualizada correctamente';
+        AppLogger.info('Contraseña cambiada exitosamente', tag: 'Auth');
+        return Success(message);
+      } else if (response.statusCode == 401) {
+        AppLogger.warning('No autorizado al cambiar contraseña', tag: 'Auth');
+        return Error(AppStrings.errorUnauthorized);
+      } else {
+        final errorMsg = ListToString(
+          data['msg'] ?? data['message'] ?? data['error'] ?? 'Error al cambiar contraseña',
+        );
+        AppLogger.warning('Error al cambiar contraseña: $errorMsg', tag: 'Auth');
+        return Error(errorMsg.isNotEmpty ? errorMsg : 'Error al cambiar contraseña');
+      }
+    } on TimeoutException {
+      AppLogger.error('Timeout al cambiar contraseña', tag: 'Auth');
+      return Error(AppStrings.errorTimeout);
+    } on SocketException {
+      AppLogger.error('Sin conexión al cambiar contraseña', tag: 'Auth');
+      return Error(AppStrings.errorConnection);
+    } catch (e) {
+      AppLogger.error('Error al cambiar contraseña: $e', tag: 'Auth');
+      return Error(e.toString());
+    }
+  }
+
   /// Registra un nuevo usuario en el servidor.
   ///
   /// Envía los datos del formulario al endpoint de registro.

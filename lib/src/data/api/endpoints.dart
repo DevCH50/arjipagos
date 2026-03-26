@@ -31,11 +31,21 @@ abstract class Endpoints {
       '/api/v1/alumno/estado-de-cuenta-sin-pagar/';
 
   // ============================================================================
+  // USUARIOS
+  // ============================================================================
+
+  /// POST - Cambiar contraseña del usuario autenticado
+  static const String cambiarContrasena = '/api/v1/user/change/password/mobile';
+
+  // ============================================================================
   // PAGOS
   // ============================================================================
 
   /// URL externa de Adquira México para procesar pagos
-  static const String pagoAdquira = 'https://www.adquiramexico.com.mx:443/mExpress/pago/avanzado';
+  static const String pagoAdquira =
+      'https://www.adquiramexico.com.mx:443/mExpress/pago/avanzado';
+
   /// Webhook de retorno después del pago
-  static const String pagoUrlRetorno = 'https://arjipagos.moriah.mx/api/v1/pago-realizado/';
+  static const String pagoUrlRetorno =
+      'https://arjipagos.moriah.mx/api/v1/pago-realizado/';
 }

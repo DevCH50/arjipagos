@@ -51,70 +51,36 @@ class UserDrawer extends StatelessWidget {
                           value: user.username,
                         ),
                         CopyableListTile(
-                          icon: Icons.person,
-                          label: 'Nombre',
-                          value: user.nombre,
-                        ),
-                        CopyableListTile(
-                          icon: Icons.person,
-                          label: 'Apellido Paterno',
-                          value: user.apPaterno,
-                        ),
-                        CopyableListTile(
-                          icon: Icons.person,
-                          label: 'Apellido Materno',
-                          value: user.apMaterno,
-                        ),
-                        CopyableListTile(
                           icon: Icons.email_outlined,
                           label: 'Email',
                           value: user.email,
                         ),
-                        if (user.emails.isNotEmpty)
-                          CopyableListTile(
-                            icon: Icons.alternate_email,
-                            label: 'Otros emails',
-                            value: user.emails,
-                          ),
                         CopyableListTile(
                           icon: Icons.phone_android,
-                          label: 'Celulares',
+                          label: 'Celular',
                           value: user.celulares.isNotEmpty
                               ? user.celulares
                               : 'Sin registrar',
                         ),
-                        if (user.telefonos.isNotEmpty)
-                          CopyableListTile(
-                            icon: Icons.phone,
-                            label: 'Teléfonos',
-                            value: user.telefonos,
-                          ),
                       ],
                       const Divider(),
-                      // Sección: Familia y alumnos
-                      const SectionHeader(title: 'Familia'),
-                      CopyableListTile(
-                        icon: Icons.family_restroom,
-                        label: 'Familia',
-                        value: state.familia ?? 'Sin información',
-                      ),
-                      CopyableListTile(
-                        icon: Icons.school_outlined,
-                        label: 'Alumnos',
-                        value: state.resumenAlumnos,
-                      ),
-                      const Divider(),
-                      // Sección: Versiones
-                      const SectionHeader(title: 'Versiones'),
-                      CopyableListTile(
-                        icon: Icons.phone_iphone,
-                        label: 'App',
-                        value: state.appVersion ?? 'Desconocida',
-                      ),
-                      CopyableListTile(
-                        icon: Icons.cloud_outlined,
-                        label: 'API',
-                        value: state.apiVersion ?? 'Desconocida',
+                      // Sección: Cuenta
+                      const SectionHeader(title: 'Mi cuenta'),
+                      ListTile(
+                        leading: Icon(
+                          Icons.lock_reset,
+                          color: theme.colorScheme.primary,
+                        ),
+                        title: const Text('Cambiar Contraseña'),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          // Cerrar el drawer antes de navegar
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, 'cambiar_contrasena');
+                        },
                       ),
                     ],
                   ),

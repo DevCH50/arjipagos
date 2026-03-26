@@ -9,7 +9,7 @@
 
 ### En progreso
 
-- Implementación de página Facturas (pendiente)
+_(ninguno)_
 
 ### Pendiente
 
@@ -17,9 +17,22 @@
 - Tests unitarios para EdoCtaListBloc y CarritoBloc
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
+- Implementación de página Facturas
 
 ### Completado recientemente
 
+- **Módulo CambiarContrasena — revisado y pulido (2026-03-26):**
+  - `DefaultTextField` ahora soporta `useThemeColors: true` para fondos de Scaffold (claro/oscuro), sin romper Login/Register que usan fondo oscuro con imagen
+  - Body del POST incluye `user_id`, `password_actual`, `password`, `password_confirmation`
+  - Respuestas manejadas con `AlertDialog` (no SnackBar): éxito → logout + navega a MyApp, error → queda en la misma pantalla
+  - `AuthService` detecta respuestas HTML (500/404) y `status:0` como errores lógicos
+  - `CambiarContrasenaBloc` llama `authUseCases.logout.run()` antes de emitir éxito
+  - `CambiarContrasenaUseCase.repository` marcado `final`
+  - Token vacío verificado con `token.isEmpty` en `AuthRepositoryImpl`
+  - `theme` movido dentro del `BlocBuilder` para reactividad correcta
+  - 21/21 tests pasan
+
+- **Módulo CambiarContrasenaPage** — Ecosistema completo: endpoint `/api/v1/user/change/password/mobile`, `CambiarContrasenaService` (POST con JWT), `CambiarContrasenaUseCase`, `CambiarContrasenaBloc` (validación en tiempo real), `CambiarContrasenaPage` + includes (Content + Response). Drawer simplificado: se quitó sección Versiones y datos redundantes, se agregó entrada a Cambiar Contraseña. Ruta `cambiar_contrasena` registrada en `main.dart`. Todos los tests pasan.
 - **Build de release configurado** - Nuevo keystore, build.gradle.kts corregido (Kotlin), APK y App Bundle generados y firmados
 - **Filtrado y selección condicional en EdoCtaPage** - Solo muestra pagos con `estaDisponibleEnInternet`, regla de orden solo si `aceptaPagosDiversos`
 - **Limpieza completa de storage al logout** - Al cerrar sesión se eliminan todos los datos (SecureStorage + SharedPreferences)
@@ -656,19 +669,24 @@
 > Replicar estos cambios en Linux.
 
 #### Fix 1: Warning "All interface orientations must be supported"
+
 - **Causa:** La app solo soporta portrait pero no declara `UIRequiresFullScreen`.
 - **Fix:** Agregar `UIRequiresFullScreen = true` en `ios/Runner/Info.plist` antes de `UIStatusBarHidden`.
 - **Archivo:** `ios/Runner/Info.plist`
+
 ```xml
 <key>UIRequiresFullScreen</key>
 <true/>
 ```
+
 - **Estado:** ✅ Resuelto
 
 #### Fix 2: iOS Deployment Target 9.0 en Pods
+
 - **Pods afectados:** `fluttertoast_privacy`, `flutter_native_splash_privacy`, `flutter_secure_storage`
 - **Causa:** Esos pods declaran `IPHONEOS_DEPLOYMENT_TARGET = 9.0`, mínimo soportado es 12.0.
 - **Fix:** Agregar en `ios/Podfile` dentro del bloque `post_install`:
+
 ```ruby
 target.build_configurations.each do |config|
   if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 12.0
@@ -676,9 +694,11 @@ target.build_configurations.each do |config|
   end
 end
 ```
+
 - **Estado:** ✅ Resuelto
 
 #### Fix 3: Eliminar dependencia `fluttertoast` (deprecated en iOS 13)
+
 - **Causa:** `UIActivityIndicatorViewStyleWhiteLarge` deprecated, y la regla del proyecto dice usar SnackBar.
 - **Fix aplicado:**
   - `pubspec.yaml` — Eliminada línea `fluttertoast: ^9.0.0`
@@ -687,6 +707,7 @@ end
 - **Estado:** ✅ Resuelto
 
 #### Fix 4: Lint removido `avoid_returning_null_for_future`
+
 - **Causa:** La regla fue removida en Dart 3.3.0 y generaba warning en `flutter analyze`.
 - **Fix:** Eliminar `avoid_returning_null_for_future: true` de `analysis_options.yaml`
 - **Estado:** ✅ Resuelto
@@ -694,6 +715,7 @@ end
 **Verificación:** `flutter analyze` → No issues found
 
 #### Fix 5: Podfile - Agregar platform y suprimir warning de master specs repo
+
 - **Causa:** CocoaPods asignaba automáticamente `iOS 13.0` y generaba warning de master specs.
 - **Fix en `ios/Podfile`:**
   - Descomentar `platform :ios, '13.0'`
@@ -701,6 +723,7 @@ end
 - **Estado:** ✅ Resuelto
 
 #### Fix 6: Crear `ios/Flutter/Profile.xcconfig`
+
 - **Causa:** CocoaPods advertía que no podía establecer base configuration para el target `Profile`.
 - **Fix:** Crear `ios/Flutter/Profile.xcconfig` con contenido:
   ```

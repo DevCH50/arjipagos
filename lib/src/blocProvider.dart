@@ -7,6 +7,8 @@ import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart'
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
+import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
+import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -47,5 +49,10 @@ List<BlocProvider> blocProviders = [
       authUseCases: locator<AuthUseCases>(),
       edoCtaUseCases: locator<EdoCtaUseCases>(),
     )..add(const CarritoInitialEvent()),
+  ),
+  BlocProvider<CambiarContrasenaBloc>(
+    create: (context) =>
+        CambiarContrasenaBloc(locator<AuthUseCases>())
+          ..add(const CambiarContrasenaInitialEvent()),
   ),
 ];
