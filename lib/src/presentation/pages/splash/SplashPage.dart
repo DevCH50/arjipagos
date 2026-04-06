@@ -7,9 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Página de splash/carga inicial de la aplicación.
 ///
-/// Muestra el logo ensamblándose como un rompecabezas mientras se
-/// inicializan las dependencias y se verifica la sesión del usuario.
-/// Cada pieza cae desde el centro hacia su posición final.
+/// Muestra el logo ensamblándose como un rompecabezas a pantalla completa:
+/// cada pieza parte del centro de la pantalla y vuela hacia su posición final.
+/// Al llegar al 100% la imagen queda totalmente armada.
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
@@ -28,8 +28,8 @@ class _SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<SplashBloc, SplashState>(
-      listenWhen: (previous, current) =>
-          previous.navigationState != current.navigationState,
+      listenWhen: (prev, curr) =>
+          prev.navigationState != curr.navigationState,
       listener: (context, state) {
         if (state.navigationState == SplashNavigationState.navigateToHome) {
           Navigator.pushNamedAndRemoveUntil(
@@ -52,17 +52,18 @@ class _SplashView extends StatelessWidget {
               ],
             ),
           ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _PuzzleLogoAnimation(),
-                SizedBox(height: 48),
-                _SplashTitle(),
-                SizedBox(height: 8),
-                _SplashSubtitle(),
-              ],
-            ),
+          child: const Stack(
+            children: [
+              // Animación del rompecabezas a pantalla completa
+              Positioned.fill(child: _PuzzleLogoAnimation()),
+              // Título y subtítulo en la parte inferior
+              Positioned(
+                bottom: 72,
+                left: 0,
+                right: 0,
+                child: _SplashTextArea(),
+              ),
+            ],
           ),
         ),
       ),
@@ -71,15 +72,61 @@ class _SplashView extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Datos de cada pieza del rompecabezas
+// Dimensiones calculadas una vez por layout
 // ---------------------------------------------------------------------------
 
-/// Información de posición y orden de animación de una pieza del logo.
+/// Contiene todas las medidas necesarias para posicionar las piezas.
+class _SplashDimensions {
+  final double logoSize;
+  final double pieceSize;
+  final double logoLeft;
+  final double logoTop;
+  final double startX; // x de inicio (centro pantalla − mitad pieza)
+  final double startY; // y de inicio (centro pantalla − mitad pieza)
+
+  const _SplashDimensions({
+    required this.logoSize,
+    required this.pieceSize,
+    required this.logoLeft,
+    required this.logoTop,
+    required this.startX,
+    required this.startY,
+  });
+
+  factory _SplashDimensions.from(BoxConstraints c) {
+    final w = c.maxWidth;
+    final h = c.maxHeight;
+
+    // Logo cuadrado: 80 % del ancho o 52 % del alto, lo que sea menor
+    final logoSize = (w * 0.80).clamp(0.0, h * 0.52);
+    final pieceSize = logoSize / _PuzzleLogoAnimationState._cols;
+
+    // Logo centrado horizontalmente, a 28 % desde arriba
+    final logoLeft = (w - logoSize) / 2;
+    final logoTop = h * 0.28;
+
+    // Punto de inicio: centro absoluto de la pantalla
+    final startX = w / 2 - pieceSize / 2;
+    final startY = h / 2 - pieceSize / 2;
+
+    return _SplashDimensions(
+      logoSize: logoSize,
+      pieceSize: pieceSize,
+      logoLeft: logoLeft,
+      logoTop: logoTop,
+      startX: startX,
+      startY: startY,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Datos de cada pieza
+// ---------------------------------------------------------------------------
+
 class _PieceInfo {
   final int row;
   final int col;
-
-  /// Índice de stagger (0 = anima primero, n-1 = anima último).
   final int staggerIndex;
 
   const _PieceInfo({
@@ -90,14 +137,14 @@ class _PieceInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Widget de animación de rompecabezas
+// Widget de animación a pantalla completa
 // ---------------------------------------------------------------------------
 
-/// Anima el logo dividiéndolo en 9 piezas (3×3) que caen desde el
-/// centro hacia sus posiciones finales, ensamblando la imagen completa
-/// al llegar al 100% de progreso.
+/// Anima 9 piezas (3×3) del logo a pantalla completa.
 ///
-/// Las piezas más cercanas al centro animan primero; las esquinas, al final.
+/// Cada pieza parte del centro de la pantalla y vuela hasta su posición
+/// definitiva en la cuadrícula del logo. Las piezas del centro animan
+/// primero; las esquinas, al final.
 class _PuzzleLogoAnimation extends StatefulWidget {
   const _PuzzleLogoAnimation();
 
@@ -109,13 +156,10 @@ class _PuzzleLogoAnimationState extends State<_PuzzleLogoAnimation>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  // ---- constantes de cuadrícula ----
   static const int _cols = 3;
   static const int _rows = 3;
-  static const double _logoSize = 100.0;
-  static const double _pieceSize = _logoSize / _cols; // 33.33…
 
-  // Orden de piezas: centro primero, esquinas al final (por distancia Manhattan)
+  // Orden: centro primero (menor distancia Manhattan), esquinas al final
   static final List<_PieceInfo> _pieces = _buildPieceOrder();
 
   static List<_PieceInfo> _buildPieceOrder() {
@@ -123,11 +167,11 @@ class _PuzzleLogoAnimationState extends State<_PuzzleLogoAnimation>
 
     for (int r = 0; r < _rows; r++) {
       for (int c = 0; c < _cols; c++) {
-        final dist = (r - (_rows - 1) / 2).abs() + (c - (_cols - 1) / 2).abs();
+        final dist =
+            (r - (_rows - 1) / 2).abs() + (c - (_cols - 1) / 2).abs();
         list.add(MapEntry(dist, (r, c)));
       }
     }
-
     list.sort((a, b) => a.key.compareTo(b.key));
 
     return list.indexed
@@ -156,86 +200,60 @@ class _PuzzleLogoAnimationState extends State<_PuzzleLogoAnimation>
     return BlocListener<SplashBloc, SplashState>(
       listenWhen: (prev, curr) => prev.progress != curr.progress,
       listener: (context, state) {
-        // Animar el controlador hasta el progreso actual del BLoC.
-        // Cada actualización del BLoC lleva el controlador suavemente
-        // al nuevo valor (200 ms de transición).
         _controller.animateTo(
           state.progress,
           duration: const Duration(milliseconds: 200),
           curve: Curves.linear,
         );
       },
-      child: Container(
-        width: 130,
-        height: 130,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 20,
-              offset: Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Center(
-          child: AnimatedBuilder(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dims = _SplashDimensions.from(constraints);
+
+          return AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
-              return SizedBox(
-                width: _logoSize,
-                height: _logoSize,
-                child: Stack(
-                  // clipBehavior none para que las piezas puedan sobrepasar
-                  // levemente el borde del Stack durante la animación easeOutBack.
-                  clipBehavior: Clip.none,
-                  children: _pieces.map(_buildPiece).toList(),
-                ),
+              return Stack(
+                clipBehavior: Clip.none,
+                children: _pieces
+                    .map((piece) => _buildPiece(piece, dims))
+                    .toList(),
               );
             },
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  /// Construye una pieza del rompecabezas con su animación de posición y opacidad.
-  Widget _buildPiece(_PieceInfo piece) {
-    const int totalPieces = _cols * _rows; // 9
+  /// Construye una pieza posicionada y animada.
+  Widget _buildPiece(_PieceInfo piece, _SplashDimensions dims) {
+    const int total = _cols * _rows; // 9
 
-    // Ventana de progreso de esta pieza dentro del rango [0, 1].
-    // La pieza 0 (centro) comienza en t=0.0 y termina en t=0.50.
-    // La pieza 8 (esquina) comienza en t=0.40 y termina en t=0.90.
-    // A partir de t=0.90 todas las piezas ya están en su lugar.
-    final double staggerStart =
-        (piece.staggerIndex / (totalPieces - 1)) * 0.40;
+    // Ventana de progreso de esta pieza.
+    // Pieza 0 (centro): [0.0, 0.50] — pieza 8 (esquina): [0.40, 0.90]
+    final double staggerStart = (piece.staggerIndex / (total - 1)) * 0.40;
     final double staggerEnd = staggerStart + 0.50;
 
-    // Progreso normalizado de esta pieza: 0.0 → 1.0
-    final double raw = (_controller.value - staggerStart) /
-        (staggerEnd - staggerStart);
+    final double raw =
+        (_controller.value - staggerStart) / (staggerEnd - staggerStart);
     final double pieceProgress = raw.clamp(0.0, 1.0);
 
-    // Curva easeOutBack: da un efecto de rebote suave al aterrizar.
+    // Curva con rebote suave al aterrizar
     final double eased = Curves.easeOutBack.transform(pieceProgress);
 
-    // Posición final de la pieza en el Stack
-    final double finalLeft = piece.col * _pieceSize;
-    final double finalTop = piece.row * _pieceSize;
+    // Posición final de la pieza en el logo ensamblado
+    final double finalLeft = dims.logoLeft + piece.col * dims.pieceSize;
+    final double finalTop = dims.logoTop + piece.row * dims.pieceSize;
 
-    // Posición de inicio: todas las piezas parten del centro del logo
-    const double startLeft = _logoSize / 2 - _pieceSize / 2;
-    const double startTop = _logoSize / 2 - _pieceSize / 2;
+    // Interpolación: desde el centro de la pantalla hasta la posición final
+    final double currentLeft = dims.startX + (finalLeft - dims.startX) * eased;
+    final double currentTop = dims.startY + (finalTop - dims.startY) * eased;
 
-    // Interpolación posición (inicio → final)
-    final double currentLeft = startLeft + (finalLeft - startLeft) * eased;
-    final double currentTop = startTop + (finalTop - startTop) * eased;
-
-    // Opacidad: aparece progresivamente en la primera mitad del recorrido
+    // Opacidad: aparece en la primera mitad del recorrido de la pieza
     final double opacity = (pieceProgress * 2).clamp(0.0, 1.0);
 
-    // Alineación para recortar la porción correcta del logo completo
+    // Alineación para recortar la porción correcta del logo
     final double alignX =
         _cols > 1 ? (-1.0 + piece.col * 2.0 / (_cols - 1)) : 0.0;
     final double alignY =
@@ -244,20 +262,19 @@ class _PuzzleLogoAnimationState extends State<_PuzzleLogoAnimation>
     return Positioned(
       left: currentLeft,
       top: currentTop,
-      width: _pieceSize,
-      height: _pieceSize,
+      width: dims.pieceSize,
+      height: dims.pieceSize,
       child: Opacity(
         opacity: opacity,
         child: ClipRect(
-          // Align con constraints apretados (de Positioned) posiciona la
-          // imagen completa (_logoSize) según la alineación, mostrando
-          // solo la porción correspondiente a esta pieza.
+          // Align con constraints apretados (de Positioned) ubica la imagen
+          // completa según la alineación, mostrando solo la porción de esta pieza.
           child: Align(
             alignment: Alignment(alignX, alignY),
             child: Image.asset(
               'assets/arji/logo_arji.png',
-              width: _logoSize,
-              height: _logoSize,
+              width: dims.logoSize,
+              height: dims.logoSize,
               fit: BoxFit.fill,
               gaplessPlayback: true,
             ),
@@ -269,38 +286,49 @@ class _PuzzleLogoAnimationState extends State<_PuzzleLogoAnimation>
 }
 
 // ---------------------------------------------------------------------------
-// Widgets de texto
+// Área de texto inferior con fade-in
 // ---------------------------------------------------------------------------
 
-/// Título principal de la app.
-class _SplashTitle extends StatelessWidget {
-  const _SplashTitle();
+/// Título y subtítulo que aparecen con fade-in cuando el logo está casi armado.
+class _SplashTextArea extends StatelessWidget {
+  const _SplashTextArea();
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      'ArjiPagos',
-      style: TextStyle(
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-      ),
-    );
-  }
-}
+    return BlocBuilder<SplashBloc, SplashState>(
+      buildWhen: (prev, curr) => prev.progress != curr.progress,
+      builder: (context, state) {
+        // Aparece entre progress 0.65 y 0.90
+        final double opacity =
+            ((state.progress - 0.65) / 0.25).clamp(0.0, 1.0);
 
-/// Subtítulo descriptivo.
-class _SplashSubtitle extends StatelessWidget {
-  const _SplashSubtitle();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'Plataforma de Gestión de Pagos',
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.white70,
-      ),
+        return Opacity(
+          opacity: opacity,
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'ArjiPagos',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Plataforma de Gestión de Pagos',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
