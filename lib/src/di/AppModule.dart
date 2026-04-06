@@ -16,6 +16,7 @@ import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -53,6 +54,7 @@ abstract class AppModule {
     logout: LogoutUseCase(authRepository),
     register: RegisterUseCase(authRepository),
     cambiarContrasena: CambiarContrasenaUseCase(authRepository),
+    recuperarContrasena: RecuperarContrasenaUseCase(authRepository),
   );
 
   @injectable

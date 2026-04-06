@@ -92,6 +92,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Resource> recuperarContrasena({
+    required String username,
+    required String email,
+    required String deviceName,
+  }) {
+    return authService.recuperarContrasena(
+      username: username,
+      email: email,
+      deviceName: deviceName,
+    );
+  }
+
+  @override
   Future<bool> logout() async {
     try {
       // Limpiar datos sensibles (tokens, sesión)

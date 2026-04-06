@@ -42,12 +42,31 @@ class LoginSaveUserSession extends LoginEvent {
   List<Object?> get props => [authResponse];
 }
 
-// Agrega este nuevo evento
 class CheckSession extends LoginEvent {
   const CheckSession();
 }
 
-// En LoginEvent.dart
 class Logout extends LoginEvent {
   const Logout();
+}
+
+/// Solicita el restablecimiento de contraseña desde la pantalla de login.
+class RecuperarContrasenaSubmitted extends LoginEvent {
+  final String username;
+  final String email;
+  final String deviceName;
+
+  const RecuperarContrasenaSubmitted({
+    required this.username,
+    required this.email,
+    required this.deviceName,
+  });
+
+  @override
+  List<Object?> get props => [username, email, deviceName];
+}
+
+/// Limpia el estado de la recuperación de contraseña.
+class RecuperarContrasenaReset extends LoginEvent {
+  const RecuperarContrasenaReset();
 }

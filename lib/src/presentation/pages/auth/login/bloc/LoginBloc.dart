@@ -23,6 +23,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginFormReset>(_onLoginFormReset);
     on<LoginSaveUserSession>(_onLoginSaveUserSession);
     on<CheckSession>(_onCheckSession);
+    on<RecuperarContrasenaSubmitted>(_onRecuperarContrasenaSubmitted);
+    on<RecuperarContrasenaReset>(_onRecuperarContrasenaReset);
   }
 
   final formKey = GlobalKey<FormState>();
@@ -124,5 +126,29 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       response: authResponse != null ? Success(authResponse) : null,
       formKey: formKey,
     ));
+  }
+
+  /// Procesa la solicitud de recuperación de contraseña.
+  Future<void> _onRecuperarContrasenaSubmitted(
+    RecuperarContrasenaSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(state.copyWith(recuperarResponse: Loading(), formKey: formKey));
+
+    final Resource result = await authUseCases.recuperarContrasena.run(
+      username: event.username,
+      email: event.email,
+      deviceName: event.deviceName,
+    );
+
+    emit(state.copyWith(recuperarResponse: result, formKey: formKey));
+  }
+
+  /// Limpia el estado de recuperación de contraseña.
+  Future<void> _onRecuperarContrasenaReset(
+    RecuperarContrasenaReset event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(state.copyWith(clearRecuperarResponse: true, formKey: formKey));
   }
 }

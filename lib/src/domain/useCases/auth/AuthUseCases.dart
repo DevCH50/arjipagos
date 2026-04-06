@@ -2,6 +2,7 @@ import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 
@@ -13,6 +14,7 @@ class AuthUseCases {
   LogoutUseCase logout;
   RegisterUseCase register;
   CambiarContrasenaUseCase cambiarContrasena;
+  RecuperarContrasenaUseCase recuperarContrasena;
 
   AuthUseCases({
     required this.login,
@@ -21,5 +23,6 @@ class AuthUseCases {
     required this.logout,
     required this.register,
     required this.cambiarContrasena,
+    required this.recuperarContrasena,
   });
 }

@@ -23,4 +23,11 @@ abstract class AuthRepository {
     required String passwordActual,
     required String passwordNuevo,
   });
+
+  /// Solicita el restablecimiento de contraseña.
+  Future<Resource> recuperarContrasena({
+    required String username,
+    required String email,
+    required String deviceName,
+  });
 }

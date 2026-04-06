@@ -160,6 +160,78 @@ class AuthService {
     }
   }
 
+  /// Solicita el restablecimiento de contraseña para el usuario indicado.
+  ///
+  /// [username] - Nombre de usuario escrito en el diálogo.
+  /// [email] - Correo electrónico registrado del usuario.
+  /// [deviceName] - Nombre/tipo del dispositivo desde el que se solicita.
+  /// Retorna [Success] con mensaje de éxito o [Error] con mensaje.
+  Future<Resource<String>> recuperarContrasena({
+    required String username,
+    required String email,
+    required String deviceName,
+  }) async {
+    final Uri url = ApiConfig.buildUri(Endpoints.recuperarContrasena);
+
+    AppLogger.httpRequest('POST', url.toString());
+
+    try {
+      final Map<String, String> headers = {'Content-Type': 'application/json'};
+      final String bodyParams = json.encode({
+        'username': username,
+        'email': email,
+        'device_name': deviceName,
+      });
+
+      final response = await http
+          .post(url, headers: headers, body: bodyParams)
+          .timeout(AppDurations.httpTimeout);
+
+      AppLogger.httpResponse(response.statusCode, url.toString());
+
+      final contentType = response.headers['content-type'] ?? '';
+      if (!contentType.contains('application/json') &&
+          response.body.trimLeft().startsWith('<')) {
+        AppLogger.error(
+          'Respuesta no-JSON (HTTP ${response.statusCode}): servidor devolvió HTML',
+          tag: 'Auth',
+        );
+        return Error('Error del servidor (${response.statusCode}). Intenta más tarde.');
+      }
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data['status'] == 0) {
+          final errorMsg = ListToString(
+            data['message'] ?? data['msg'] ?? data['error'] ?? 'Error al recuperar contraseña',
+          );
+          AppLogger.warning('Error lógico del servidor: $errorMsg', tag: 'Auth');
+          return Error(errorMsg.isNotEmpty ? errorMsg : 'Error al recuperar contraseña');
+        }
+        final String message =
+            data['message'] ?? data['msg'] ?? 'Solicitud enviada. Revisa tu correo.';
+        AppLogger.info('Recuperación de contraseña solicitada para: $email', tag: 'Auth');
+        return Success(message);
+      } else {
+        final errorMsg = ListToString(
+          data['msg'] ?? data['message'] ?? data['error'] ?? 'Error al recuperar contraseña',
+        );
+        AppLogger.warning('Error al recuperar contraseña: $errorMsg', tag: 'Auth');
+        return Error(errorMsg.isNotEmpty ? errorMsg : 'Error al recuperar contraseña');
+      }
+    } on TimeoutException {
+      AppLogger.error('Timeout al recuperar contraseña', tag: 'Auth');
+      return Error(AppStrings.errorTimeout);
+    } on SocketException {
+      AppLogger.error('Sin conexión al recuperar contraseña', tag: 'Auth');
+      return Error(AppStrings.errorConnection);
+    } catch (e) {
+      AppLogger.error('Error al recuperar contraseña: $e', tag: 'Auth');
+      return Error(e.toString());
+    }
+  }
+
   /// Registra un nuevo usuario en el servidor.
   ///
   /// Envía los datos del formulario al endpoint de registro.

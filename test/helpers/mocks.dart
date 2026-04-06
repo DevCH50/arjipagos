@@ -12,6 +12,7 @@ import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
@@ -67,6 +68,10 @@ class MockRegisterUseCase extends Mock implements RegisterUseCase {}
 class MockCambiarContrasenaUseCase extends Mock
     implements CambiarContrasenaUseCase {}
 
+/// Mock del caso de uso de recuperación de contraseña.
+class MockRecuperarContrasenaUseCase extends Mock
+    implements RecuperarContrasenaUseCase {}
+
 /// Crea un AuthUseCases con todos los use cases mockeados.
 AuthUseCases createMockAuthUseCases({
   MockLoginUseCase? login,
@@ -75,6 +80,7 @@ AuthUseCases createMockAuthUseCases({
   MockLogoutUseCase? logout,
   MockRegisterUseCase? register,
   MockCambiarContrasenaUseCase? cambiarContrasena,
+  MockRecuperarContrasenaUseCase? recuperarContrasena,
 }) {
   return AuthUseCases(
     login: login ?? MockLoginUseCase(),
@@ -83,6 +89,8 @@ AuthUseCases createMockAuthUseCases({
     logout: logout ?? MockLogoutUseCase(),
     register: register ?? MockRegisterUseCase(),
     cambiarContrasena: cambiarContrasena ?? MockCambiarContrasenaUseCase(),
+    recuperarContrasena:
+        recuperarContrasena ?? MockRecuperarContrasenaUseCase(),
   );
 }
 

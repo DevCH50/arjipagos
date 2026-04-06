@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginState.dart';
+import 'package:arjipagos/src/presentation/pages/auth/login/RecuperarContrasenaPage.dart';
 import 'package:arjipagos/src/presentation/utils/BlocForItem.dart';
 import 'package:arjipagos/src/presentation/widgets/DefaultTextField.dart';
 import 'package:arjipagos/src/presentation/widgets/GlassContainer.dart';
@@ -107,7 +108,25 @@ class LoginContent extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: 20),
+                // Enlace de recuperación de contraseña
+                TextButton(
+                  onPressed: () {
+                    final bloc = BlocProvider.of<LoginBloc>(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: bloc,
+                          child: const RecuperarContrasenaPage(),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    '¿Olvidaste tu contraseña?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 const NoTienesCuentaAun(
                   color: Color.fromARGB(111, 65, 34, 5),
                   mensaje:

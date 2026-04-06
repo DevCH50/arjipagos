@@ -37,6 +37,9 @@ abstract class Endpoints {
   /// POST - Cambiar contraseña del usuario autenticado
   static const String cambiarContrasena = '/api/v1/user/change/password/mobile';
 
+  /// POST - Recuperar contraseña (solicitud de restablecimiento)
+  static const String recuperarContrasena = '/api/v1/user/recovery/password/mobile';
+
   // ============================================================================
   // PAGOS
   // ============================================================================

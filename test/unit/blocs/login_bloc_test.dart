@@ -26,6 +26,7 @@ void main() {
   late MockGetUserSessionUseCase mockGetUserSessionUseCase;
   late MockLogoutUseCase mockLogoutUseCase;
   late MockRegisterUseCase mockRegisterUseCase;
+  late MockRecuperarContrasenaUseCase mockRecuperarContrasenaUseCase;
   late AuthUseCases authUseCases;
 
   setUp(() {
@@ -34,6 +35,7 @@ void main() {
     mockGetUserSessionUseCase = MockGetUserSessionUseCase();
     mockLogoutUseCase = MockLogoutUseCase();
     mockRegisterUseCase = MockRegisterUseCase();
+    mockRecuperarContrasenaUseCase = MockRecuperarContrasenaUseCase();
 
     authUseCases = AuthUseCases(
       login: mockLoginUseCase,
@@ -42,6 +44,7 @@ void main() {
       logout: mockLogoutUseCase,
       register: mockRegisterUseCase,
       cambiarContrasena: MockCambiarContrasenaUseCase(),
+      recuperarContrasena: mockRecuperarContrasenaUseCase,
     );
 
     loginBloc = LoginBloc(authUseCases);
@@ -239,6 +242,101 @@ void main() {
         verify: (_) {
           verify(() => mockSaveUserSessionUseCase.run(any())).called(1);
         },
+      );
+    });
+
+    group('RecuperarContrasenaSubmitted', () {
+      blocTest<LoginBloc, LoginState>(
+        'debe emitir Loading y luego Success cuando la solicitud es exitosa',
+        setUp: () {
+          when(
+            () => mockRecuperarContrasenaUseCase.run(
+              username: any(named: 'username'),
+              email: any(named: 'email'),
+              deviceName: any(named: 'deviceName'),
+            ),
+          ).thenAnswer((_) async => Success('Correo enviado'));
+        },
+        build: () => loginBloc,
+        act: (bloc) => bloc.add(
+          const RecuperarContrasenaSubmitted(
+            username: 'usuario1',
+            email: 'usuario@test.com',
+            deviceName: 'Android',
+          ),
+        ),
+        expect: () => [
+          isA<LoginState>().having(
+            (s) => s.recuperarResponse,
+            'recuperarResponse',
+            isA<Loading>(),
+          ),
+          isA<LoginState>().having(
+            (s) => s.recuperarResponse,
+            'recuperarResponse',
+            isA<Success>(),
+          ),
+        ],
+        verify: (_) {
+          verify(
+            () => mockRecuperarContrasenaUseCase.run(
+              username: 'usuario1',
+              email: 'usuario@test.com',
+              deviceName: 'Android',
+            ),
+          ).called(1);
+        },
+      );
+
+      blocTest<LoginBloc, LoginState>(
+        'debe emitir Loading y luego Error cuando el servidor responde con error',
+        setUp: () {
+          when(
+            () => mockRecuperarContrasenaUseCase.run(
+              username: any(named: 'username'),
+              email: any(named: 'email'),
+              deviceName: any(named: 'deviceName'),
+            ),
+          ).thenAnswer((_) async => Error('Usuario o correo no encontrado'));
+        },
+        build: () => loginBloc,
+        act: (bloc) => bloc.add(
+          const RecuperarContrasenaSubmitted(
+            username: 'inexistente',
+            email: 'no@existe.com',
+            deviceName: 'iOS',
+          ),
+        ),
+        expect: () => [
+          isA<LoginState>().having(
+            (s) => s.recuperarResponse,
+            'recuperarResponse',
+            isA<Loading>(),
+          ),
+          isA<LoginState>().having(
+            (s) => s.recuperarResponse,
+            'recuperarResponse',
+            isA<Error>(),
+          ),
+        ],
+      );
+    });
+
+    group('RecuperarContrasenaReset', () {
+      blocTest<LoginBloc, LoginState>(
+        'debe limpiar recuperarResponse del estado',
+        build: () => loginBloc,
+        seed: () => LoginState(
+          recuperarResponse: Success('Correo enviado'),
+        ),
+        act: (bloc) => bloc.add(const RecuperarContrasenaReset()),
+        expect: () => [
+          isA<LoginState>().having(
+            (s) => s.recuperarResponse,
+            'recuperarResponse',
+            isNull,
+          ),
+        ],
       );
     });
   });
