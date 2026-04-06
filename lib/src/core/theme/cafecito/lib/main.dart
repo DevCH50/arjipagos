@@ -18,9 +18,9 @@ class MyApp extends StatelessWidget {
     //TextTheme textTheme = Theme.of(context).textTheme;
 
     // Use with Google Fonts package to use downloadable fonts
-    TextTheme textTheme = createTextTheme(context, "Roboto Flex", "Roboto Flex");
+    final TextTheme textTheme = createTextTheme(context, 'Roboto Flex', 'Roboto Flex');
 
-    MaterialTheme theme = MaterialTheme(textTheme);
+    final MaterialTheme theme = MaterialTheme(textTheme);
     return MaterialApp(
       title: 'Flutter Demo',
       theme: brightness == Brightness.light ? theme.light() : theme.dark(),
