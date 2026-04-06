@@ -195,10 +195,15 @@ class _MatrixPercent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // inversePrimary es el color primario invertido para fondos oscuros:
-    // sobre el degradado marrón oscuro del splash resulta un dorado cálido
-    // que pertenece al esquema de color de la app.
-    final color = Theme.of(context).colorScheme.inversePrimary;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // El splash siempre tiene fondo oscuro (degradado café). Elegimos el
+    // token correcto según el modo activo para garantizar contraste:
+    //   • Modo claro → inversePrimary: color primario para superficies oscuras/inversas.
+    //   • Modo oscuro → primary: en el tema oscuro el primario ya es claro (#F0BB9E).
+    final color = colorScheme.brightness == Brightness.dark
+        ? colorScheme.primary
+        : colorScheme.inversePrimary;
 
     return BlocBuilder<SplashBloc, SplashState>(
       buildWhen: (prev, curr) => prev.progress != curr.progress,
