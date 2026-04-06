@@ -188,33 +188,34 @@ class _SplashSubtitle extends StatelessWidget {
 // Porcentaje estilo Matrix
 // ---------------------------------------------------------------------------
 
-/// Muestra el porcentaje de carga con tipografía y estilo de la película Matrix:
-/// fuente monoespaciada, color verde fosforescente y efecto de brillo (glow).
+/// Muestra el porcentaje de carga con tipografía monoespaciada estilo Matrix
+/// usando los colores del tema de la aplicación.
 class _MatrixPercent extends StatelessWidget {
   const _MatrixPercent();
 
-  /// Verde Matrix característico.
-  static const Color _matrixGreen = Color(0xFF00FF41);
-
   @override
   Widget build(BuildContext context) {
+    // inversePrimary es el color primario invertido para fondos oscuros:
+    // sobre el degradado marrón oscuro del splash resulta un dorado cálido
+    // que pertenece al esquema de color de la app.
+    final color = Theme.of(context).colorScheme.inversePrimary;
+
     return BlocBuilder<SplashBloc, SplashState>(
       buildWhen: (prev, curr) => prev.progress != curr.progress,
       builder: (context, state) {
-        final String text = '${state.progressPercent.toString().padLeft(3, '0')} %';
+        final String text =
+            '${state.progressPercent.toString().padLeft(3, '0')} %';
 
         return Text(
           text,
           style: GoogleFonts.shareTechMono(
             fontSize: 28,
-            color: _matrixGreen,
+            color: color,
             letterSpacing: 6,
-            shadows: const [
-              // Brillo interior
-              Shadow(color: _matrixGreen, blurRadius: 6),
-              // Halo exterior
-              Shadow(color: _matrixGreen, blurRadius: 18),
-              Shadow(color: _matrixGreen, blurRadius: 32),
+            shadows: [
+              Shadow(color: color, blurRadius: 6),
+              Shadow(color: color, blurRadius: 18),
+              Shadow(color: color, blurRadius: 32),
             ],
           ),
         );
