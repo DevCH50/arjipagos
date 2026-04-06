@@ -108,6 +108,7 @@ class LoginContent extends StatelessWidget {
                     },
                   ),
                 ),
+                const SizedBox(height: 12),
                 // Enlace de recuperación de contraseña
                 TextButton(
                   onPressed: () {
