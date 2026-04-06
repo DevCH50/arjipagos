@@ -209,7 +209,7 @@ class _MatrixPercent extends StatelessWidget {
       buildWhen: (prev, curr) => prev.progress != curr.progress,
       builder: (context, state) {
         final String text =
-            '${state.progressPercent.toString().padLeft(3, '0')} %';
+            '${state.progressPercent.toString().padLeft(3, '0')}%';
 
         return Text(
           text,
@@ -218,9 +218,7 @@ class _MatrixPercent extends StatelessWidget {
             color: color,
             letterSpacing: 6,
             shadows: [
-              Shadow(color: color, blurRadius: 6),
-              Shadow(color: color, blurRadius: 18),
-              Shadow(color: color, blurRadius: 32),
+              Shadow(color: color, blurRadius: 8),
             ],
           ),
         );
