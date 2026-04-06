@@ -4,6 +4,7 @@ import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashState.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Página de splash/carga inicial de la aplicación.
 ///
@@ -60,6 +61,8 @@ class _SplashView extends StatelessWidget {
                 _SplashTitle(),
                 SizedBox(height: 8),
                 _SplashSubtitle(),
+                SizedBox(height: 32),
+                _MatrixPercent(),
               ],
             ),
           ),
@@ -177,6 +180,45 @@ class _SplashSubtitle extends StatelessWidget {
         fontSize: 14,
         color: Colors.white70,
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Porcentaje estilo Matrix
+// ---------------------------------------------------------------------------
+
+/// Muestra el porcentaje de carga con tipografía y estilo de la película Matrix:
+/// fuente monoespaciada, color verde fosforescente y efecto de brillo (glow).
+class _MatrixPercent extends StatelessWidget {
+  const _MatrixPercent();
+
+  /// Verde Matrix característico.
+  static const Color _matrixGreen = Color(0xFF00FF41);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SplashBloc, SplashState>(
+      buildWhen: (prev, curr) => prev.progress != curr.progress,
+      builder: (context, state) {
+        final String text = '${state.progressPercent.toString().padLeft(3, '0')} %';
+
+        return Text(
+          text,
+          style: GoogleFonts.shareTechMono(
+            fontSize: 28,
+            color: _matrixGreen,
+            letterSpacing: 6,
+            shadows: const [
+              // Brillo interior
+              Shadow(color: _matrixGreen, blurRadius: 6),
+              // Halo exterior
+              Shadow(color: _matrixGreen, blurRadius: 18),
+              Shadow(color: _matrixGreen, blurRadius: 32),
+            ],
+          ),
+        );
+      },
     );
   }
 }
