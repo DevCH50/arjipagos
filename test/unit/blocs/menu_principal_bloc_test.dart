@@ -24,6 +24,7 @@ void main() {
   late MockGetUserSessionUseCase mockGetUserSession;
   late MockGetEstadosDeCuentaUseCase mockGetEstadosDeCuenta;
   late MockLogoutUseCase mockLogout;
+  late MockFcmService mockFcmService;
 
   final testAuthResponse = TestAuthResponse.valid;
   final testAlumnoActivo = TestAlumno.activo;
@@ -39,6 +40,7 @@ void main() {
       createMockEdoCtaUseCases(
         getEstadosDeCuenta: mockGetEstadosDeCuenta,
       ),
+      mockFcmService,
     );
   }
 
@@ -47,6 +49,9 @@ void main() {
     mockGetUserSession = MockGetUserSessionUseCase();
     mockGetEstadosDeCuenta = MockGetEstadosDeCuentaUseCase();
     mockLogout = MockLogoutUseCase();
+    mockFcmService = MockFcmService();
+    // Stub obtenerToken para que _registrarTokenFcm no lance MissingStubError
+    when(() => mockFcmService.obtenerToken()).thenAnswer((_) async => null);
     // Inicializar bloc por defecto para que tearDown siempre funcione
     bloc = createBloc();
   });
@@ -360,6 +365,8 @@ void main() {
       blocTest<MenuPrincipalBloc, MenuPrincipalState>(
         'llama al caso de uso de logout',
         setUp: () {
+          // getUserSession devuelve null → _eliminarTokenFcm termina temprano sin error
+          when(() => mockGetUserSession.run()).thenAnswer((_) async => null);
           when(() => mockLogout.run()).thenAnswer((_) async => true);
         },
         build: () => createBloc(),

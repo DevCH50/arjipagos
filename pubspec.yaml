@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.4+10
+version: 1.0.6+12
 
 environment:
   sdk: ^3.10.4
@@ -46,6 +46,25 @@ dependencies:
   cached_network_image: ^3.4.1
   webview_flutter: ^4.13.1
   google_fonts: ^6.2.1
+
+  # ============================================================================
+  # NOTIFICACIONES PUSH
+  # ============================================================================
+
+  # Firebase Core (requerido por firebase_messaging)
+  firebase_core: ^3.13.0
+
+  # Firebase Cloud Messaging - notificaciones push
+  firebase_messaging: ^15.2.4
+
+  # Notificaciones locales (foreground notifications)
+  flutter_local_notifications: ^18.0.0
+
+  # Render de HTML enriquecido en NotificacionesPage
+  flutter_widget_from_html_core: ^0.17.2
+
+  # Badge para el contador de notificaciones no leídas
+  badges: ^3.1.2
 
 dev_dependencies:
   flutter_test:

@@ -18,8 +18,59 @@ _(ninguno)_
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
 - Implementación de página Facturas
+- **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **Release 1.0.6+12 (2026-04-09):**
+  - **Verificación completa** — 313/313 tests pasan, 0 errores de análisis estático (`flutter analyze`).
+  - **APK y AAB firmados** — builds generados con `--no-tree-shake-icons` (fix error ConstFinder en icon tree shaking).
+  - **Instalado en dispositivo físico** — verificado el flujo completo en Android.
+
+- **Release 1.0.5+11 (2026-04-09):**
+  - **Bug splash → login resuelto** — `SplashBloc` llamaba `configureDependencies()` duplicado; GetIt lanzaba excepción → splash iba a login en vez de `menu_principal`. Eliminada la llamada redundante.
+  - **Sistema de Notificaciones (FCM)** — `NotificacionResponse` creado siguiendo arquitectura del proyecto. `fromJson` corregido para mapear campos reales del backend (`title`→`titulo`, `message`→`mensaje`, `is_read` como bool, `user_id` opcional). Conteo no leídas lee `no_leidas` en vez de `count`.
+  - **Botón Refresh en NotificacionesPage** — ícono en AppBar, siempre visible, muestra spinner durante carga.
+  - **`mobile_type` FCM** — simplificado a `'android'` / `'ios'` según lo que valida el backend Laravel (`in:android,ios`).
+  - **Bug fecha carrito** — `CarritoPagoItem` ahora muestra chip `EstadoPagoChip` igual que `EdoCtaPage` (badge "Vencido"/"Pendiente" homogéneo).
+  - **Glow splash** — porcentaje con tres capas de sombra (blurRadius 4/12/20) para efecto matrix más visible.
+  - **Warning import** — eliminado import `flutter/widgets.dart` no usado en `FcmService`.
+
+- **Sesión de revisión completa y correcciones de logout (2026-04-08):**
+  - **Flujo de logout corregido** — se realizaba antes de que se limpiara la sesión; ahora el drawer llama directamente `authUseCases.logout.run()` con `await` antes de navegar
+  - **Diálogo de carga animado** — `_LogoutLoadingDialog` con ícono pulsante + spinner + texto "Cerrando sesión..."; funciona en tema claro y oscuro
+  - **Bug del diálogo ciclado** — corregido con `rootNavigator: true` en `Navigator.of(context)` para que `pushAndRemoveUntil` elimine el diálogo del navigator raíz
+  - **`mobile_type` corregido** — `FcmService.obtenerTipoDispositivo()` retorna `'Android'`, `'iPhone'` o `'iPad'` (detecta iPad por pantalla ≥ 600 dp, sin paquetes extra)
+  - **"Cerrar Sesión" movido al Drawer** — quitado del AppBar, agregado en `UserDrawer` debajo de "Cambiar Contraseña" con color de error
+  - **`configureDependencies()` descomentado** — era crítico para que el DI funcione
+  - **0 errores de análisis — 313/313 tests pasan**
+
+- **Registro/desregistro de dispositivo FCM corregido (2026-04-08):**
+  - Endpoint POST corregido: `/api/v1/dispositivo/registrar` (antes era incorrecto)
+  - Nuevo endpoint DELETE: `/api/v1/dispositivo/eliminar` al hacer logout
+  - `FcmService`: nuevo método `eliminarToken(authToken, fcmToken)` con DELETE
+  - `MenuPrincipalBloc._onLogout()`: ahora llama `_eliminarTokenFcm()` antes de limpiar sesión local
+  - `main.dart`: se descomentó `await configureDependencies()` (DI ahora funciona correctamente)
+  - `MenuPrincipalBloc` requiere 3 parámetros; `MockFcmService` agregado a los helpers de test
+  - 313/313 tests pasan, 0 errores de análisis
+
+- **UX Menú Principal — Cerrar Sesión movido al Drawer (2026-04-08):**
+  - Botón logout removido del AppBar de `MenuPrincipalPage`
+  - "Cerrar Sesión" agregado en `UserDrawer` debajo de "Cambiar Contraseña", con ícono y texto en color error
+  - Lógica del diálogo de confirmación movida a `UserDrawer._handleLogout()`
+
+- **Sistema de Notificaciones Push — Parte B Flutter (2026-04-08):**
+  - **Dependencias agregadas:** `firebase_core ^3.13.0`, `firebase_messaging ^15.2.4`, `flutter_local_notifications ^18.0.0`, `flutter_widget_from_html_core`, `badges ^3.1.2`
+  - **Capa de dominio:** Entidad `Notificacion` (con Equatable, fromJson/toJson/copyWith), `NotificacionRepository` (interfaz), 4 use cases (`GetNotificaciones`, `GetCountNoLeidas`, `MarcarLeida`, `MarcarTodasLeidas`), `NotificacionUseCases` (agregado)
+  - **Capa de datos:** `NotificacionService` (HTTP con paginación, auth Bearer, manejo de errores igual a EdoCtaService), `FcmService` (obtenerToken, registrarToken, eliminarToken, configurarHandlers con background handler), `NotificacionRepositoryImpl`
+  - **Endpoints en `endpoints.dart`:** `notificaciones`, `notificacionesNoLeidas`, `notificacionMarcarLeida`, `notificacionesMarcarTodas`, `dispositivoRegistrar`, `dispositivoEliminar`
+  - **BLoC:** `NotificacionEvent` (6 eventos), `NotificacionState` (estado único con copyWith), `NotificacionBloc` (carga paralela con Future.wait, paginación, optimistic update, foreground push)
+  - **UI:** `NotificacionesPage` (RefreshIndicator + paginación por scroll + pull-to-refresh), `NotificacionItemWidget` (badge no leída, fecha relativa, strip HTML), `NotificacionVaciaWidget` (estado vacío elegante), `NotificacionDetalleWidget` (bottom sheet con HtmlWidget), `NotificacionBadgeButton` (badge animado en AppBar)
+  - **Integración:** campana + badge en AppBar de `MenuPrincipalPage`, ruta `notificaciones` en `main.dart`, `NotificacionBloc` en `blocProvider.dart`, DI completo en `AppModule.dart`
+  - **Plataforma Android:** Permisos `POST_NOTIFICATIONS` + `RECEIVE_BOOT_COMPLETED` en AndroidManifest, plugin `google-services 4.4.2` en `settings.gradle.kts` y `app/build.gradle.kts`
+  - **Plataforma iOS:** `NSUserNotificationUsageDescription` + `UIBackgroundModes` en `Info.plist`, `FirebaseApp.configure()` en `AppDelegate.swift`
+  - **injection.config.dart regenerado** con los 4 nuevos registros
+  - **Firebase listo:** `google-services.json` y `GoogleService-Info.plist` ya están en el repo
 
 - **Módulo CambiarContrasena — revisado y pulido (2026-03-26):**
   - `DefaultTextField` ahora soporta `useThemeColors: true` para fondos de Scaffold (claro/oscuro), sin romper Login/Register que usan fondo oscuro con imagen

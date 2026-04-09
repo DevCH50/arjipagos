@@ -1,5 +1,9 @@
+import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/blocProvider.dart';
 import 'package:arjipagos/src/core/theme/app_theme.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/RegisterPage.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
@@ -8,6 +12,7 @@ import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
 import 'package:arjipagos/src/presentation/pages/home/HomePage.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/MenuPrincipalPage.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/NotificacionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,7 +40,16 @@ void main() async {
     ),
   );
 
-  // await configureDependencies();
+  // Inicializar Firebase (requerido para FCM)
+  try {
+    await Firebase.initializeApp();
+    // Configurar permisos y handlers de notificaciones push
+    await FcmService().configurarHandlers();
+  } catch (e) {
+    AppLogger.error('Error al inicializar Firebase: $e', tag: 'Main');
+  }
+
+  await configureDependencies();
   runApp(const MyApp());
 }
 
@@ -73,6 +87,8 @@ class MyApp extends StatelessWidget {
           'pago_webview': (BuildContext context) => const PagoWebViewPage(),
           'cambiar_contrasena': (BuildContext context) =>
               const CambiarContrasenaPage(),
+          'notificaciones': (BuildContext context) =>
+              const NotificacionesPage(),
         },
         initialRoute: 'splash',
       ),

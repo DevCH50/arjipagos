@@ -1,8 +1,10 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
@@ -17,6 +19,8 @@ import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 List<BlocProvider> blocProviders = [
@@ -34,9 +38,11 @@ List<BlocProvider> blocProviders = [
           ..add(const GetHomesList()),
   ),
   BlocProvider<MenuPrincipalBloc>(
-    create: (context) =>
-        MenuPrincipalBloc(locator<AuthUseCases>(), locator<EdoCtaUseCases>())
-          ..add(const MenuPrincipalInitialEvent()),
+    create: (context) => MenuPrincipalBloc(
+      locator<AuthUseCases>(),
+      locator<EdoCtaUseCases>(),
+      locator<FcmService>(),
+    )..add(const MenuPrincipalInitialEvent()),
   ),
   BlocProvider<EdoCtaListBloc>(
     create: (context) =>
@@ -54,5 +60,10 @@ List<BlocProvider> blocProviders = [
     create: (context) =>
         CambiarContrasenaBloc(locator<AuthUseCases>())
           ..add(const CambiarContrasenaInitialEvent()),
+  ),
+  BlocProvider<NotificacionBloc>(
+    create: (context) =>
+        NotificacionBloc(locator<NotificacionUseCases>())
+          ..add(const NotificacionInicialEvent()),
   ),
 ];

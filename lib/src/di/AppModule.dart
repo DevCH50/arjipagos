@@ -1,14 +1,18 @@
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
 import 'package:arjipagos/src/data/repository/AuthRepositoryImpl.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/HomeRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/NotificacionRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
+import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -21,6 +25,11 @@ import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarTodasLeidasUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart';
 import 'package:arjipagos/src/data/repository/PagoRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/PagoRepository.dart';
@@ -80,6 +89,29 @@ abstract class AppModule {
   @injectable
   EdoCtaUseCases get edoCtaUseCases =>
       EdoCtaUseCases(getEstadosDeCuenta: GetEstadosDeCuentaUseCase(edoCtaRepository));
+
+  // ============================================================================
+  // NOTIFICACIONES
+  // ============================================================================
+
+  @injectable
+  FcmService get fcmService => FcmService();
+
+  @injectable
+  NotificacionService get notificacionService =>
+      NotificacionService(authUseCases);
+
+  @injectable
+  NotificacionRepository get notificacionRepository =>
+      NotificacionRepositoryImpl(notificacionService);
+
+  @injectable
+  NotificacionUseCases get notificacionUseCases => NotificacionUseCases(
+        getNotificaciones: GetNotificacionesUseCase(notificacionRepository),
+        getCountNoLeidas: GetCountNoLeidasUseCase(notificacionRepository),
+        marcarLeida: MarcarLeidaUseCase(notificacionRepository),
+        marcarTodasLeidas: MarcarTodasLeidasUseCase(notificacionRepository),
+      );
 
   // ============================================================================
   // PAGOS

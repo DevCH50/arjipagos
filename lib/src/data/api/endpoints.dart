@@ -51,4 +51,30 @@ abstract class Endpoints {
   /// Webhook de retorno después del pago
   static const String pagoUrlRetorno =
       'https://arjipagos.moriah.mx/api/v1/pago-realizado/';
+
+  // ============================================================================
+  // NOTIFICACIONES
+  // ============================================================================
+
+  /// GET - Historial de notificaciones del usuario (paginado)
+  static const String notificaciones = '/api/v1/notificaciones';
+
+  /// GET - Conteo de notificaciones no leídas
+  static const String notificacionesNoLeidas = '/api/v1/notificaciones/no-leidas';
+
+  /// POST - Marcar una notificación como leída
+  static String notificacionMarcarLeida(int id) => '/api/v1/notificaciones/$id/leer';
+
+  /// POST - Marcar todas las notificaciones como leídas
+  static const String notificacionesMarcarTodas = '/api/v1/notificaciones/leer-todas';
+
+  // ============================================================================
+  // DISPOSITIVO (FCM)
+  // ============================================================================
+
+  /// POST - Registrar token FCM del dispositivo al hacer login
+  static const String dispositivoRegistrar = '/api/v1/dispositivo/registrar';
+
+  /// DELETE - Desregistrar token FCM del dispositivo al hacer logout
+  static const String dispositivoEliminar = '/api/v1/dispositivo/eliminar';
 }

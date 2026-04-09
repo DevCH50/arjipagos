@@ -67,5 +67,14 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<!-- Descripción requerida por App Store para el uso de notificaciones push -->
+	<key>NSUserNotificationUsageDescription</key>
+	<string>ArjiPagos te enviará notificaciones cuando tu estado de cuenta sea actualizado.</string>
+	<!-- Modo de procesamiento en background para FCM -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

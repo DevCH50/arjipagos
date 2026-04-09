@@ -218,7 +218,9 @@ class _MatrixPercent extends StatelessWidget {
             color: color,
             letterSpacing: 6,
             shadows: [
-              Shadow(color: color, blurRadius: 8),
+              Shadow(color: color, blurRadius: 4),
+              Shadow(color: color, blurRadius: 12),
+              Shadow(color: color, blurRadius: 20),
             ],
           ),
         );

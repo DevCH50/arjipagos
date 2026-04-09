@@ -6,6 +6,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Plugin de Google Services para Firebase Cloud Messaging (FCM)
+    id("com.google.gms.google-services")
 }
 
 // Cargar propiedades del keystore para firma de release
@@ -21,6 +23,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Requerido por flutter_local_notifications para APIs de Java 8+ en Android antiguo
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -68,4 +72,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Requerido por flutter_local_notifications para core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

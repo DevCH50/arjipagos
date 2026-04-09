@@ -4,6 +4,7 @@
 library;
 
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
@@ -36,6 +37,9 @@ class MockEdoCtaRepository extends Mock implements EdoCtaRepository {}
 
 /// Mock de SharedPreferences wrapper.
 class MockSharedPref extends Mock implements SharedPref {}
+
+/// Mock del servicio de Firebase Cloud Messaging.
+class MockFcmService extends Mock implements FcmService {}
 
 // ============================================================================
 // MOCKS DE USE CASES

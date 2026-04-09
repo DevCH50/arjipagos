@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,22 +31,7 @@ class CarritoPagoItem extends StatelessWidget {
         pago.descripcionAbreviada,
         style: theme.textTheme.bodyLarge,
       ),
-      subtitle: Row(
-        children: [
-          Icon(
-            Icons.calendar_today,
-            size: 14,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Vence: ${pago.fechaVencimiento}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+      subtitle: _buildSubtitulo(theme),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -70,6 +56,34 @@ class CarritoPagoItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Construye el subtítulo con la fecha y el chip de estado.
+  Widget _buildSubtitulo(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(
+              Icons.calendar_today,
+              size: 14,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Vence: ${pago.fechaVencimiento}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        EstadoPagoChip(estadoPago: pago.estadoPago),
+      ],
     );
   }
 

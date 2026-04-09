@@ -74,6 +74,10 @@ mygit_*.sh
 
 # Archivos de configuración local (no subir al remoto)
 /.gitignore
+
+# Credenciales de Firebase (no subir al repositorio)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
 /android/.gitignore
 /ios/.gitignore
 /linux/.gitignore

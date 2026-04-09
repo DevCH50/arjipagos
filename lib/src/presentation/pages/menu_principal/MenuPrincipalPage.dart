@@ -1,14 +1,11 @@
-import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
-import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/user_drawer.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/user_header.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/widgets/notificacion_badge_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../../main.dart';
 
 /// Página del Menú Principal.
 ///
@@ -30,47 +27,13 @@ class MenuPrincipalPage extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => _handleLogout(context),
-          ),
+          // Botón de notificaciones con badge de no leídas
+          const NotificacionBadgeButton(),
         ],
       ),
       drawer: const UserDrawer(),
       body: const _MenuPrincipalBody(),
     );
-  }
-
-  /// Maneja el cierre de sesión.
-  void _handleLogout(BuildContext context) async {
-    final bloc = context.read<MenuPrincipalBloc>();
-
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CloseSession(
-        title: 'Cerrar Sesión',
-        message: '¿Estás seguro que deseas cerrar sesión?',
-        icon: Icons.logout,
-        iconColor: Colors.orange,
-        confirmText: 'Cerrar Sesión',
-        cancelText: 'Cancelar',
-        confirmButtonColor: Colors.red,
-        confirmTextColor: Colors.white,
-        onConfirm: () {},
-        onCancel: () {},
-      ),
-    );
-
-    if (shouldLogout == true && context.mounted) {
-      bloc.add(const MenuPrincipalLogout());
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MyApp()),
-        (route) => false,
-      );
-    }
   }
 }
 

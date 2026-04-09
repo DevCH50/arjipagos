@@ -13,7 +13,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// y verificación de sesión para determinar la navegación inicial.
 class SplashBloc extends Bloc<SplashEvent, SplashState> {
   Timer? _progressTimer;
-  bool _dependenciesInitialized = false;
 
   SplashBloc() : super(const SplashState()) {
     on<SplashStarted>(_onSplashStarted);
@@ -33,9 +32,6 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     _startProgressAnimation();
 
     try {
-      // Inicializar dependencias
-      await _initializeDependencies();
-
       // Esperar mínimo para que se vea el splash
       await Future.delayed(const Duration(milliseconds: 1500));
 
@@ -74,14 +70,6 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         timer.cancel();
       }
     });
-  }
-
-  /// Inicializa las dependencias de la aplicación.
-  Future<void> _initializeDependencies() async {
-    if (!_dependenciesInitialized) {
-      await configureDependencies();
-      _dependenciesInitialized = true;
-    }
   }
 
   /// Verifica si existe una sesión activa.

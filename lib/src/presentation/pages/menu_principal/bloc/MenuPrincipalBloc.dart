@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -13,8 +15,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
   final AuthUseCases authUseCases;
   final EdoCtaUseCases edoCtaUseCases;
+  final FcmService fcmService;
 
-  MenuPrincipalBloc(this.authUseCases, this.edoCtaUseCases)
+  MenuPrincipalBloc(this.authUseCases, this.edoCtaUseCases, this.fcmService)
       : super(const MenuPrincipalState()) {
     on<MenuPrincipalInitialEvent>(_onInitialEvent);
     on<MenuItemSelected>(_onMenuItemSelected);
@@ -43,6 +46,9 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
           appVersion: authResponse.appVersion,
           menuItems: MenuPrincipalState.defaultMenuItems,
         ));
+
+        // Registrar token FCM en el backend (sin bloquear la UI)
+        _registrarTokenFcm(authResponse.accessToken);
 
         // Intentar cargar alumnos y familia (puede fallar si no hay conexión)
         try {
@@ -89,11 +95,62 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
     emit(state.copyWith(selectedItemId: null));
   }
 
+  /// Registra el token FCM del dispositivo en el backend de forma silenciosa.
+  ///
+  /// Se llama sin `await` para no bloquear la carga del menú.
+  /// Errores son ignorados — el usuario no debe ver fallos de FCM.
+  void _registrarTokenFcm(String authToken) {
+    Future(() async {
+      try {
+        final String? fcmToken = await fcmService.obtenerToken();
+        if (fcmToken == null) {
+          return;
+        }
+        await fcmService.registrarToken(
+          authToken: authToken,
+          fcmToken: fcmToken,
+          mobileType: fcmService.obtenerTipoDispositivo(),
+        );
+      } catch (e) {
+        AppLogger.warning('No se pudo registrar token FCM: $e', tag: 'FCM');
+      }
+    });
+  }
+
   /// Maneja el cierre de sesión.
+  ///
+  /// Primero elimina el token FCM del backend (antes de limpiar la sesión
+  /// local para que el Bearer token aún sea válido), luego ejecuta el logout.
   Future<void> _onLogout(
     MenuPrincipalLogout event,
     Emitter<MenuPrincipalState> emit,
   ) async {
+    await _eliminarTokenFcm();
     await authUseCases.logout.run();
+  }
+
+  /// Elimina el token FCM del backend de forma silenciosa antes del logout.
+  ///
+  /// Se necesita el auth token antes de que la sesión sea limpiada localmente,
+  /// por eso se obtiene aquí y no después de llamar a logout.
+  Future<void> _eliminarTokenFcm() async {
+    try {
+      final authResponse = await authUseCases.getUserSession.run();
+      if (authResponse == null) {
+        return;
+      }
+
+      final String? fcmToken = await fcmService.obtenerToken();
+      if (fcmToken == null) {
+        return;
+      }
+
+      await fcmService.eliminarToken(
+        authToken: authResponse.accessToken,
+        fcmToken: fcmToken,
+      );
+    } catch (e) {
+      AppLogger.warning('No se pudo eliminar token FCM en logout: $e', tag: 'FCM');
+    }
   }
 }
