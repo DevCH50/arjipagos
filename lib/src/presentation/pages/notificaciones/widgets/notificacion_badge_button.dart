@@ -1,18 +1,17 @@
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
-import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Botón de campana con badge que muestra el conteo de notificaciones no leídas.
+/// Botón de campana con indicador visual de notificaciones no leídas.
 ///
 /// Diseñado para usarse como acción en el AppBar del menú principal.
 /// Lee el [NotificacionBloc] directamente desde el árbol de widgets global.
 ///
 /// Comportamiento visual:
 /// - Sin notificaciones: campana outline simple.
-/// - Con no leídas: badge rojo con el conteo en la esquina superior derecha.
+/// - Con no leídas: campana sólida [Icons.notifications].
 /// - Nueva notificación en foreground ([hayNueva]): punto rojo pulsante en la
 ///   esquina inferior derecha + icono sólido [Icons.notifications_active].
 ///   El pulso se detiene en cuanto el usuario toca la campana.
@@ -79,22 +78,9 @@ class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
           onPressed: () => _navegarANotificaciones(context),
         );
 
-        // Construir de adentro hacia afuera:
-        // 1. Badge de conteo (top-right).
-        Widget result = state.noLeidas > 0
-            ? badges.Badge(
-                badgeContent: Text(
-                  '${state.noLeidas}',
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                badgeAnimation: const badges.BadgeAnimation.scale(),
-                badgeStyle: badges.BadgeStyle(
-                  badgeColor: errorColor,
-                  padding: const EdgeInsets.all(4),
-                ),
-                child: iconButton,
-              )
-            : iconButton;
+        // Construir de adentro hacia afuera.
+        // 1. Ícono base (sin badge numérico).
+        Widget result = iconButton;
 
         // 2. Punto rojo pulsante (bottom-right) cuando hay nueva notificación.
         if (state.hayNueva) {
