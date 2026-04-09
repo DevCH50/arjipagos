@@ -1,8 +1,12 @@
+import 'dart:async';
+
+import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC que gestiona el estado de la pantalla de notificaciones.
@@ -12,11 +16,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - Seguimiento del conteo de notificaciones no leídas (badge).
 /// - Marcar una o todas las notificaciones como leídas (optimistic update local).
 /// - Insertar notificaciones recibidas en foreground sin recargar la lista.
+/// - Suscribirse a [FirebaseMessaging.onMessage] para capturar mensajes en
+///   primer plano y activar el indicador visual de nueva notificación.
 ///
 /// Depende de [NotificacionUseCases] para acceder a la capa de dominio.
 class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   /// Casos de uso del dominio para la gestión de notificaciones.
   final NotificacionUseCases notificacionUseCases;
+
+  /// Suscripción al stream de mensajes FCM en foreground.
+  StreamSubscription<RemoteMessage>? _fcmForegroundSub;
+
+  /// Suscripción al stream de notificaciones tocadas desde background.
+  StreamSubscription<RemoteMessage>? _fcmBackgroundTapSub;
 
   NotificacionBloc(this.notificacionUseCases) : super(const NotificacionState()) {
     on<NotificacionInicialEvent>(_onNotificacionInicialEvent);
@@ -25,6 +37,56 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     on<MarcarTodasLeidasEvent>(_onMarcarTodasLeidas);
     on<ActualizarContadorEvent>(_onActualizarContador);
     on<NotificacionForegroundRecibidaEvent>(_onNotificacionForegroundRecibida);
+    on<ResetNuevaNotificacionEvent>(_onResetNuevaNotificacion);
+    on<NotificacionAbiertaDesdeBackgroundEvent>(_onNotificacionAbiertaDesdeBackground);
+
+    // Caso 1: app en primer plano → FCM entrega el mensaje directamente.
+    _fcmForegroundSub =
+        FirebaseMessaging.onMessage.listen(_onFcmForegroundMessage);
+
+    // Caso 2: app en background → usuario toca la notificación del sistema.
+    _fcmBackgroundTapSub = FirebaseMessaging.onMessageOpenedApp.listen((_) {
+      add(const NotificacionAbiertaDesdeBackgroundEvent());
+    });
+
+    // Caso 3: app terminada → la notificación la lanzó; leer el mensaje inicial.
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        add(const NotificacionAbiertaDesdeBackgroundEvent());
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _fcmForegroundSub?.cancel();
+    _fcmBackgroundTapSub?.cancel();
+    return super.close();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Handler privado de FCM foreground
+  // ---------------------------------------------------------------------------
+
+  /// Convierte un [RemoteMessage] de FCM en un [NotificacionForegroundRecibidaEvent]
+  /// y lo despacha al BLoC para actualizar la UI sin llamada de red.
+  void _onFcmForegroundMessage(RemoteMessage message) {
+    AppLogger.info(
+      'FCM foreground — título: ${message.notification?.title}',
+      tag: 'FCM',
+    );
+
+    final notificacion = Notificacion(
+      id: 0, // Sin ID real; se actualiza al abrir la pantalla de notificaciones
+      userId: 0,
+      titulo: message.notification?.title ?? '',
+      mensaje: message.notification?.body ?? '',
+      campania: message.data['campania']?.toString() ?? '',
+      fecha: DateTime.now(),
+      isRead: false,
+    );
+
+    add(NotificacionForegroundRecibidaEvent(notificacion: notificacion));
   }
 
   // ---------------------------------------------------------------------------
@@ -85,6 +147,8 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       emit(state.copyWith(
         notificaciones: lista,
         noLeidas: conteoNoLeidas,
+        // El usuario abrió la pantalla de notificaciones → apagar el indicador.
+        hayNueva: false,
         isLoading: false,
         // Si la primera página devuelve menos registros de lo esperado o vacía,
         // asumimos que no hay más páginas.
@@ -278,7 +342,8 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   /// Inserta una notificación recibida en foreground al inicio de la lista.
   ///
   /// No realiza ninguna llamada de red. La notificación se agrega directamente
-  /// al principio de la lista en memoria y se incrementa el contador de no leídas.
+  /// al principio de la lista en memoria, se incrementa el contador de no leídas
+  /// y se activa [hayNueva] para mostrar el punto rojo pulsante en el AppBar.
   void _onNotificacionForegroundRecibida(
     NotificacionForegroundRecibidaEvent event,
     Emitter<NotificacionState> emit,
@@ -292,6 +357,51 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     emit(state.copyWith(
       notificaciones: listaActualizada,
       noLeidas: state.noLeidas + 1,
+      // Activar el indicador visual de "nueva notificación" en el AppBar.
+      hayNueva: true,
     ));
+  }
+
+  /// Apaga el indicador de nueva notificación.
+  ///
+  /// Se dispara cuando el usuario toca la campana en el AppBar,
+  /// indicando que ya vio la alerta visual.
+  void _onResetNuevaNotificacion(
+    ResetNuevaNotificacionEvent event,
+    Emitter<NotificacionState> emit,
+  ) {
+    emit(state.copyWith(hayNueva: false));
+  }
+
+  /// Maneja la apertura de la app desde una notificación en background o terminada.
+  ///
+  /// Activa el indicador visual de inmediato y luego refresca el contador
+  /// real desde el servidor para que el badge muestre el número correcto.
+  Future<void> _onNotificacionAbiertaDesdeBackground(
+    NotificacionAbiertaDesdeBackgroundEvent event,
+    Emitter<NotificacionState> emit,
+  ) async {
+    // Activar el punto rojo pulsante de inmediato.
+    emit(state.copyWith(hayNueva: true));
+
+    // Refrescar el contador real desde el servidor.
+    try {
+      final resultado = await notificacionUseCases.getCountNoLeidas.run();
+
+      if (emit.isDone) {
+        return;
+      }
+
+      if (resultado is utils.Success<int>) {
+        emit(state.copyWith(noLeidas: resultado.data, clearError: true));
+      }
+    } catch (e) {
+      // No bloquear el flujo si falla el conteo; el badge se corregirá
+      // la próxima vez que el usuario abra la pantalla de notificaciones.
+      AppLogger.warning(
+        'No se pudo refrescar el contador tras abrir desde background: $e',
+        tag: 'FCM',
+      );
+    }
   }
 }

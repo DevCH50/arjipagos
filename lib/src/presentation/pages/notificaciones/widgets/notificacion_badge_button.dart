@@ -10,56 +10,138 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Diseñado para usarse como acción en el AppBar del menú principal.
 /// Lee el [NotificacionBloc] directamente desde el árbol de widgets global.
 ///
-/// Al presionar, navega a la pantalla de notificaciones y al regresar
-/// refresca únicamente el conteo mediante [ActualizarContadorEvent].
-class NotificacionBadgeButton extends StatelessWidget {
+/// Comportamiento visual:
+/// - Sin notificaciones: campana outline simple.
+/// - Con no leídas: badge rojo con el conteo en la esquina superior derecha.
+/// - Nueva notificación en foreground ([hayNueva]): punto rojo pulsante en la
+///   esquina inferior derecha + icono sólido [Icons.notifications_active].
+///   El pulso se detiene en cuanto el usuario toca la campana.
+class NotificacionBadgeButton extends StatefulWidget {
   const NotificacionBadgeButton({super.key});
 
   @override
+  State<NotificacionBadgeButton> createState() =>
+      _NotificacionBadgeButtonState();
+}
+
+class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _pulseAnim = Tween<double>(begin: 0.55, end: 1.35).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotificacionBloc, NotificacionState>(
-      // Solo reconstruir cuando cambia el conteo de no leídas.
-      buildWhen: (prev, curr) => prev.noLeidas != curr.noLeidas,
-      builder: (context, state) {
-        if (state.noLeidas > 0) {
-          return _buildConBadge(context, state.noLeidas);
+    return BlocConsumer<NotificacionBloc, NotificacionState>(
+      // Reaccionar a cambios de hayNueva para controlar la animación.
+      listenWhen: (prev, curr) => prev.hayNueva != curr.hayNueva,
+      listener: (context, state) {
+        if (state.hayNueva) {
+          _pulseController.repeat(reverse: true);
+        } else {
+          _pulseController.stop();
+          _pulseController.reset();
         }
-        return _buildSinBadge(context);
+      },
+      // Reconstruir cuando cambia el conteo o el indicador de nueva notificación.
+      buildWhen: (prev, curr) =>
+          prev.noLeidas != curr.noLeidas || prev.hayNueva != curr.hayNueva,
+      builder: (context, state) {
+        final errorColor = Theme.of(context).colorScheme.error;
+
+        // Ícono base: sólido si hay no leídas o nueva, outline si todo leído.
+        final iconData = state.hayNueva
+            ? Icons.notifications_active
+            : (state.noLeidas > 0
+                ? Icons.notifications
+                : Icons.notifications_outlined);
+
+        final iconButton = IconButton(
+          icon: Icon(iconData),
+          tooltip: 'Notificaciones',
+          onPressed: () => _navegarANotificaciones(context),
+        );
+
+        // Construir de adentro hacia afuera:
+        // 1. Badge de conteo (top-right).
+        Widget result = state.noLeidas > 0
+            ? badges.Badge(
+                badgeContent: Text(
+                  '${state.noLeidas}',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                badgeAnimation: const badges.BadgeAnimation.scale(),
+                badgeStyle: badges.BadgeStyle(
+                  badgeColor: errorColor,
+                  padding: const EdgeInsets.all(4),
+                ),
+                child: iconButton,
+              )
+            : iconButton;
+
+        // 2. Punto rojo pulsante (bottom-right) cuando hay nueva notificación.
+        if (state.hayNueva) {
+          result = Stack(
+            clipBehavior: Clip.none,
+            children: [
+              result,
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: AnimatedBuilder(
+                  animation: _pulseAnim,
+                  builder: (context2, child) => Transform.scale(
+                    scale: _pulseAnim.value,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: errorColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: errorColor.withValues(alpha: 0.55),
+                            blurRadius: 6,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return result;
       },
     );
   }
 
-  /// Construye el botón con badge cuando hay notificaciones no leídas.
-  Widget _buildConBadge(BuildContext context, int cantidad) {
-    return badges.Badge(
-      badgeContent: Text(
-        '$cantidad',
-        style: const TextStyle(color: Colors.white, fontSize: 10),
-      ),
-      badgeAnimation: const badges.BadgeAnimation.scale(),
-      badgeStyle: badges.BadgeStyle(
-        badgeColor: Theme.of(context).colorScheme.error,
-        padding: const EdgeInsets.all(4),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.notifications),
-        tooltip: 'Notificaciones',
-        onPressed: () => _navegarANotificaciones(context),
-      ),
-    );
-  }
-
-  /// Construye el botón simple sin badge cuando no hay notificaciones sin leer.
-  Widget _buildSinBadge(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.notifications_outlined),
-      tooltip: 'Notificaciones',
-      onPressed: () => _navegarANotificaciones(context),
-    );
-  }
-
-  /// Navega a la pantalla de notificaciones y refresca el contador al volver.
+  /// Navega a la pantalla de notificaciones.
+  ///
+  /// Antes de navegar limpia el indicador [hayNueva] para detener el pulso.
+  /// Al volver, refresca únicamente el contador del badge.
   void _navegarANotificaciones(BuildContext context) {
+    context.read<NotificacionBloc>().add(const ResetNuevaNotificacionEvent());
     Navigator.pushNamed(context, 'notificaciones').then((_) {
       if (context.mounted) {
         context.read<NotificacionBloc>().add(const ActualizarContadorEvent());

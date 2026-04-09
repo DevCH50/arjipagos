@@ -137,6 +137,13 @@ class UserDrawer extends StatelessWidget {
                               ? user.celulares
                               : 'Sin registrar',
                         ),
+                        CopyableListTile(
+                          icon: Icons.family_restroom,
+                          label: 'Familia',
+                          value: state.familia?.isNotEmpty == true
+                              ? state.familia!
+                              : 'Sin registrar',
+                        ),
                       ],
                       const Divider(),
                       // Sección: Cuenta

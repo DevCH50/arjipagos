@@ -73,3 +73,19 @@ class NotificacionForegroundRecibidaEvent extends NotificacionEvent {
   @override
   List<Object?> get props => [notificacion];
 }
+
+/// Evento para limpiar el indicador de "nueva notificación".
+///
+/// Se dispara cuando el usuario toca el ícono de la campana,
+/// apagando el punto rojo pulsante del AppBar.
+class ResetNuevaNotificacionEvent extends NotificacionEvent {
+  const ResetNuevaNotificacionEvent();
+}
+
+/// Evento para cuando el usuario abre la app tocando una notificación
+/// que llegó mientras la app estaba en background o completamente cerrada.
+///
+/// Activa el indicador visual [hayNueva] y refresca el contador desde el servidor.
+class NotificacionAbiertaDesdeBackgroundEvent extends NotificacionEvent {
+  const NotificacionAbiertaDesdeBackgroundEvent();
+}

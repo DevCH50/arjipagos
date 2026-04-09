@@ -14,48 +14,65 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   LoginBloc? bloc;
+  final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-    //   bloc?.dispose();
-    // });
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Cuando aparece el teclado, hace scroll al final para que el botón
+  /// "Iniciar Sesión" y el enlace de recuperación queden visibles.
+  void _scrollAlFinal() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     bloc = BlocProvider.of<LoginBloc>(context);
 
-    // Obtener el padding del teclado para ajustar el scroll
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          const BackgroundImage(),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                top: 16,
-                bottom: bottomInset > 0 ? 20 : 16,
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    LoginResponse(bloc),
-                    LoginContent(bloc),
-                  ],
+    // Cada vez que el teclado aparece, desplaza hasta el final del scroll
+    if (keyboardHeight > 0) {
+      _scrollAlFinal();
+    }
+
+    // El fondo vive FUERA del Scaffold → nunca se recorta con el teclado.
+    // El Scaffold (resizeToAvoidBottomInset: true) encoge su body cuando
+    // aparece el teclado y Flutter hace scroll automático al campo activo.
+    // _scrollAlFinal() garantiza que el botón debajo del campo también sea visible.
+    return Stack(
+      children: [
+        const Positioned.fill(child: BackgroundImage()),
+        Scaffold(
+          resizeToAvoidBottomInset: true,
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              LoginResponse(bloc),
+              SafeArea(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: LoginContent(bloc)),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      backgroundColor: Colors.transparent,
+        ),
+      ],
     );
   }
 }
