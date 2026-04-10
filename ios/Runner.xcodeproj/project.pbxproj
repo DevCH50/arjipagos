@@ -198,6 +198,8 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				58975F882D88A83DA89AEFB6 /* [CP] Embed Pods Frameworks */,
+				C3B8C9F3FB5906F24BB80900 /* [CP] Copy Pods Resources */,
+				60787D5F21AAF0B0EA16AF93 /* Generate dSYM for objective_c native asset */,
 			);
 			buildRules = (
 			);
@@ -324,6 +326,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		60787D5F21AAF0B0EA16AF93 /* Generate dSYM for objective_c native asset */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate dSYM for objective_c native asset";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Genera dSYM para objective_c.framework (native asset Flutter precompilado).\n# Sin este script, App Store Connect rechaza el archive por UUID de dSYM faltante.\nFRAMEWORK_BINARY=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework/objective_c\"\nDSYM_OUTPUT=\"${DWARF_DSYM_FOLDER_PATH}/objective_c.framework.dSYM\"\nif [ -f \"$FRAMEWORK_BINARY\" ]; then\n  dsymutil \"$FRAMEWORK_BINARY\" -o \"$DSYM_OUTPUT\" 2>/dev/null || true\nfi\n";
+		};
 		83BF0634F706417CD584FF7C /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -360,6 +381,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		C3B8C9F3FB5906F24BB80900 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
