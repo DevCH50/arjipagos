@@ -69,10 +69,22 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 ## iOS — Archive & Distribute (App Store)
 
+### Limpieza obligatoria antes de cualquier build iOS
+
+Siempre ejecutar esta secuencia antes de Archive o build en dispositivo físico, para garantizar que se usen las últimas versiones:
+
+```bash
+flutter clean
+flutter pub get
+cd ios && pod install
+```
+
+Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
+
 ### Checklist antes de Archive
 
-1. Verificar `ApiConfig.isProduction = true`
-2. Correr `pod install` en `ios/` si hubo cambios en dependencias
+1. Ejecutar limpieza obligatoria (ver sección anterior)
+2. Verificar `ApiConfig.isProduction = true`
 3. Abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`)
 4. Menú: **Product → Archive**
 5. En Organizer: **Distribute App → App Store Connect**
