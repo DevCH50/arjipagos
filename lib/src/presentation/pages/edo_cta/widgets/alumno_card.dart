@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/pagos_list.dart';
@@ -78,7 +79,7 @@ class AlumnoCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Text(
-        'Sin pagos pendientes',
+        AppStrings.edoCtaSinPagosPendientes,
         style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           fontStyle: FontStyle.italic,

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/pago_item.dart';
@@ -45,7 +46,7 @@ class PagosList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Text(
-        'Sin pagos disponibles para pago en línea',
+        AppStrings.edoCtaSinPagosEnLinea,
         style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           fontStyle: FontStyle.italic,

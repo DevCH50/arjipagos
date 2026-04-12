@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/utils/BlocForItem.dart';
 import 'package:equatable/equatable.dart';
@@ -24,9 +25,9 @@ class CambiarContrasenaState extends Equatable {
   final Resource? response;
 
   const CambiarContrasenaState({
-    this.passwordActual = const BlocForItem(error: 'Ingresa tu contraseña actual'),
-    this.passwordNuevo = const BlocForItem(error: 'Ingresa la nueva contraseña'),
-    this.passwordConfirmar = const BlocForItem(error: 'Confirma la nueva contraseña'),
+    this.passwordActual = const BlocForItem(error: AppStrings.cambiarContrasenaIngresaActual),
+    this.passwordNuevo = const BlocForItem(error: AppStrings.cambiarContrasenaIngresaNueva),
+    this.passwordConfirmar = const BlocForItem(error: AppStrings.cambiarContrasenaConfirmaError),
     this.formKey,
     this.response,
   });

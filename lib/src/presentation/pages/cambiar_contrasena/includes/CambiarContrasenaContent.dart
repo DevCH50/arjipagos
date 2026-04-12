@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaState.dart';
@@ -35,7 +36,7 @@ class CambiarContrasenaContent extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Cambiar Contraseña',
+                AppStrings.cambiarContrasenaTitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
@@ -44,7 +45,7 @@ class CambiarContrasenaContent extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ingresa tu contraseña actual y la nueva contraseña que deseas establecer.',
+                AppStrings.cambiarContrasenaDescripcion,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -54,7 +55,7 @@ class CambiarContrasenaContent extends StatelessWidget {
 
               // Campo: contraseña actual
               DefaultTextField(
-                label: 'Contraseña actual',
+                label: AppStrings.cambiarContrasenaActual,
                 icon: Icons.lock_outline,
                 obscureText: true,
                 useThemeColors: true,
@@ -71,7 +72,7 @@ class CambiarContrasenaContent extends StatelessWidget {
 
               // Campo: contraseña nueva
               DefaultTextField(
-                label: 'Nueva contraseña',
+                label: AppStrings.cambiarContrasenaNueva,
                 icon: Icons.lock,
                 obscureText: true,
                 useThemeColors: true,
@@ -88,7 +89,7 @@ class CambiarContrasenaContent extends StatelessWidget {
 
               // Campo: confirmar contraseña nueva
               DefaultTextField(
-                label: 'Confirmar nueva contraseña',
+                label: AppStrings.cambiarContrasenaConfirmar,
                 icon: Icons.lock,
                 obscureText: true,
                 useThemeColors: true,
@@ -120,14 +121,12 @@ class CambiarContrasenaContent extends StatelessWidget {
                           color: theme.colorScheme.error,
                           size: 48,
                         ),
-                        title: const Text('Campos incompletos'),
-                        content: const Text(
-                          'Por favor, completa todos los campos correctamente.',
-                        ),
+                        title: const Text(AppStrings.validacionCamposIncompletos),
+                        content: const Text(AppStrings.cambiarContrasenaCamposMsg),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
-                            child: const Text('Aceptar'),
+                            child: const Text(AppStrings.accept),
                           ),
                         ],
                       ),

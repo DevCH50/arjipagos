@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
@@ -52,7 +53,7 @@ class CambiarContrasenaBloc
         value: event.passwordActual.value,
         error: event.passwordActual.value.isNotEmpty
             ? null
-            : 'Ingresa tu contraseña actual',
+            : AppStrings.cambiarContrasenaIngresaActual,
       ),
       formKey: formKey,
     ));
@@ -67,7 +68,7 @@ class CambiarContrasenaBloc
     final valor = event.passwordNuevo.value;
     String? error;
     if (valor.isEmpty) {
-      error = 'Ingresa la nueva contraseña';
+      error = AppStrings.cambiarContrasenaIngresaNueva;
     } else if (valor.length < 6) {
       error = 'Mínimo 6 caracteres';
     }
@@ -86,9 +87,9 @@ class CambiarContrasenaBloc
     final valor = event.passwordConfirmar.value;
     String? error;
     if (valor.isEmpty) {
-      error = 'Confirma la nueva contraseña';
+      error = AppStrings.cambiarContrasenaConfirmaError;
     } else if (valor != state.passwordNuevo.value) {
-      error = 'Las contraseñas no coinciden';
+      error = AppStrings.cambiarContrasenaNoCoinciden;
     }
 
     emit(state.copyWith(
@@ -109,7 +110,7 @@ class CambiarContrasenaBloc
       emit(state.copyWith(
         passwordConfirmar: const BlocForItem(
           value: '',
-          error: 'Las contraseñas no coinciden',
+          error: AppStrings.cambiarContrasenaNoCoinciden,
         ),
         formKey: formKey,
       ));

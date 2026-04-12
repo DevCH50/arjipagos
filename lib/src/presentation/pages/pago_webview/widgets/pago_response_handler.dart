@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Resultado del procesamiento de respuesta de pago.
@@ -50,7 +51,7 @@ class PagoResponseHandler {
         debugPrint('Pago fallido: $message');
         final errorMsg = message.isNotEmpty
             ? message
-            : 'El pago no pudo ser procesado';
+            : AppStrings.pagoNoProcesado;
         return PagoResult(
           success: false,
           message: errorMsg,
@@ -76,7 +77,7 @@ class PagoResponseHandler {
         textoLower.contains('aprobado')) {
       return const PagoResult(
         success: true,
-        message: 'Pago procesado correctamente',
+        message: AppStrings.pagoProcesadoCorrectamente,
         processed: true,
       );
     }
@@ -87,7 +88,7 @@ class PagoResponseHandler {
         textoLower.contains('rechazado')) {
       return const PagoResult(
         success: false,
-        message: 'El pago no pudo ser procesado',
+        message: AppStrings.pagoNoProcesado,
         processed: true,
       );
     }

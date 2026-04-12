@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:arjipagos/src/core/constants/app_colors.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:flutter/material.dart';
 import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 
 /// Widget que muestra el encabezado informativo de la página Home.
@@ -45,7 +46,7 @@ class HomeHeaderWidget extends StatelessWidget {
             isDark: isDark,
           ),
           _InfoChip(
-            label: alumnosCount == 1 ? 'Alumno' : 'Alumnos',
+            label: alumnosCount == 1 ? AppStrings.homeStudent : AppStrings.homeStudents,
             value: alumnosCount.toString(),
             icon: Icons.people,
             isDark: isDark,

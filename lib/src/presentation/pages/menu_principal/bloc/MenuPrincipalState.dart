@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/User.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_item_model.dart';
@@ -60,24 +61,24 @@ class MenuPrincipalState extends Equatable {
   /// Ejemplo: "2 alumnos: Juan, María"
   String get resumenAlumnos {
     if (alumnos.isEmpty) {
-      return 'Sin alumnos';
+      return AppStrings.menuSinAlumnos;
     }
     final nombres = alumnos.map((a) => a.nombre).join(', ');
     final cantidad = alumnos.length;
-    return '$cantidad ${cantidad == 1 ? 'alumno' : 'alumnos'}: $nombres';
+    return '$cantidad ${cantidad == 1 ? AppStrings.alumnoSingular : AppStrings.alumnoPlural}: $nombres';
   }
 
   /// Items predeterminados del menú.
   static List<MenuItem> get defaultMenuItems => [
     const MenuItem(
       id: 'pagos',
-      titulo: 'Pagos',
+      titulo: AppStrings.menuPagos,
       icono: Icons.payment,
       ruta: 'edo_cta',
     ),
     const MenuItem(
       id: 'facturas',
-      titulo: 'Facturas',
+      titulo: AppStrings.menuFacturas,
       icono: Icons.receipt_long,
       ruta: 'facturas',
     ),

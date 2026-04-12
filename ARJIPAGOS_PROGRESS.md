@@ -22,6 +22,12 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Centralización de strings en AppStrings (2026-04-12):**
+  - Migrados todos los strings hardcodeados de la UI a `AppStrings` (18 archivos actualizados).
+  - Nuevas constantes agregadas: validaciones de cambio de contraseña, textos del drawer, splash, pago, menú principal, errores, tooltips y chips.
+  - `resumenAlumnos` en `MenuPrincipalState` usa `AppStrings.alumnoSingular/Plural` (minúscula para oraciones vs. mayúscula para etiquetas `homeStudent/homeStudents`).
+  - **313/313 tests pasan, 0 errores de análisis estático.**
+
 - **Release 1.0.6+12 (2026-04-09):**
   - **Verificación completa** — 313/313 tests pasan, 0 errores de análisis estático (`flutter analyze`).
   - **APK y AAB firmados** — builds generados con `--no-tree-shake-icons` (fix error ConstFinder en icon tree shaking).

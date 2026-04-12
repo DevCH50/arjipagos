@@ -20,6 +20,8 @@ class AppStrings {
   static const String splashConfiguring = 'Configurando...';
   static const String splashVerifyingSession = 'Verificando sesión...';
   static const String splashReady = 'Listo';
+  static const String splashSesionEncontrada = 'Sesión encontrada';
+  static const String splashBienvenido = 'Bienvenido';
 
   // ============================================================================
   // LOGIN
@@ -53,6 +55,26 @@ class AppStrings {
   static const String registerButton = 'Guardar';
 
   // ============================================================================
+  // GENERAL — ACCIONES COMUNES
+  // ============================================================================
+
+  static const String accept = 'Aceptar';
+  static const String cancel = 'Cancelar';
+  static const String confirm = 'Confirmar';
+  static const String retry = 'Reintentar';
+  static const String close = 'Cerrar';
+  static const String back = 'Volver';
+  static const String send = 'Enviar';
+  static const String update = 'Actualizar';
+  static const String error = 'Error';
+  static const String info = 'Información';
+  static const String understood = 'Entendido';
+  static const String comingSoon = 'Próximamente';
+  static const String mostrarContrasena = 'Mostrar contraseña';
+  static const String ocultarContrasena = 'Ocultar contraseña';
+  static const String errorAlCargar = 'Error al cargar';
+
+  // ============================================================================
   // HOME
   // ============================================================================
 
@@ -69,6 +91,33 @@ class AppStrings {
   static const String homeStudents = 'Alumnos';
 
   // ============================================================================
+  // MENÚ PRINCIPAL
+  // ============================================================================
+
+  static const String menuPrincipalTitle = 'Menú Principal';
+  static const String menuCambiarContrasena = 'Cambiar Contraseña';
+  static const String menuTocaCualquierCampo = 'Toca cualquier campo para copiar';
+  static const String menuFacturasProximamente = 'La sección de Facturas estará disponible pronto.';
+  static const String menuMiCuenta = 'Mi cuenta';
+  static const String menuSinAlumnos = 'Sin alumnos';
+  static const String menuPagos = 'Pagos';
+  static const String menuFacturas = 'Facturas';
+  static const String menuCerrando = 'Cerrando sesión...';
+  static const String menuNoPudoCargar = 'No se pudo cargar la información del usuario';
+
+  // ============================================================================
+  // DRAWER — DATOS DEL USUARIO
+  // ============================================================================
+
+  static const String drawerDatosPersonales = 'Datos personales';
+  static const String drawerMiCuenta = 'Mi cuenta';
+  static const String drawerIdLabel = 'ID';
+  static const String drawerEmail = 'Email';
+  static const String drawerCelular = 'Celular';
+  static const String drawerFamilia = 'Familia';
+  static const String drawerSinRegistrar = 'Sin registrar';
+
+  // ============================================================================
   // LOGOUT
   // ============================================================================
 
@@ -76,6 +125,104 @@ class AppStrings {
   static const String logoutMessage = '¿Estás seguro que deseas cerrar sesión?';
   static const String logoutConfirm = 'Cerrar Sesión';
   static const String logoutCancel = 'Cancelar';
+
+  // ============================================================================
+  // ESTADOS DE CUENTA
+  // ============================================================================
+
+  static const String edoCtaTitle = 'Estados de Cuenta';
+  static const String edoCtaLoading = 'Cargando estados de cuenta...';
+  static const String edoCtaSinPagosPendientes = 'Sin pagos pendientes';
+  static const String edoCtaSinPagosEnLinea = 'Sin pagos disponibles para pago en línea';
+  static const String edoCtaContinuar = 'Continuar';
+  static const String edoCtaVence = 'Vence:';
+  static const String edoCtaPagoNum = 'Pago #';
+  static const String edoCtaVencido = 'Vencido';
+  static const String edoCtaPendiente = 'Pendiente';
+  static const String edoCtaInfoDialogMsg =
+      'Debes seleccionar primero los pagos anteriores para poder seleccionar este.';
+  static const String edoCtaOrdenPagosMsg =
+      'Debe seleccionar los pagos en orden (del más antiguo al más reciente)';
+  static const String edoCtaGrupo = 'Grupo:';
+  static const String edoCtaLimpiarSeleccion = 'Limpiar selección';
+
+  // ============================================================================
+  // CARRITO
+  // ============================================================================
+
+  static const String carritoTitle = 'Carrito';
+  static const String carritoLoading = 'Cargando carrito...';
+  static const String carritoVaciarTitle = 'Vaciar carrito';
+  static const String carritoVaciarConfirm = '¿Estás seguro de que deseas vaciar el carrito?';
+  static const String carritoVaciar = 'Vaciar';
+  static const String carritoEmpty = 'Selecciona pagos desde Estados de Cuenta';
+  static const String carritoSinPagos = 'No hay pagos seleccionados';
+  static const String carritoPagar = 'Pagar';
+  static const String carritoProcesando = 'Procesando...';
+  static const String carritoQuitarOrden = 'Debe quitar primero los pagos más recientes';
+
+  // ============================================================================
+  // PAGO WEBVIEW
+  // ============================================================================
+
+  static const String pagoWebViewTitle = 'Realizar Pago';
+  static const String pagoLoading = 'Cargando página de pago...';
+  static const String pagoExitosoTitle = 'Pago exitoso';
+  static const String pagoExitosoMsg = 'Tu pago ha sido procesado correctamente.';
+  static const String pagoErrorTitle = 'Error en el pago';
+  static const String pagoCancelarTitle = 'Cancelar pago';
+  static const String pagoCancelarMsg = '¿Estás seguro de que deseas cancelar el pago?';
+  static const String pagoContinuar = 'Continuar pago';
+  static const String pagoNoProcesado = 'El pago no pudo ser procesado';
+  static const String pagoProcesadoCorrectamente = 'Pago procesado correctamente';
+
+  // ============================================================================
+  // NOTIFICACIONES
+  // ============================================================================
+
+  static const String notificacionesTitle = 'Notificaciones';
+  static const String notificacionesMarcarLeidas = 'Marcar todas leídas';
+  static const String notificacionesSinNotif = 'Sin notificaciones';
+  static const String notificacionesAquiApareceran =
+      'Cuando tengas notificaciones aparecerán aquí';
+
+  // ============================================================================
+  // CAMBIAR CONTRASEÑA
+  // ============================================================================
+
+  static const String cambiarContrasenaTitle = 'Cambiar Contraseña';
+  static const String cambiarContrasenaActual = 'Contraseña actual';
+  static const String cambiarContrasenaNueva = 'Nueva contraseña';
+  static const String cambiarContrasenaConfirmar = 'Confirmar nueva contraseña';
+  static const String cambiarContrasenaButton = 'Cambiar Contraseña';
+  static const String cambiarContrasenaActualizada = 'Contraseña actualizada';
+  static const String cambiarContrasenaDescripcion =
+      'Ingresa tu contraseña actual y la nueva contraseña que deseas establecer.';
+  static const String cambiarContrasenaExitosoMsg =
+      'Tu contraseña ha sido actualizada correctamente.';
+  static const String cambiarContrasenaCamposMsg =
+      'Por favor, completa todos los campos correctamente.';
+
+  // Validaciones inline
+  static const String cambiarContrasenaIngresaActual = 'Ingresa tu contraseña actual';
+  static const String cambiarContrasenaIngresaNueva = 'Ingresa la nueva contraseña';
+  static const String cambiarContrasenaConfirmaError = 'Confirma la nueva contraseña';
+  static const String cambiarContrasenaNoCoinciden = 'Las contraseñas no coinciden';
+
+  // ============================================================================
+  // REGISTRO
+  // ============================================================================
+
+  static const String registerExitosoTitle = 'Registro exitoso';
+  static const String registerExitosoMsg = 'Ahora puedes iniciar sesión con tu cuenta.';
+  static const String registerIrLogin = 'Iniciar sesión';
+  static const String registerCamposIncompletos = 'Campos incompletos';
+
+  // ============================================================================
+  // VALIDACIONES COMUNES
+  // ============================================================================
+
+  static const String validacionCamposIncompletos = 'Campos incompletos';
 
   // ============================================================================
   // ERRORES
@@ -96,8 +243,25 @@ class AppStrings {
 
   static const String alumnoDetails = 'Detalles del Alumno';
   static const String alumnoGroup = 'Grupo';
+  static const String alumnoGroupLabel = 'Grupo:';
   static const String alumnoScholarships = 'Becas';
   static const String alumnoStatus = 'Estado';
   static const String alumnoActive = 'Activo';
   static const String alumnoInactive = 'Dado de baja';
+  static const String alumnoBaja = 'Baja';
+  // Forma en minúscula para usarse dentro de oraciones
+  static const String alumnoSingular = 'alumno';
+  static const String alumnoPlural = 'alumnos';
+
+  // ============================================================================
+  // HOME — ERRORES
+  // ============================================================================
+
+  static const String homeDatosInesperados = 'Datos inesperados';
+
+  // ============================================================================
+  // ESTADOS DE CUENTA — EMPTY
+  // ============================================================================
+
+  static const String edoCtaSinEstadosCuenta = 'No tienes estados de cuenta por pagar';
 }

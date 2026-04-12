@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra el estado de error de la página Home.
@@ -36,7 +37,7 @@ class HomeErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error',
+              AppStrings.error,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -53,7 +54,7 @@ class HomeErrorWidget extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: const Text(AppStrings.retry),
             ),
           ],
         ),

@@ -91,16 +91,17 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 
 ### Configuración crítica — NO modificar sin revisar
 
-| Archivo | Valor fijo | Motivo |
-|---|---|---|
-| `project.pbxproj` | `LastUpgradeCheck = 1510` | Xcode beta lo sube a 2630; revertir si cambia |
-| `Runner.xcscheme` | `LastUpgradeVersion = "1510"` | Mismo motivo |
-| `Runner.xcscheme` | `LaunchAction buildConfiguration = "Release"` | Necesario para Archive/Distribute |
-| `Podfile` | `objective_c` usa `dwarf` | XCFramework precompilado — no puede generar dSYM |
+| Archivo           | Valor fijo                                    | Motivo                                           |
+| ----------------- | --------------------------------------------- | ------------------------------------------------ |
+| `project.pbxproj` | `LastUpgradeCheck = 1510`                     | Xcode beta lo sube a 2630; revertir si cambia    |
+| `Runner.xcscheme` | `LastUpgradeVersion = "1510"`                 | Mismo motivo                                     |
+| `Runner.xcscheme` | `LaunchAction buildConfiguration = "Release"` | Necesario para Archive/Distribute                |
+| `Podfile`         | `objective_c` usa `dwarf`                     | XCFramework precompilado — no puede generar dSYM |
 
 ### Advertencia — Xcode beta / actualizaciones de Xcode
 
 Si Xcode muestra el dialogo **"Update to recommended settings"** al abrir el proyecto:
+
 - **RECHAZAR** (click en "Later" o "Don't Update")
 - Si se acepta, `LastUpgradeCheck` y `LastUpgradeVersion` subirán a 2630+
 - Revertir con: `git checkout ios/Runner.xcodeproj/project.pbxproj ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme`
@@ -108,11 +109,13 @@ Si Xcode muestra el dialogo **"Update to recommended settings"** al abrir el pro
 ### Errores conocidos y soluciones
 
 **Error: "Missing dSYM" al subir a App Store Connect**
+
 - Causa: pod `objective_c` es XCFramework precompilado, no puede generar dSYM
 - Solución: ya está en `Podfile` — el pod usa `dwarf` en vez de `dwarf-with-dsym`
 - Si reaparece, verificar que el bloque `if target.name == 'objective_c'` siga en el Podfile y correr `pod install`
 
 **Error: Archive genera configuración Debug en vez de Release**
+
 - Causa: `LaunchAction` en `Runner.xcscheme` apunta a Debug
 - Solución: asegurar `buildConfiguration = "Release"` y `selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"` en `LaunchAction`
 
@@ -173,3 +176,4 @@ lib/src/
 - No uses emojis en los nombres de los archivos de configuración
 - No uses emojis en los nombres de los archivos de prueba
 - Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.
+- Todos los strings hardcodeados en el código que deberían estar en AppStrings

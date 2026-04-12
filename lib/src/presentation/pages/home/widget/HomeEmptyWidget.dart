@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra el estado vacío de la página Home.
@@ -30,7 +31,7 @@ class HomeEmptyWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No hay Alumnos registrados',
+            AppStrings.homeNoStudents,
             style: TextStyle(
               fontSize: 16,
               color: theme.colorScheme.onSurfaceVariant,
@@ -40,7 +41,7 @@ class HomeEmptyWidget extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRefresh,
             icon: const Icon(Icons.refresh),
-            label: const Text('Actualizar'),
+            label: const Text(AppStrings.homeRefresh),
           ),
         ],
       ),

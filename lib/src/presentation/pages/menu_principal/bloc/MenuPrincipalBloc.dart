@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
@@ -72,7 +73,7 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
         emit(state.copyWith(
           isLoading: false,
           menuItems: MenuPrincipalState.defaultMenuItems,
-          errorMessage: 'No se pudo cargar la información del usuario',
+          errorMessage: AppStrings.menuNoPudoCargar,
         ));
       }
     } catch (e) {

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra un enlace para información de cuentas.
@@ -94,7 +95,7 @@ class NoTienesCuentaAun extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'Entendido',
+                      AppStrings.understood,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

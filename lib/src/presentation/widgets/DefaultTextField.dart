@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Campo de texto genérico reutilizable con soporte para tema claro y oscuro.
@@ -98,7 +99,7 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 onPressed: _togglePasswordVisibility,
-                tooltip: _obscureText ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                tooltip: _obscureText ? AppStrings.mostrarContrasena : AppStrings.ocultarContrasena,
               )
             : null,
         filled: true,
@@ -164,7 +165,7 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
                   color: Colors.white70,
                 ),
                 onPressed: _togglePasswordVisibility,
-                tooltip: _obscureText ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                tooltip: _obscureText ? AppStrings.mostrarContrasena : AppStrings.ocultarContrasena,
               )
             : null,
         enabledBorder: const UnderlineInputBorder(

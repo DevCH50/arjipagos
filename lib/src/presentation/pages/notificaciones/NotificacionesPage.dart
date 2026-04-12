@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
@@ -75,7 +76,7 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
   /// Construye el AppBar con botón de actualizar y acción condicional de marcar todas leídas.
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      title: const Text('Notificaciones'),
+      title: const Text(AppStrings.notificacionesTitle),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.pop(context),

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Clase helper para mostrar diálogos relacionados con el pago.
@@ -16,15 +17,15 @@ class PagoDialogs {
           color: Theme.of(ctx).colorScheme.primary,
           size: 48,
         ),
-        title: const Text('Pago exitoso'),
-        content: const Text('Tu pago ha sido procesado correctamente.'),
+        title: const Text(AppStrings.pagoExitosoTitle),
+        content: const Text(AppStrings.pagoExitosoMsg),
         actions: [
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               onAceptar();
             },
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),
@@ -47,7 +48,7 @@ class PagoDialogs {
           color: Theme.of(ctx).colorScheme.error,
           size: 48,
         ),
-        title: const Text('Error en el pago'),
+        title: const Text(AppStrings.pagoErrorTitle),
         content: Text(mensaje),
         actions: [
           TextButton(
@@ -55,14 +56,14 @@ class PagoDialogs {
               Navigator.pop(ctx);
               onVolver();
             },
-            child: const Text('Volver'),
+            child: const Text(AppStrings.back),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               onReintentar();
             },
-            child: const Text('Reintentar'),
+            child: const Text(AppStrings.retry),
           ),
         ],
       ),
@@ -77,19 +78,19 @@ class PagoDialogs {
     return showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancelar pago'),
-        content: const Text('¿Estás seguro de que deseas cancelar el pago?'),
+        title: const Text(AppStrings.pagoCancelarTitle),
+        content: const Text(AppStrings.pagoCancelarMsg),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Continuar pago'),
+            child: const Text(AppStrings.pagoContinuar),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               onCancelar();
             },
-            child: const Text('Cancelar'),
+            child: const Text(AppStrings.cancel),
           ),
         ],
       ),

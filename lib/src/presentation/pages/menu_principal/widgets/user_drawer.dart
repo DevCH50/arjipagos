@@ -1,4 +1,5 @@
 import 'package:arjipagos/injection.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
@@ -31,12 +32,12 @@ class UserDrawer extends StatelessWidget {
     // Mostrar el diálogo CON el drawer aún abierto (contexto válido).
     final shouldLogout = await CloseSession.show(
       context: context,
-      title: 'Cerrar Sesión',
-      message: '¿Estás seguro que deseas cerrar sesión?',
+      title: AppStrings.logoutTitle,
+      message: AppStrings.logoutMessage,
       icon: Icons.logout,
       iconColor: Colors.orange,
-      confirmText: 'Cerrar Sesión',
-      cancelText: 'Cancelar',
+      confirmText: AppStrings.logoutConfirm,
+      cancelText: AppStrings.cancel,
       confirmButtonColor: Colors.red,
       confirmTextColor: Colors.white,
     );
@@ -102,7 +103,7 @@ class UserDrawer extends StatelessWidget {
             children: [
               // Header del drawer (incluye SafeArea top)
               UserDrawerHeader(
-                nombre: state.nombreUsuario ?? 'Usuario',
+                nombre: state.nombreUsuario ?? AppStrings.loginUsername,
                 email: state.emailUsuario,
               ),
               // Lista de datos del usuario
@@ -113,47 +114,47 @@ class UserDrawer extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     children: [
                       // Sección: Datos personales
-                      const SectionHeader(title: 'Datos personales'),
+                      const SectionHeader(title: AppStrings.drawerDatosPersonales),
                       if (user != null) ...[
                         CopyableListTile(
                           icon: Icons.badge_outlined,
-                          label: 'ID',
+                          label: AppStrings.drawerIdLabel,
                           value: user.id.toString(),
                         ),
                         CopyableListTile(
                           icon: Icons.person_outline,
-                          label: 'Usuario',
+                          label: AppStrings.loginUsername,
                           value: user.username,
                         ),
                         CopyableListTile(
                           icon: Icons.email_outlined,
-                          label: 'Email',
+                          label: AppStrings.drawerEmail,
                           value: user.email,
                         ),
                         CopyableListTile(
                           icon: Icons.phone_android,
-                          label: 'Celular',
+                          label: AppStrings.drawerCelular,
                           value: user.celulares.isNotEmpty
                               ? user.celulares
-                              : 'Sin registrar',
+                              : AppStrings.drawerSinRegistrar,
                         ),
                         CopyableListTile(
                           icon: Icons.family_restroom,
-                          label: 'Familia',
+                          label: AppStrings.drawerFamilia,
                           value: state.familia?.isNotEmpty == true
                               ? state.familia!
-                              : 'Sin registrar',
+                              : AppStrings.drawerSinRegistrar,
                         ),
                       ],
                       const Divider(),
                       // Sección: Cuenta
-                      const SectionHeader(title: 'Mi cuenta'),
+                      const SectionHeader(title: AppStrings.drawerMiCuenta),
                       ListTile(
                         leading: Icon(
                           Icons.lock_reset,
                           color: theme.colorScheme.primary,
                         ),
-                        title: const Text('Cambiar Contraseña'),
+                        title: const Text(AppStrings.menuCambiarContrasena),
                         trailing: Icon(
                           Icons.chevron_right,
                           color: theme.colorScheme.onSurfaceVariant,
@@ -170,7 +171,7 @@ class UserDrawer extends StatelessWidget {
                           color: theme.colorScheme.error,
                         ),
                         title: Text(
-                          'Cerrar Sesión',
+                          AppStrings.logoutTitle,
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                         onTap: () => _handleLogout(context),
@@ -185,7 +186,7 @@ class UserDrawer extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Toca cualquier campo para copiar',
+                    AppStrings.menuTocaCualquierCampo,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -276,7 +277,7 @@ class _LogoutLoadingDialogState extends State<_LogoutLoadingDialog>
             FadeTransition(
               opacity: _fadeAnim,
               child: Text(
-                'Cerrando sesión...',
+                AppStrings.menuCerrando,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,

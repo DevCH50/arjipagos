@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
@@ -18,11 +19,11 @@ class MenuPrincipalPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Menú Principal'),
+        title: const Text(AppStrings.menuPrincipalTitle),
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
-            tooltip: 'Mi cuenta',
+            tooltip: AppStrings.menuMiCuenta,
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -67,7 +68,7 @@ class _MenuPrincipalBody extends StatelessWidget {
           children: [
             // Header con información del usuario
             UserHeader(
-              nombre: state.nombreUsuario ?? 'Usuario',
+              nombre: state.nombreUsuario ?? AppStrings.loginUsername,
               email: state.emailUsuario,
             ),
             const Divider(height: 1),
@@ -91,12 +92,12 @@ class _MenuPrincipalBody extends StatelessWidget {
           color: Theme.of(ctx).colorScheme.error,
           size: 48,
         ),
-        title: const Text('Error'),
+        title: const Text(AppStrings.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),
@@ -131,14 +132,12 @@ class _MenuPrincipalBody extends StatelessWidget {
           color: Theme.of(ctx).colorScheme.primary,
           size: 48,
         ),
-        title: const Text('Próximamente'),
-        content: const Text(
-          'La sección de Facturas estará disponible pronto.',
-        ),
+        title: const Text(AppStrings.comingSoon),
+        content: const Text(AppStrings.menuFacturasProximamente),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),

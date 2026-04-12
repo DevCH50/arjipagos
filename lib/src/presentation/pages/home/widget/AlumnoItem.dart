@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/UserAvatar.dart';
@@ -45,7 +46,7 @@ class AlumnoItem extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: Chip(
                   label: Text(
-                    'Baja',
+                    AppStrings.alumnoBaja,
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.getAlumnoBajaText(isDark),
@@ -117,7 +118,7 @@ class AlumnoItem extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            child: const Text(AppStrings.close),
           ),
         ],
       ),

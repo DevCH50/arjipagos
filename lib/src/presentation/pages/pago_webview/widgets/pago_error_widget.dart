@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra un mensaje de error con opción de reintentar.
@@ -28,7 +29,7 @@ class PagoErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error al cargar',
+              AppStrings.errorAlCargar,
               style: theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.error,
               ),
@@ -45,7 +46,7 @@ class PagoErrorWidget extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: const Text(AppStrings.retry),
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -52,7 +53,7 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
   /// Construye el AppBar con botón de limpiar selección.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Estados de Cuenta'),
+      title: const Text(AppStrings.edoCtaTitle),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.pop(context),
@@ -63,7 +64,7 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
             if (state.cantidadPagosSeleccionados > 0) {
               return IconButton(
                 icon: const Icon(Icons.clear_all),
-                tooltip: 'Limpiar selección',
+                tooltip: AppStrings.edoCtaLimpiarSeleccion,
                 onPressed: () {
                   context.read<EdoCtaListBloc>().add(
                     const EdoCtaLimpiarSeleccionEvent(),

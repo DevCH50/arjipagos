@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:arjipagos/injection.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
@@ -36,7 +37,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       await Future.delayed(const Duration(milliseconds: 1500));
 
       // Completar progreso
-      add(const SplashProgressUpdated(progress: 1.0, statusText: 'Listo'));
+      add(const SplashProgressUpdated(progress: 1.0, statusText: AppStrings.splashReady));
 
       // Pequeña pausa al 100%
       await Future.delayed(const Duration(milliseconds: 300));
@@ -58,11 +59,11 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
         String statusText;
         if (currentProgress < 0.3) {
-          statusText = 'Inicializando...';
+          statusText = AppStrings.splashInitializing;
         } else if (currentProgress < 0.6) {
-          statusText = 'Configurando...';
+          statusText = AppStrings.splashConfiguring;
         } else {
-          statusText = 'Verificando sesión...';
+          statusText = AppStrings.splashVerifyingSession;
         }
 
         add(SplashProgressUpdated(progress: currentProgress, statusText: statusText));
@@ -106,7 +107,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   ) {
     emit(state.copyWith(
       progress: 1.0,
-      statusText: 'Listo',
+      statusText: AppStrings.splashReady,
     ));
   }
 
@@ -118,7 +119,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     _progressTimer?.cancel();
     emit(state.copyWith(
       progress: 1.0,
-      statusText: 'Sesión encontrada',
+      statusText: AppStrings.splashSesionEncontrada,
       navigationState: SplashNavigationState.navigateToHome,
     ));
   }
@@ -131,7 +132,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     _progressTimer?.cancel();
     emit(state.copyWith(
       progress: 1.0,
-      statusText: 'Bienvenido',
+      statusText: AppStrings.splashBienvenido,
       navigationState: SplashNavigationState.navigateToLogin,
     ));
   }

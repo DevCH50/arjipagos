@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:flutter/material.dart';
 
@@ -33,7 +34,7 @@ class EstadoPagoChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        isVencido ? 'Vencido' : 'Pendiente',
+        isVencido ? AppStrings.edoCtaVencido : AppStrings.edoCtaPendiente,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w500,

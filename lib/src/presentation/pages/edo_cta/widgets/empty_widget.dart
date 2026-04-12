@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra mensaje cuando no hay pagos pendientes.
@@ -19,14 +20,14 @@ class EdoCtaEmptyWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Sin pagos pendientes',
+            AppStrings.edoCtaSinPagosPendientes,
             style: theme.textTheme.titleLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'No tienes estados de cuenta por pagar',
+            AppStrings.edoCtaSinEstadosCuenta,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

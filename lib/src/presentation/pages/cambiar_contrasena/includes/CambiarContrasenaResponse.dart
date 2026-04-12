@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
@@ -27,7 +28,7 @@ class CambiarContrasenaResponse extends StatelessWidget {
           color: Colors.green,
           size: 48,
         ),
-        title: const Text('Contraseña actualizada'),
+        title: const Text(AppStrings.cambiarContrasenaActualizada),
         content: Text(mensaje),
         actions: [
           TextButton(
@@ -39,7 +40,7 @@ class CambiarContrasenaResponse extends StatelessWidget {
                 (route) => false,
               );
             },
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),
@@ -58,12 +59,12 @@ class CambiarContrasenaResponse extends StatelessWidget {
           color: errorColor,
           size: 48,
         ),
-        title: const Text('Error'),
+        title: const Text(AppStrings.error),
         content: Text(mensaje),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),
@@ -82,7 +83,7 @@ class CambiarContrasenaResponse extends StatelessWidget {
             context,
             respuesta.data is String
                 ? respuesta.data as String
-                : 'Tu contraseña ha sido actualizada correctamente.',
+                : AppStrings.cambiarContrasenaExitosoMsg,
           );
         } else if (respuesta is Error) {
           _mostrarError(context, respuesta.msg);
