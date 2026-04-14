@@ -1,4 +1,4 @@
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
@@ -49,11 +49,13 @@ void main() {
         'emite estado con alumnos cuando la carga es exitosa',
         build: () {
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
-            (_) async => Success(EstatodosDeCuentaResponse(
+            (_) async => Success(EstadosDeCuentaResponse(
               alumnos: [alumnoTest],
               cicloPredeterminadoId: '1',
               familiaId: '1',
               familia: 'Familia Test',
+              success: true,
+              message: '',
             )),
           );
           return createBloc();

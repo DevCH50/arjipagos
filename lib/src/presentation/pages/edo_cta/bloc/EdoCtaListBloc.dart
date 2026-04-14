@@ -1,5 +1,5 @@
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
@@ -63,7 +63,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
 
       final result = await edoCtaUseCases.getEstadosDeCuenta.run();
 
-      if (result is utils.Success<EstatodosDeCuentaResponse>) {
+      if (result is utils.Success<EstadosDeCuentaResponse>) {
         final data = result.data;
         emit(state.copyWith(
           alumnos: data.alumnos,
@@ -71,7 +71,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
           isLoading: false,
           errorMessage: null,
         ));
-      } else if (result is utils.Error<EstatodosDeCuentaResponse>) {
+      } else if (result is utils.Error<EstadosDeCuentaResponse>) {
         emit(state.copyWith(
           isLoading: false,
           errorMessage: result.msg,

@@ -8,7 +8,7 @@ import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/ListToString.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
@@ -27,15 +27,15 @@ class EdoCtaService {
   ///
   /// Requiere una sesión activa con token válido.
   /// Envía el user_id en el body como JSON.
-  /// Retorna [Success] con [EstatodosDeCuentaResponse] o [Error] con mensaje.
-  Future<Resource<EstatodosDeCuentaResponse>> getEstadosDeCuenta() async {
+  /// Retorna [Success] con [EstadosDeCuentaResponse] o [Error] con mensaje.
+  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta() async {
     try {
       // Obtener userId y token de la sesión
       final AuthResponse? authResponse = await authUseCases.getUserSession.run();
 
       if (authResponse == null) {
         AppLogger.warning('Intento de obtener estados de cuenta sin sesión', tag: 'EdoCta');
-        return Error<EstatodosDeCuentaResponse>(AppStrings.errorNoSession);
+        return Error<EstadosDeCuentaResponse>(AppStrings.errorNoSession);
       }
 
       final int userId = authResponse.user.id;
@@ -44,12 +44,12 @@ class EdoCtaService {
       // Validar datos de sesión
       if (userId == 0) {
         AppLogger.warning('UserId inválido en sesión', tag: 'EdoCta');
-        return Error<EstatodosDeCuentaResponse>(AppStrings.errorNoUserId);
+        return Error<EstadosDeCuentaResponse>(AppStrings.errorNoUserId);
       }
 
       if (token.isEmpty) {
         AppLogger.warning('Token vacío en sesión', tag: 'EdoCta');
-        return Error<EstatodosDeCuentaResponse>(AppStrings.errorNoToken);
+        return Error<EstadosDeCuentaResponse>(AppStrings.errorNoToken);
       }
 
       // Construir URL
@@ -80,7 +80,7 @@ class EdoCtaService {
       // Verificar si el servidor devolvió HTML en lugar de JSON (error del servidor)
       if (response.body.trim().startsWith('<!DOCTYPE') || response.body.trim().startsWith('<html')) {
         AppLogger.error('El servidor devolvió HTML en lugar de JSON (posible error 500)', tag: 'EdoCta');
-        return Error<EstatodosDeCuentaResponse>(
+        return Error<EstadosDeCuentaResponse>(
           'El servidor no está disponible en este momento. Por favor intenta más tarde.',
         );
       }
@@ -88,8 +88,8 @@ class EdoCtaService {
       final data = json.decode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final EstatodosDeCuentaResponse edoCtaResponse =
-            EstatodosDeCuentaResponse.fromJson(data);
+        final EstadosDeCuentaResponse edoCtaResponse =
+            EstadosDeCuentaResponse.fromJson(data);
         AppLogger.info(
           'Estados de cuenta cargados: ${edoCtaResponse.alumnos.length} alumnos',
           tag: 'EdoCta',
@@ -98,17 +98,17 @@ class EdoCtaService {
       } else {
         final errorMsg = ListToString(data['msg']);
         AppLogger.warning('Error obteniendo estados de cuenta: $errorMsg', tag: 'EdoCta');
-        return Error<EstatodosDeCuentaResponse>(errorMsg);
+        return Error<EstadosDeCuentaResponse>(errorMsg);
       }
     } on TimeoutException {
       AppLogger.error('Timeout obteniendo estados de cuenta', tag: 'EdoCta');
-      return Error<EstatodosDeCuentaResponse>(AppStrings.errorTimeout);
+      return Error<EstadosDeCuentaResponse>(AppStrings.errorTimeout);
     } on SocketException {
       AppLogger.error('Sin conexión obteniendo estados de cuenta', tag: 'EdoCta');
-      return Error<EstatodosDeCuentaResponse>(AppStrings.errorConnection);
+      return Error<EstadosDeCuentaResponse>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error obteniendo estados de cuenta: $e', tag: 'EdoCta');
-      return Error<EstatodosDeCuentaResponse>(e.toString());
+      return Error<EstadosDeCuentaResponse>(e.toString());
     }
   }
 }

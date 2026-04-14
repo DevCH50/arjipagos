@@ -114,33 +114,6 @@ class _MenuPrincipalBody extends StatelessWidget {
       return;
     }
 
-    // Verificar si la ruta está implementada
-    if (item.ruta == 'facturas') {
-      _showComingSoonDialog(context);
-    } else {
-      Navigator.pushNamed(context, item.ruta!);
-    }
-  }
-
-  /// Muestra diálogo "Próximamente".
-  void _showComingSoonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: Icon(
-          Icons.construction,
-          color: Theme.of(ctx).colorScheme.primary,
-          size: 48,
-        ),
-        title: const Text(AppStrings.comingSoon),
-        content: const Text(AppStrings.menuFacturasProximamente),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(AppStrings.accept),
-          ),
-        ],
-      ),
-    );
+    Navigator.pushNamed(context, item.ruta!);
   }
 }

@@ -12,6 +12,7 @@ import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
 import 'package:arjipagos/src/presentation/pages/home/HomePage.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/MenuPrincipalPage.dart';
+import 'package:arjipagos/src/presentation/pages/facturas/FacturasPage.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/NotificacionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +90,7 @@ class MyApp extends StatelessWidget {
               const CambiarContrasenaPage(),
           'notificaciones': (BuildContext context) =>
               const NotificacionesPage(),
+          'facturas': (BuildContext context) => const FacturasPage(),
         },
         initialRoute: 'splash',
       ),

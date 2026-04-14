@@ -1,4 +1,4 @@
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 
@@ -13,8 +13,8 @@ class GetEstadosDeCuentaUseCase {
 
   /// Ejecuta el caso de uso.
   ///
-  /// Retorna [Success] con [EstatodosDeCuentaResponse] o [Error].
-  Future<Resource<EstatodosDeCuentaResponse>> run() async {
+  /// Retorna [Success] con [EstadosDeCuentaResponse] o [Error].
+  Future<Resource<EstadosDeCuentaResponse>> run() async {
     return await repository.getEstadosDeCuenta();
   }
 }

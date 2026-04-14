@@ -264,4 +264,23 @@ class AppStrings {
   // ============================================================================
 
   static const String edoCtaSinEstadosCuenta = 'No tienes estados de cuenta por pagar';
+
+  // ============================================================================
+  // FACTURAS
+  // ============================================================================
+
+  static const String facturasTitle = 'Facturas';
+  static const String facturasLoading = 'Cargando facturas...';
+  static const String facturasSinFacturas = 'No tienes facturas disponibles';
+  static const String facturasFolio = 'Folio:';
+  static const String facturasFecha = 'Fecha:';
+  static const String facturasFechaTimbrado = 'Timbrado:';
+  static const String facturasReferencia = 'Referencia:';
+  static const String facturasTotal = 'Total:';
+  static const String facturasCompartir = 'Compartir factura';
+  static const String facturasDescargando = 'Descargando archivo ZIP...';
+  static const String facturasErrorCompartir =
+      'No se pudo descargar el archivo para compartir';
+  static const String facturasZipSinDatos = 'Esta factura no tiene archivo adjunto';
+  static const String facturasErrorDescarga = 'Error al descargar el archivo ZIP';
 }

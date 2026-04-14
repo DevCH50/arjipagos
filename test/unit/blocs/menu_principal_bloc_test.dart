@@ -7,7 +7,7 @@
 /// - Getter resumenAlumnos del estado
 library;
 
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
@@ -184,11 +184,13 @@ void main() {
               .thenAnswer((_) async => testAuthResponse);
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
             (_) async => Success(
-              EstatodosDeCuentaResponse(
+              EstadosDeCuentaResponse(
                 familiaId: '1',
                 familia: 'Familia López García',
                 cicloPredeterminadoId: '2024',
                 alumnos: [testAlumnoActivo],
+                success: true,
+                message: '',
               ),
             ),
           );

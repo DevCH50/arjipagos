@@ -1,5 +1,5 @@
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 
@@ -12,12 +12,12 @@ class EdoCtaRepositoryImpl implements EdoCtaRepository {
   EdoCtaRepositoryImpl(this.edoCtaService);
 
   @override
-  Future<Resource<EstatodosDeCuentaResponse>> getEstadosDeCuenta() async {
+  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta() async {
     try {
       final result = await edoCtaService.getEstadosDeCuenta();
       return result;
     } catch (e) {
-      return Error<EstatodosDeCuentaResponse>('Error al obtener estados de cuenta: $e');
+      return Error<EstadosDeCuentaResponse>('Error al obtener estados de cuenta: $e');
     }
   }
 }

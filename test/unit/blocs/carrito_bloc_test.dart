@@ -1,4 +1,4 @@
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
@@ -67,11 +67,13 @@ void main() {
             (_) async => {'1': [100]},
           );
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
-            (_) async => Success(EstatodosDeCuentaResponse(
+            (_) async => Success(EstadosDeCuentaResponse(
               alumnos: [testAlumno],
               cicloPredeterminadoId: '1',
               familiaId: '1',
               familia: 'Test',
+              success: true,
+              message: '',
             )),
           );
           return createBloc();

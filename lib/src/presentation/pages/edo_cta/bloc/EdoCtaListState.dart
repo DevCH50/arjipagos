@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
-import 'package:arjipagos/src/domain/models/EstatodosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 
 /// Estado del BLoC de estados de cuenta.
 ///
@@ -11,7 +11,7 @@ class EdoCtaListState extends Equatable {
   final List<Alumno>? alumnos;
 
   /// Respuesta completa del servidor.
-  final EstatodosDeCuentaResponse? response;
+  final EstadosDeCuentaResponse? response;
 
   /// Indica si está cargando datos.
   final bool isLoading;
@@ -95,7 +95,7 @@ class EdoCtaListState extends Equatable {
 
   EdoCtaListState copyWith({
     List<Alumno>? alumnos,
-    EstatodosDeCuentaResponse? response,
+    EstadosDeCuentaResponse? response,
     bool? isLoading,
     String? errorMessage,
     Map<int, List<int>>? pagosSeleccionados,

@@ -69,6 +69,13 @@ abstract class Endpoints {
   static const String notificacionesMarcarTodas = '/api/v1/notificaciones/leer-todas';
 
   // ============================================================================
+  // FACTURAS
+  // ============================================================================
+
+  /// POST - Obtener facturas del usuario autenticado (ZIP en base64)
+  static const String facturas = '/api/v1/facturas/list';
+
+  // ============================================================================
   // DISPOSITIVO (FCM)
   // ============================================================================
 

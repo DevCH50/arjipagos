@@ -32,6 +32,7 @@ class AuthService {
       final String bodyParams = json.encode({
         'username': username,
         'password': password,
+        'device_type': Platform.isIOS ? 'ios' : 'android',
       });
 
       final response = await http

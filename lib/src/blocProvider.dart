@@ -4,6 +4,7 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
@@ -19,6 +20,8 @@ import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
+import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaBloc.dart';
+import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -65,5 +68,10 @@ List<BlocProvider> blocProviders = [
     create: (context) =>
         NotificacionBloc(locator<NotificacionUseCases>())
           ..add(const NotificacionInicialEvent()),
+  ),
+  BlocProvider<FacturaBloc>(
+    create: (context) =>
+        FacturaBloc(locator<FacturaUseCases>())
+          ..add(const FacturaInicialEvent()),
   ),
 ];

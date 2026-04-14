@@ -17,10 +17,32 @@ _(ninguno)_
 - Tests unitarios para EdoCtaListBloc y CarritoBloc
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
-- Implementación de página Facturas
+_(ninguno pendiente de facturas)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **Release 1.0.8+14 (2026-04-14):**
+  - Página de Facturas completa con compartir ZIP por URL.
+  - `device_type` enviado en login (`'ios'` / `'android'`).
+  - Renombrado `EstatodosDeCuentaResponse` → `EstadosDeCuentaResponse` (typo corregido en 7 archivos lib + 3 tests).
+  - `FacturaResponse` corregido: eliminado `dart:ffi`, `Bool` → `bool`, comillas simples.
+  - **313/313 tests pasan, 0 errores de análisis estático.**
+
+- **Página de Facturas (2026-04-14):**
+  - Endpoint: `POST /facturas/list` con `user_id` en body.
+  - Arquitectura completa Clean Architecture + BLoC:
+    - Dominio: `FacturaRepository`, `GetFacturasUseCase`, `FacturaUseCases`
+    - Datos: `FacturaService`, `FacturaRepositoryImpl`
+    - Presentación: `FacturaBloc` (Event/State), `FacturasPage`, 4 widgets (`FacturaItemWidget`, loading, empty, error)
+  - Compartir ZIP: decodificación base64 **lazy** (solo al presionar compartir), guardado en directorio temporal, compartido con `SharePlus.instance.share()`.
+  - Nuevas dependencias: `share_plus ^12.0.2`, `path_provider ^2.1.5`.
+  - Nuevos strings en `AppStrings` (sección FACTURAS).
+  - Ruta `'facturas'` registrada en `main.dart`; menú principal navega directamente sin diálogo "próximamente".
+  - DI (`AppModule.dart`) y `blocProvider.dart` actualizados; `injection.config.dart` regenerado.
+  - **0 errores de análisis estático en todos los archivos nuevos.**
+
+
 
 - **Centralización de strings en AppStrings (2026-04-12):**
   - Migrados todos los strings hardcodeados de la UI a `AppStrings` (18 archivos actualizados).

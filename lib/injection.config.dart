@@ -16,6 +16,8 @@ import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart'
     as _i424;
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart'
     as _i276;
+import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart'
+    as _i908;
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart'
     as _i303;
 import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart'
@@ -27,6 +29,8 @@ import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart'
 import 'package:arjipagos/src/di/AppModule.dart' as _i21;
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart' as _i1009;
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart' as _i57;
+import 'package:arjipagos/src/domain/repository/FacturaRepository.dart'
+    as _i1073;
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart' as _i123;
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
@@ -36,6 +40,8 @@ import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart'
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart' as _i887;
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart'
     as _i869;
+import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart'
+    as _i504;
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart'
     as _i274;
 import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart' as _i604;
@@ -69,6 +75,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i274.NotificacionUseCases>(
       () => appModule.notificacionUseCases,
     );
+    gh.factory<_i908.FacturaService>(() => appModule.facturaService);
+    gh.factory<_i1073.FacturaRepository>(() => appModule.facturaRepository);
+    gh.factory<_i504.FacturaUseCases>(() => appModule.facturaUseCases);
     gh.factory<_i424.PagoService>(() => appModule.pagoService);
     gh.factory<_i946.PagoRepository>(() => appModule.pagoRepository);
     gh.factory<_i604.PagoUseCases>(() => appModule.pagoUseCases);
