@@ -266,6 +266,16 @@ class AppStrings {
   static const String edoCtaSinEstadosCuenta = 'No tienes estados de cuenta por pagar';
 
   // ============================================================================
+  // AVISO DE PRIVACIDAD / VERSIÓN
+  // ============================================================================
+
+  static const String drawerAvisoPrivacidad = 'Aviso de Privacidad';
+  static const String drawerVersionAndroid = 'Android';
+  static const String drawerVersionIos = 'iOS';
+  static const String drawerAvisoPrivacidadError =
+      'No se pudo abrir el Aviso de Privacidad';
+
+  // ============================================================================
   // FACTURAS
   // ============================================================================
 

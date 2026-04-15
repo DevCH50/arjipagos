@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
@@ -10,6 +13,8 @@ import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/drawer_h
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../main.dart';
 
@@ -180,22 +185,113 @@ class UserDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-              // Pie con información
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    AppStrings.menuTocaCualquierCampo,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
+              // Pie con Aviso de Privacidad, versión e indicación de copia
+              const _DrawerFooter(),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// PIE DEL DRAWER — AVISO DE PRIVACIDAD + VERSIÓN
+// ============================================================================
+
+/// Pie del drawer con enlace al Aviso de Privacidad y versión de la app.
+///
+/// Obtiene la versión en tiempo de ejecución con [PackageInfo] y detecta
+/// la plataforma (Android / iOS) con [Platform].
+class _DrawerFooter extends StatefulWidget {
+  const _DrawerFooter();
+
+  @override
+  State<_DrawerFooter> createState() => _DrawerFooterState();
+}
+
+class _DrawerFooterState extends State<_DrawerFooter> {
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  /// Carga la versión de la app desde [PackageInfo].
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() => _version = info.version);
+    }
+  }
+
+  /// Abre el Aviso de Privacidad en el navegador externo.
+  Future<void> _abrirAvisoPrivacidad() async {
+    final uri = Uri.parse(Endpoints.avisodePrivacidad);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(AppStrings.drawerAvisoPrivacidadError),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final platformLabel = Platform.isIOS
+        ? AppStrings.drawerVersionIos
+        : AppStrings.drawerVersionAndroid;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            // Aviso de Privacidad — enlace
+            InkWell(
+              onTap: _abrirAvisoPrivacidad,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Text(
+                  AppStrings.drawerAvisoPrivacidad,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                    decorationColor: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Versión de la app
+            if (_version != null)
+              Text(
+                'v$_version · $platformLabel',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            const SizedBox(height: 6),
+            // Indicación de copia
+            Text(
+              AppStrings.menuTocaCualquierCampo,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
