@@ -21,7 +21,11 @@ class LoginResponse extends StatelessWidget {
           if (responseState.data.status == 1) {
             final data = responseState.data as AuthResponse;
             bloc?.add(LoginSaveUserSession(authResponse: data));
-            Navigator.pushNamed(context, 'menu_principal');
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              'menu_principal',
+              (route) => false,
+            );
           } else {
             _showErrorDialog(context, responseState.data.msg);
           }
