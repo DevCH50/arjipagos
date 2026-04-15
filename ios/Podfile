@@ -65,6 +65,14 @@ post_install do |installer|
         config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
       end
+
+      # share_plus 12.x usa keyWindow (deprecated iOS 13) en su plugin Objective-C.
+      # No se puede corregir directamente en código de terceros.
+      # Se suprimen warnings hasta migrar a share_plus 13.x.
+      if target.name == 'share_plus'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
     end
   end
 
