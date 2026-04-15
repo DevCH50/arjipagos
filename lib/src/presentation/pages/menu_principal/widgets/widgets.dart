@@ -4,6 +4,7 @@
 // de menú principal para facilitar las importaciones.
 
 export 'copyable_list_tile.dart';
+export 'drawer_footer.dart';
 export 'drawer_header.dart';
 export 'menu_item_model.dart';
 export 'menu_item_tile.dart';
