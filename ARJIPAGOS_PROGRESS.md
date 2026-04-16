@@ -17,10 +17,28 @@ _(ninguno)_
 - Tests unitarios para EdoCtaListBloc y CarritoBloc
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
-_(ninguno pendiente de facturas)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **Release 1.0.10+16 (2026-04-15):**
+  - Actualización de dependencias: `badges 3.1.2 → 3.2.0`, `mocktail 1.0.4 → 1.0.5`, `vm_service 15.0.2 → 15.1.0`.
+  - `injection.config.dart` regenerado tras upgrade.
+
+- **Fix: evitar regreso al Login al presionar back desde Menu Principal (2026-04-15):**
+  - `LoginResponse.dart` — cambia `pushNamed` por `pushNamedAndRemoveUntil` al navegar a `menu_principal`, limpiando el stack de navegación completo.
+
+- **Refactor: DrawerFooter extraído a su propio archivo (2026-04-15):**
+  - Nuevo widget `drawer_footer.dart` con el pie del Drawer.
+  - `user_drawer.dart` reducido drásticamente (sin el footer inline).
+  - `widgets.dart` actualizado con el export.
+
+- **Release 1.0.9+15 — Aviso de Privacidad y versión en Drawer (2026-04-15):**
+  - Nuevo endpoint `Endpoints.avisoDePrivacidad` con URL del aviso.
+  - Dependencias añadidas: `url_launcher` y `package_info_plus`.
+  - `DrawerFooter`: enlace al Aviso de Privacidad, versión real de la app con etiqueta de plataforma (Android/iOS) y hint de copia.
+  - `AndroidManifest.xml`: query `https` para `url_launcher` en Android 11+.
+  - `AppStrings`: nuevos strings para el pie del drawer.
 
 - **Release 1.0.8+14 (2026-04-14):**
   - Página de Facturas completa con compartir ZIP por URL.
@@ -138,6 +156,39 @@ _(ninguno pendiente de facturas)_
 - **RegisterBloc** - Lógica completa de registro con validación
 - **SplashBloc** - Lógica de splash movida a BLoC
 - **SecureStorage** - Almacenamiento seguro para tokens y sesión
+
+---
+
+## Errores iOS conocidos y sus soluciones
+
+### Firebase swizzling log `[I-FCM001000]`
+
+**Síntoma:** `FIRMessaging Remote Notifications proxy enabled, will swizzle remote notification receiver handlers.`
+
+**Fix:**
+1. `ios/Runner/Info.plist` → `FirebaseAppDelegateProxyEnabled = false`
+2. `ios/Runner/AppDelegate.swift` → agregar `import FirebaseMessaging` + reenvío manual:
+   - `didRegisterForRemoteNotificationsWithDeviceToken` → asignar `Messaging.messaging().apnsToken = deviceToken`
+   - `didReceiveRemoteNotification` → llamar `super`
+
+> `FirebaseAppDelegateProxyEnabled = YES` **no** suprime el log. Solo `NO` + reenvío manual lo elimina.
+
+### `url_launcher` — sandbox extension error en iOS
+
+**Síntoma:** `unable to make sandbox extension: [1: Operation not permitted]`
+
+**Fix:** `ios/Runner/Info.plist` → agregar `LSApplicationQueriesSchemes` con `https` y `http`.
+
+> Equivalente al `<queries>` de `AndroidManifest.xml`. Ambos deben mantenerse sincronizados al agregar `url_launcher`.
+
+### Logs de sistema iOS — NO son errores de la app
+
+Estos mensajes aparecen solo en builds de desarrollo y **no son corregibles desde el código**:
+
+- `FlutterView implements focusItemsInRect:` → warning del motor Flutter (C++), cosmético
+- `unable to make sandbox extension` (post-fix url_launcher) → WebKit creando proceso sandboxed para WKWebView
+
+En builds de release / App Store no aparecen.
 
 ---
 

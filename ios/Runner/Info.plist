@@ -76,5 +76,14 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<!-- Firebase: swizzling desactivado — reenvío manual en AppDelegate.swift -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<!-- url_launcher: esquemas permitidos para abrir URLs externas en iOS -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+	</array>
 </dict>
 </plist>
