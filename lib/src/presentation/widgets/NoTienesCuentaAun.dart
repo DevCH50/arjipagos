@@ -63,7 +63,7 @@ class NoTienesCuentaAun extends StatelessWidget {
                 Icon(icono, size: 60, color: color),
                 const SizedBox(height: 16),
                 Text(
-                  '¡Atención!',
+                  AppStrings.noTienesCuentaAtencion,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

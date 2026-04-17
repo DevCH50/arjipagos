@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
@@ -69,12 +70,12 @@ class LoginResponse extends StatelessWidget {
             color: Theme.of(ctx).colorScheme.error,
             size: 48,
           ),
-          title: const Text('Error'),
+          title: const Text(AppStrings.error),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Aceptar'),
+              child: const Text(AppStrings.accept),
             ),
           ],
         ),

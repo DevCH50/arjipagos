@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'dart:typed_data';
 
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -172,7 +173,7 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Realizar Pago'),
+          title: const Text(AppStrings.pagoWebViewTitle),
           leading: IconButton(
             icon: const Icon(Icons.close),
             onPressed: _confirmarSalir,

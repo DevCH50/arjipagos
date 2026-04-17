@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que muestra el estado de carga de la página Home.
@@ -15,7 +16,7 @@ class HomeLoadingWidget extends StatelessWidget {
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 16),
-          Text('Cargando Alumnos...'),
+          Text(AppStrings.homeLoading),
         ],
       ),
     );

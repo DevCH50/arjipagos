@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_pago_item.dart';
@@ -51,7 +52,7 @@ class CarritoAlumnoCard extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        'Grupo: ${item.alumno.grupo}',
+        '${AppStrings.alumnoGroupLabel} ${item.alumno.grupo}',
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),

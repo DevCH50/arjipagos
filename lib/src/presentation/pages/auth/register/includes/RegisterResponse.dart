@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterState.dart';
@@ -29,12 +30,12 @@ class RegisterResponse extends StatelessWidget {
                 color: Theme.of(ctx).colorScheme.error,
                 size: 48,
               ),
-              title: const Text('Error'),
+              title: const Text(AppStrings.error),
               content: Text(response.msg),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Aceptar'),
+                  child: const Text(AppStrings.accept),
                 ),
               ],
             ),
@@ -49,15 +50,15 @@ class RegisterResponse extends StatelessWidget {
                 color: Theme.of(ctx).colorScheme.primary,
                 size: 48,
               ),
-              title: const Text('Registro exitoso'),
-              content: const Text('Ahora puedes iniciar sesión con tu cuenta.'),
+              title: const Text(AppStrings.registerExitosoTitle),
+              content: const Text(AppStrings.registerExitosoMsg),
               actions: [
                 FilledButton(
                   onPressed: () {
                     Navigator.pop(ctx); // Cerrar diálogo
                     Navigator.pop(context); // Volver al login
                   },
-                  child: const Text('Iniciar sesión'),
+                  child: const Text(AppStrings.registerIrLogin),
                 ),
               ],
             ),

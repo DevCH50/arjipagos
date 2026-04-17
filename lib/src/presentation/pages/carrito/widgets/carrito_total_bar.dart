@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
@@ -50,7 +51,7 @@ class CarritoTotalBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${state.cantidadPagos} ${state.cantidadPagos == 1 ? 'pago' : 'pagos'}',
+          '${state.cantidadPagos} ${state.cantidadPagos == 1 ? AppStrings.pagoSingular : AppStrings.pagoPlural}',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -79,7 +80,7 @@ class CarritoTotalBar extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : const Icon(Icons.payment),
-      label: Text(state.isProcesandoPago ? 'Procesando...' : 'Pagar'),
+      label: Text(state.isProcesandoPago ? AppStrings.carritoProcesando : AppStrings.carritoPagar),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),

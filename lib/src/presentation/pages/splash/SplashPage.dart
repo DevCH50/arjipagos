@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashBloc.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashState.dart';
@@ -162,7 +163,7 @@ class _SplashTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'ArjiPagos',
+      AppStrings.appName,
       style: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
@@ -179,7 +180,7 @@ class _SplashSubtitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'Plataforma de Gestión de Pagos',
+      AppStrings.appDescription,
       style: TextStyle(
         fontSize: 14,
         color: Colors.white70,

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -63,12 +64,12 @@ class EdoCtaBody extends StatelessWidget {
           color: Theme.of(ctx).colorScheme.error,
           size: 48,
         ),
-        title: const Text('Error'),
+        title: const Text(AppStrings.error),
         content: Text(mensaje),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ],
       ),

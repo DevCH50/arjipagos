@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
@@ -74,7 +75,7 @@ class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
 
         final iconButton = IconButton(
           icon: Icon(iconData),
-          tooltip: 'Notificaciones',
+          tooltip: AppStrings.notificacionesTitle,
           onPressed: () => _navegarANotificaciones(context),
         );
 

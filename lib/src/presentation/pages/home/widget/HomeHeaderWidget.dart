@@ -35,7 +35,7 @@ class HomeHeaderWidget extends StatelessWidget {
         children: [
           Flexible(
             child: _InfoChip(
-              label: 'Familia ID',
+              label: AppStrings.homeFamilyId,
               value: alumnosResponse.familiaId.toString(),
               icon: Icons.family_restroom,
               isDark: isDark,
@@ -43,7 +43,7 @@ class HomeHeaderWidget extends StatelessWidget {
           ),
           Flexible(
             child: _InfoChip(
-              label: 'Ciclo Escolar',
+              label: AppStrings.homeSchoolYear,
               value: alumnosResponse.cicloPredeterminado.toString(),
               icon: Icons.calendar_today,
               isDark: isDark,

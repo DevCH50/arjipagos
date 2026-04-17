@@ -162,7 +162,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
       if (authResponse == null) {
         emit(state.copyWith(
           isProcesandoPago: false,
-          errorMessage: 'Sesión no válida',
+          errorMessage: AppStrings.errorSesionInvalida,
         ));
         return;
       }
@@ -213,7 +213,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     emit(state.copyWith(
       pagosSeleccionados: {},
       pagoExitoso: true,
-      mensajeExito: 'Pago realizado con éxito',
+      mensajeExito: AppStrings.pagoRealizadoConExito,
       clearPagoData: true,
     ));
   }

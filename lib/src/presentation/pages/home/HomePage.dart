@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,7 +41,7 @@ class _HomesPageState extends State<HomesPage> {
     return AppBar(
       title: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          return Text(state.alumnosResponse?.familia ?? 'Cargando...');
+          return Text(state.alumnosResponse?.familia ?? AppStrings.homeCargando);
         },
       ),
       actions: [

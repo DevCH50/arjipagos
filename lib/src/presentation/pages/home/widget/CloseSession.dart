@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget reutilizable para diálogos de confirmación
@@ -19,8 +20,8 @@ class CloseSession extends StatelessWidget {
     required this.message,
     this.icon,
     this.iconColor,
-    this.confirmText = 'Confirmar',
-    this.cancelText = 'Cancelar',
+    this.confirmText = AppStrings.confirm,
+    this.cancelText = AppStrings.cancel,
     this.confirmButtonColor,
     this.confirmTextColor,
     this.onConfirm,
@@ -34,8 +35,8 @@ class CloseSession extends StatelessWidget {
     required String message,
     IconData? icon,
     Color? iconColor,
-    String confirmText = 'Confirmar',
-    String cancelText = 'Cancelar',
+    String confirmText = AppStrings.confirm,
+    String cancelText = AppStrings.cancel,
     Color? confirmButtonColor,
     Color? confirmTextColor,
   }) async {

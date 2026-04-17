@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
@@ -87,7 +88,9 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              isSuccess ? 'Correo enviado' : 'Recuperar contraseña',
+              isSuccess
+                  ? AppStrings.recuperarContrasenaCorreoEnviado
+                  : AppStrings.recuperarContrasenaTitle,
             ),
             // Evita que el botón atrás quede activo durante la carga
             leading: isLoading
@@ -131,13 +134,13 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Revisa tu bandeja de entrada',
+          AppStrings.recuperarContrasenaRevisa,
           style: textTheme.titleLarge,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
         Text(
-          'Hemos enviado las instrucciones para recuperar tu contraseña al correo proporcionado.',
+          AppStrings.recuperarContrasenaMensajeEnviado,
           style: textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
@@ -151,7 +154,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
                   .add(const RecuperarContrasenaReset());
               Navigator.of(context).pop();
             },
-            child: const Text('Aceptar'),
+            child: const Text(AppStrings.accept),
           ),
         ),
       ],
@@ -177,7 +180,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Ingresa tu usuario y correo registrado. Te enviaremos instrucciones para restablecer tu contraseña.',
+            AppStrings.recuperarContrasenaInstrucciones,
             style: textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -186,14 +189,14 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
             controller: _usernameController,
             enabled: !isLoading,
             decoration: const InputDecoration(
-              labelText: 'Usuario',
+              labelText: AppStrings.loginUsername,
               prefixIcon: Icon(Icons.person_outline),
               border: OutlineInputBorder(),
             ),
             textInputAction: TextInputAction.next,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Ingresa tu nombre de usuario';
+                return AppStrings.recuperarContrasenaIngresaUsuario;
               }
               return null;
             },
@@ -203,7 +206,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
             controller: _emailController,
             enabled: !isLoading,
             decoration: const InputDecoration(
-              labelText: 'Correo electrónico',
+              labelText: AppStrings.recuperarContrasenaCorreoLabel,
               prefixIcon: Icon(Icons.email_outlined),
               border: OutlineInputBorder(),
             ),
@@ -212,11 +215,11 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
             onFieldSubmitted: (_) => _submit(context),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Ingresa tu correo electrónico';
+                return AppStrings.recuperarContrasenaIngresaCorreo;
               }
               final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
               if (!emailRegex.hasMatch(value.trim())) {
-                return 'Ingresa un correo válido';
+                return AppStrings.recuperarContrasenaCorreoInvalido;
               }
               return null;
             },
@@ -264,7 +267,7 @@ class _RecuperarContrasenaPageState extends State<RecuperarContrasenaPage> {
                         color: colorScheme.onPrimary,
                       ),
                     )
-                  : const Text('Enviar'),
+                  : const Text(AppStrings.send),
             ),
           ),
         ],

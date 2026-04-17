@@ -93,7 +93,7 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
                         const MarcarTodasLeidasEvent(),
                       );
                 },
-                child: const Text('Marcar todas leídas'),
+                child: const Text(AppStrings.notificacionesMarcarLeidas),
               );
             }
             return const SizedBox.shrink();
@@ -115,7 +115,7 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
             }
             return IconButton(
               icon: const Icon(Icons.refresh),
-              tooltip: 'Actualizar',
+              tooltip: AppStrings.homeRefresh,
               onPressed: () {
                 context.read<NotificacionBloc>().add(
                       const NotificacionInicialEvent(),

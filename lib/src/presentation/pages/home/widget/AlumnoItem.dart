@@ -40,7 +40,7 @@ class AlumnoItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Grupo: ${alumno.grupo}'),
+            Text('${AppStrings.alumnoGroupLabel} ${alumno.grupo}'),
             if (alumno.esBaja)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -91,26 +91,26 @@ class AlumnoItem extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow(context, 'ID:', alumno.alumnoId.toString()),
-              _buildDetailRow(context, 'Grupo:', alumno.grupo),
+              _buildDetailRow(context, AppStrings.alumnoIdLabel, alumno.alumnoId.toString()),
+              _buildDetailRow(context, AppStrings.alumnoGroupLabel, alumno.grupo),
               const Divider(),
               Text(
-                'Becas:',
+                AppStrings.alumnoBecasLabel,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              _buildDetailRow(context, 'SEP:', alumno.becaSep),
-              _buildDetailRow(context, 'ARJI:', alumno.becaArji),
-              _buildDetailRow(context, 'Bach:', alumno.becaBach),
-              _buildDetailRow(context, 'SP:', alumno.becaSp),
+              _buildDetailRow(context, AppStrings.alumnoSepLabel, alumno.becaSep),
+              _buildDetailRow(context, AppStrings.alumnoArjiLabel, alumno.becaArji),
+              _buildDetailRow(context, AppStrings.alumnoBachLabel, alumno.becaBach),
+              _buildDetailRow(context, AppStrings.alumnoSpLabel, alumno.becaSp),
               const Divider(),
               _buildDetailRow(
                 context,
-                'Estado:',
-                alumno.esBaja ? '❌ Baja' : '✅ Activo',
+                AppStrings.alumnoEstadoLabel,
+                alumno.esBaja ? AppStrings.alumnoEstadoBaja : AppStrings.alumnoEstadoActivo,
               ),
             ],
           ),

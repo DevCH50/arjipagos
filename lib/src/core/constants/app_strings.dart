@@ -9,7 +9,7 @@ class AppStrings {
   // GENERAL
   // ============================================================================
 
-  static const String appName = 'Arji Pagos';
+  static const String appName = 'Arjí Pagos';
   static const String appDescription = 'Plataforma de Gestión de Pagos';
 
   // ============================================================================
@@ -164,6 +164,7 @@ class AppStrings {
   static const String carritoSinPagos = 'No hay pagos seleccionados';
   static const String carritoPagar = 'Pagar';
   static const String carritoProcesando = 'Procesando...';
+  static const String carritoQuitar = 'Quitar';
   static const String carritoQuitarOrden = 'Debe quitar primero los pagos más recientes';
   static const String carritoReferenciaExcede =
       'La referencia de pago excede el límite permitido por la pasarela.\n\n'
@@ -183,6 +184,7 @@ class AppStrings {
   static const String pagoContinuar = 'Continuar pago';
   static const String pagoNoProcesado = 'El pago no pudo ser procesado';
   static const String pagoProcesadoCorrectamente = 'Pago procesado correctamente';
+  static const String pagoRealizadoConExito = 'Pago realizado con éxito';
 
   // ============================================================================
   // NOTIFICACIONES
@@ -242,6 +244,7 @@ class AppStrings {
   // ============================================================================
 
   static const String errorNoSession = 'No hay sesión activa';
+  static const String errorSesionInvalida = 'Sesión no válida';
   static const String errorNoUserId = 'No se encontró el ID de usuario en la sesión';
   static const String errorNoToken = 'No se encontró el token de autenticación';
   static const String errorConnection = 'Sin conexión, intente más tarde';
@@ -271,6 +274,74 @@ class AppStrings {
   // ============================================================================
 
   static const String homeDatosInesperados = 'Datos inesperados';
+
+  // ============================================================================
+  // RECUPERAR CONTRASEÑA
+  // ============================================================================
+
+  static const String recuperarContrasenaTitle = 'Recuperar contraseña';
+  static const String recuperarContrasenaCorreoEnviado = 'Correo enviado';
+  static const String recuperarContrasenaInstrucciones =
+      'Ingresa tu usuario y correo registrado. Te enviaremos instrucciones para restablecer tu contraseña.';
+  static const String recuperarContrasenaRevisa = 'Revisa tu bandeja de entrada';
+  static const String recuperarContrasenaMensajeEnviado =
+      'Hemos enviado las instrucciones para recuperar tu contraseña al correo proporcionado.';
+  static const String recuperarContrasenaCorreoLabel = 'Correo electrónico';
+  static const String recuperarContrasenaIngresaCorreo = 'Ingresa tu correo electrónico';
+  static const String recuperarContrasenaCorreoInvalido = 'Ingresa un correo válido';
+  static const String recuperarContrasenaIngresaUsuario = 'Ingresa tu nombre de usuario';
+
+  // ============================================================================
+  // LOGIN — EXTRAS
+  // ============================================================================
+
+  static const String loginIngresar = 'Ingresar';
+  static const String loginIniciarSesion = 'Iniciar Sesión';
+  static const String loginCamposIncompletosMsg =
+      'Por favor, completa todos los campos para continuar.';
+
+  // ============================================================================
+  // REGISTRO — EXTRAS
+  // ============================================================================
+
+  static const String registerApellidoMaterno = 'Apellido Materno (opcional)';
+  static const String registerYaTienesCuenta = '¿Ya tienes cuenta? Inicia sesión';
+  static const String registerRegistrarse = 'Registrarse';
+
+  // ============================================================================
+  // CARRITO — EXTRAS
+  // ============================================================================
+
+  static const String carritoVacio = 'Carrito vacío';
+
+  // ============================================================================
+  // PAGOS — PLURALIZACIÓN
+  // ============================================================================
+
+  static const String pagoSingular = 'pago';
+  static const String pagoPlural = 'pagos';
+  static const String pagosSeleccionadosLabel = 'seleccionados';
+
+  // ============================================================================
+  // GENERAL — EXTRAS
+  // ============================================================================
+
+  static const String noTienesCuentaAtencion = '¡Atención!';
+  static const String homeCargando = 'Cargando...';
+
+  // ============================================================================
+  // ALUMNO — ETIQUETAS DE DETALLE
+  // ============================================================================
+
+  static const String alumnoIdLabel = 'ID:';
+  static const String alumnoBecasLabel = 'Becas:';
+  static const String alumnoSepLabel = 'SEP:';
+  static const String alumnoArjiLabel = 'ARJI:';
+  static const String alumnoBachLabel = 'Bach:';
+  static const String alumnoSpLabel = 'SP:';
+  static const String alumnoEstadoLabel = 'Estado:';
+  static const String alumnoEstadoBaja = '❌ Baja';
+  static const String alumnoEstadoActivo = '✅ Activo';
 
   // ============================================================================
   // ESTADOS DE CUENTA — EMPTY

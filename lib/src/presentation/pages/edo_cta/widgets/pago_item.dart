@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
@@ -122,7 +123,7 @@ class PagoItem extends StatelessWidget {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                'Vence: ${pago.fechaVencimiento}',
+                '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -155,7 +156,7 @@ class PagoItem extends StatelessWidget {
           ),
         ),
         Text(
-          'Pago #${pago.numPago}',
+          '${AppStrings.edoCtaPagoNum}${pago.numPago}',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -193,14 +194,12 @@ class PagoItem extends StatelessWidget {
           color: Theme.of(ctx).colorScheme.primary,
           size: 48,
         ),
-        title: const Text('Información'),
-        content: const Text(
-          'Debes seleccionar primero los pagos anteriores para poder seleccionar este.',
-        ),
+        title: const Text(AppStrings.info),
+        content: const Text(AppStrings.edoCtaInfoDialogMsg),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido'),
+            child: const Text(AppStrings.understood),
           ),
         ],
       ),

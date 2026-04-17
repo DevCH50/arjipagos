@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginState.dart';
@@ -41,7 +42,7 @@ class LoginContent extends StatelessWidget {
                 Container(
                   margin: const EdgeInsets.only(bottom: 15),
                   child: const Text(
-                    'Ingresar',
+                    AppStrings.loginIngresar,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -50,7 +51,7 @@ class LoginContent extends StatelessWidget {
                   ),
                 ),
                 DefaultTextField(
-                  label: 'Username',
+                  label: AppStrings.loginUsername,
                   icon: Icons.email,
                   keyboardType: TextInputType.text,
                   onChanged: (text) {
@@ -62,7 +63,7 @@ class LoginContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 DefaultTextField(
-                  label: 'Contraseña',
+                  label: AppStrings.loginPassword,
                   icon: Icons.lock,
                   obscureText: true,
                   onChanged: (text) {
@@ -78,7 +79,7 @@ class LoginContent extends StatelessWidget {
                 SizedBox(
                   width: double.infinity, // Ocupa el ancho disponible dentro del contenedor
                   child: PrimaryElevatedButton(
-                    text: 'Iniciar Sesión',
+                    text: AppStrings.loginIniciarSesion,
                     onPressed: () {
                       if (bloc?.state.formKey?.currentState?.validate() ??
                           false) {
@@ -92,14 +93,14 @@ class LoginContent extends StatelessWidget {
                               color: Theme.of(ctx).colorScheme.error,
                               size: 48,
                             ),
-                            title: const Text('Campos incompletos'),
+                            title: const Text(AppStrings.validacionCamposIncompletos),
                             content: const Text(
-                              'Por favor, completa todos los campos para continuar.',
+                              AppStrings.loginCamposIncompletosMsg,
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Aceptar'),
+                                child: const Text(AppStrings.accept),
                               ),
                             ],
                           ),
@@ -123,7 +124,7 @@ class LoginContent extends StatelessWidget {
                     );
                   },
                   child: const Text(
-                    '¿Olvidaste tu contraseña?',
+                    AppStrings.loginForgotPassword,
                     style: TextStyle(color: Colors.white70),
                   ),
                 ),

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -73,7 +74,7 @@ class TotalSeleccionadoBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$cantidadPagos ${cantidadPagos == 1 ? 'pago' : 'pagos'} seleccionados',
+          '$cantidadPagos ${cantidadPagos == 1 ? AppStrings.pagoSingular : AppStrings.pagoPlural} ${AppStrings.pagosSeleccionadosLabel}',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -99,7 +100,7 @@ class TotalSeleccionadoBar extends StatelessWidget {
           ? () => _navegarAlCarrito(context)
           : null,
       icon: const Icon(Icons.shopping_cart),
-      label: const Text('Continuar'),
+      label: const Text(AppStrings.edoCtaContinuar),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(
           horizontal: 24,

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
@@ -50,8 +51,8 @@ class CarritoPagoItem extends StatelessWidget {
                   : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
             tooltip: puedeEliminar
-                ? 'Quitar'
-                : 'Debe quitar primero los pagos más recientes',
+                ? AppStrings.carritoQuitar
+                : AppStrings.carritoQuitarOrden,
             onPressed: puedeEliminar ? () => _quitarPago(context) : null,
           ),
         ],
@@ -74,7 +75,7 @@ class CarritoPagoItem extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Vence: ${pago.fechaVencimiento}',
+              '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que se muestra cuando el carrito está vacío.
@@ -19,14 +20,14 @@ class CarritoEmptyWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Carrito vacío',
+            AppStrings.carritoVacio,
             style: theme.textTheme.titleLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Selecciona pagos desde Estados de Cuenta',
+            AppStrings.carritoEmpty,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -35,7 +36,7 @@ class CarritoEmptyWidget extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back),
-            label: const Text('Volver'),
+            label: const Text(AppStrings.back),
           ),
         ],
       ),

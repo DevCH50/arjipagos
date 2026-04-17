@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/includes/CambiarContrasenaContent.dart';
@@ -39,7 +40,7 @@ class _CambiarContrasenaPageState extends State<CambiarContrasenaPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cambiar Contraseña'),
+        title: const Text(AppStrings.cambiarContrasenaTitle),
         centerTitle: true,
       ),
       body: SafeArea(

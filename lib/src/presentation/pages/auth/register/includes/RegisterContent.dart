@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterState.dart';
@@ -31,7 +32,7 @@ class RegisterContent extends StatelessWidget {
                 const Icon(Icons.person_add, size: 60, color: Colors.white), // 25% más pequeño
                 const SizedBox(height: 8),
                 const Text(
-                  'REGISTRO',
+                  AppStrings.registerTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -40,7 +41,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 DefaultTextField(
-                  label: 'Nombre',
+                  label: AppStrings.registerName,
                   icon: Icons.person,
                   onChanged: (text) {
                     bloc?.add(NombreChanged(nombre: BlocForItem(value: text)));
@@ -49,7 +50,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Apellido Paterno',
+                  label: AppStrings.registerLastName,
                   icon: Icons.person_outline,
                   onChanged: (text) {
                     bloc?.add(ApPaternoChanged(apPaterno: BlocForItem(value: text)));
@@ -58,7 +59,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Apellido Materno (opcional)',
+                  label: AppStrings.registerApellidoMaterno,
                   icon: Icons.person_outline,
                   onChanged: (text) {
                     bloc?.add(ApMaternoChanged(apMaterno: BlocForItem(value: text)));
@@ -67,7 +68,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Celular',
+                  label: AppStrings.registerPhone,
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone,
                   onChanged: (text) {
@@ -77,7 +78,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Email',
+                  label: AppStrings.registerEmail,
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   onChanged: (text) {
@@ -87,7 +88,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Contraseña',
+                  label: AppStrings.registerPassword,
                   icon: Icons.lock,
                   obscureText: true,
                   onChanged: (text) {
@@ -97,7 +98,7 @@ class RegisterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 DefaultTextField(
-                  label: 'Confirmar Contraseña',
+                  label: AppStrings.registerConfirmPassword,
                   icon: Icons.lock_outline,
                   obscureText: true,
                   onChanged: (text) {
@@ -109,7 +110,7 @@ class RegisterContent extends StatelessWidget {
                 SizedBox(
                   width: double.infinity, // Ocupa el ancho disponible dentro del contenedor
                   child: PrimaryElevatedButton(
-                    text: 'Registrarse',
+                    text: AppStrings.registerRegistrarse,
                     onPressed: () {
                       if (bloc?.state.formKey?.currentState?.validate() ?? false) {
                         bloc?.add(const RegisterSubmitted());
@@ -122,14 +123,14 @@ class RegisterContent extends StatelessWidget {
                               color: Theme.of(ctx).colorScheme.error,
                               size: 48,
                             ),
-                            title: const Text('Campos incompletos'),
+                            title: const Text(AppStrings.validacionCamposIncompletos),
                             content: const Text(
-                              'Por favor, completa todos los campos correctamente.',
+                              AppStrings.cambiarContrasenaCamposMsg,
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Aceptar'),
+                                child: const Text(AppStrings.accept),
                               ),
                             ],
                           ),
@@ -144,7 +145,7 @@ class RegisterContent extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   child: const Text(
-                    '¿Ya tienes cuenta? Inicia sesión',
+                    AppStrings.registerYaTienesCuenta,
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

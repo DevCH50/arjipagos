@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget de estado vacío que se muestra cuando no hay notificaciones.
@@ -25,7 +26,7 @@ class NotificacionVaciaWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin notificaciones',
+              AppStrings.notificacionesSinNotif,
               style: textTheme.titleLarge?.copyWith(
                 color: colorScheme.onSurface,
               ),
@@ -33,7 +34,7 @@ class NotificacionVaciaWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Cuando tengas notificaciones aparecerán aquí',
+              AppStrings.notificacionesAquiApareceran,
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),

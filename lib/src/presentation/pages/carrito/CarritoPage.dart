@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
@@ -34,7 +35,7 @@ class _CarritoPageState extends State<CarritoPage> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Carrito'),
+      title: const Text(AppStrings.carritoTitle),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.pop(context),
@@ -45,7 +46,7 @@ class _CarritoPageState extends State<CarritoPage> {
             if (state.cantidadPagos > 0) {
               return IconButton(
                 icon: const Icon(Icons.delete_sweep),
-                tooltip: 'Vaciar carrito',
+                tooltip: AppStrings.carritoVaciarTitle,
                 onPressed: () => _confirmarVaciarCarrito(context),
               );
             }
@@ -60,19 +61,19 @@ class _CarritoPageState extends State<CarritoPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Vaciar carrito'),
-        content: const Text('¿Estás seguro de que deseas vaciar el carrito?'),
+        title: const Text(AppStrings.carritoVaciarTitle),
+        content: const Text(AppStrings.carritoVaciarConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: const Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<CarritoBloc>().add(const CarritoLimpiarEvent());
             },
-            child: const Text('Vaciar'),
+            child: const Text(AppStrings.carritoVaciar),
           ),
         ],
       ),

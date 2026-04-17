@@ -57,7 +57,7 @@ class AlumnoCard extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            'Grupo: ${alumno.grupo}',
+            '${AppStrings.alumnoGroupLabel} ${alumno.grupo}',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
