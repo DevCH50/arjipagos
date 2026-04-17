@@ -1,3 +1,6 @@
+import 'package:arjipagos/src/core/constants/app_constants.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -136,7 +139,37 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
         pagosActuales.remove(pagoId);
       }
     } else {
-      // Seleccionar
+      // Seleccionar — validar primero que la referencia resultante no exceda el límite.
+      //
+      // Simular cómo quedaría la referencia si se añade este pago.
+      // Se replica la misma lógica que CarritoState.referenciaPago para
+      // garantizar consistencia entre ambos puntos de validación.
+      final mapaSimulado = Map<int, List<int>>.from(state.pagosSeleccionados);
+      final idsSimulados = List<int>.from(mapaSimulado[alumnoId] ?? [])
+        ..add(pagoId);
+      mapaSimulado[alumnoId] = idsSimulados;
+
+      final allIds = <int>[];
+      for (final ids in mapaSimulado.values) {
+        allIds.addAll(ids);
+      }
+
+      if (allIds.join('D').length > AppConstants.maxLongitudReferencia) {
+        final refSimulada = allIds.join('D');
+        AppLogger.warning(
+          'Tope máximo de referencia alcanzado\n'
+          '  referencia  : "$refSimulada"\n'
+          '  longitud    : ${refSimulada.length} chars\n'
+          '  límite máx  : ${AppConstants.maxLongitudReferencia} chars',
+          tag: 'CARRITO',
+        );
+        emit(state.copyWith(
+          errorMessage: AppStrings.edoCtaReferenciaLimiteAlcanzado,
+        ));
+        emit(state.copyWith(errorMessage: null));
+        return;
+      }
+
       if (pago.aceptaPagosDiversos) {
         // Verificar que se puede seleccionar (orden ascendente)
         if (state.puedeSelecionarPago(alumnoId, pagoId, idsDisponibles)) {
@@ -145,7 +178,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
         } else {
           // No se puede seleccionar, emitir error temporal
           emit(state.copyWith(
-            errorMessage: 'Debe seleccionar los pagos en orden (del más antiguo al más reciente)',
+            errorMessage: AppStrings.edoCtaOrdenPagosMsg,
           ));
           // Limpiar el error después de mostrarlo
           emit(state.copyWith(errorMessage: null));

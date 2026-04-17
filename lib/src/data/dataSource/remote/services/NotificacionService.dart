@@ -51,6 +51,7 @@ class NotificacionService {
   /// Construye los headers HTTP con autenticación Bearer.
   Map<String, String> _buildHeaders(String token) => {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'Authorization': 'Bearer $token',
       };
 

@@ -168,6 +168,22 @@ class UserDrawer extends StatelessWidget {
                       ),
                       ListTile(
                         leading: Icon(
+                          Icons.privacy_tip_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        title: const Text(AppStrings.drawerAvisoPrivacidad),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          // Cerrar el drawer antes de navegar
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, 'aviso_de_privacidad');
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(
                           Icons.logout,
                           color: theme.colorScheme.error,
                         ),

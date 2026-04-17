@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Color de acento del ícono en la barra de estado (azul corporativo Arji) -->
+    <color name="notification_color">#1565C0</color>
 </resources>

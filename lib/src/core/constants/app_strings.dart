@@ -9,7 +9,7 @@ class AppStrings {
   // GENERAL
   // ============================================================================
 
-  static const String appName = 'ArjiPagos';
+  static const String appName = 'Arji Pagos';
   static const String appDescription = 'Plataforma de Gestión de Pagos';
 
   // ============================================================================
@@ -145,6 +145,11 @@ class AppStrings {
       'Debe seleccionar los pagos en orden (del más antiguo al más reciente)';
   static const String edoCtaGrupo = 'Grupo:';
   static const String edoCtaLimpiarSeleccion = 'Limpiar selección';
+  static const String edoCtaReferenciaLimiteAlcanzado =
+      'No es posible agregar más pagos a esta transacción.\n\n'
+      'El límite de la pasarela de pago ha sido alcanzado. '
+      'Realiza el pago con los pagos seleccionados y '
+      'después agrega los restantes.';
 
   // ============================================================================
   // CARRITO
@@ -160,6 +165,9 @@ class AppStrings {
   static const String carritoPagar = 'Pagar';
   static const String carritoProcesando = 'Procesando...';
   static const String carritoQuitarOrden = 'Debe quitar primero los pagos más recientes';
+  static const String carritoReferenciaExcede =
+      'La referencia de pago excede el límite permitido por la pasarela.\n\n'
+      'Regresa a Estados de Cuenta y reduce la cantidad de pagos seleccionados.';
 
   // ============================================================================
   // PAGO WEBVIEW
@@ -185,6 +193,11 @@ class AppStrings {
   static const String notificacionesSinNotif = 'Sin notificaciones';
   static const String notificacionesAquiApareceran =
       'Cuando tengas notificaciones aparecerán aquí';
+
+  // Canal de notificaciones Android — nombre y descripción visibles en Ajustes del sistema
+  static const String fcmChannelNombre = 'Arjipagos';
+  static const String fcmChannelDescripcion =
+      'Notificaciones de pagos y estados de cuenta';
 
   // ============================================================================
   // CAMBIAR CONTRASEÑA
@@ -274,6 +287,12 @@ class AppStrings {
   static const String drawerVersionIos = 'iOS';
   static const String drawerAvisoPrivacidadError =
       'No se pudo abrir el Aviso de Privacidad';
+  static const String avisoDePrivacidadActualizar = 'Actualizar';
+  static const String avisoDePrivacidadCargando =
+      'Cargando aviso de privacidad...';
+  static const String avisoDePrivacidadErrorCarga =
+      'No se pudo cargar el Aviso de Privacidad';
+  static const String avisoDePrivacidadReintentar = 'Reintentar';
 
   // ============================================================================
   // FACTURAS

@@ -12,6 +12,7 @@ import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
 import 'package:arjipagos/src/presentation/pages/home/HomePage.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/MenuPrincipalPage.dart';
+import 'package:arjipagos/src/presentation/pages/aviso_de_privacidad/AvisoDePrivacidadPage.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/FacturasPage.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/NotificacionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
@@ -91,6 +92,8 @@ class MyApp extends StatelessWidget {
           'notificaciones': (BuildContext context) =>
               const NotificacionesPage(),
           'facturas': (BuildContext context) => const FacturasPage(),
+          'aviso_de_privacidad': (BuildContext context) =>
+              const AvisoDePrivacidadPage(),
         },
         initialRoute: 'splash',
       ),

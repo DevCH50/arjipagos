@@ -13,13 +13,76 @@ _(ninguno)_
 
 ### Pendiente
 
-- Tests de widgets
-- Tests unitarios para EdoCtaListBloc y CarritoBloc
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **Íconos y sonido en notificaciones push — v1.0.11+17 (2026-04-17):**
+
+  **Android:**
+  - `drawable/ic_notification.xml` — ícono monocromático (campana blanca) para la barra de estado. Android 5+ requiere que sea blanco/transparente.
+  - `AndroidManifest.xml` — `meta-data` `default_notification_icon` apunta a `@drawable/ic_notification` y `default_notification_color` a `#1565C0`.
+  - `values/colors.xml` — color `notification_color` (#1565C0, azul corporativo Arji).
+  - `FcmService.dart` — canal `arjipagos_notif` y `AndroidNotificationDetails` actualizados: ícono `@drawable/ic_notification` + sonido `notif_sound` desde `res/raw/`.
+  - `res/raw/notif_sound.wav` — archivo de sonido personalizado para notificaciones.
+
+  **iOS:**
+  - `ios/Runner/notif_sound.wav` — archivo de sonido personalizado en el bundle de la app.
+
+  **Backend (ArjiApp Laravel):**
+  - `PushNotificationService.php` — `CloudMessage` enriquecido con `AndroidConfig::new()->withSound('notif_sound')` y `ApnsConfig::new()->withSound('notif_sound.wav')`.
+  - Imports añadidos: `AndroidConfig`, `ApnsConfig` del SDK Kreait.
+
+  **Debug:**
+  - `EdoCtaListBloc.dart` — `AppLogger.warning` cuando se alcanza el tope máximo de referencia; muestra cadena exacta, longitud y límite.
+  - `CarritoBloc.dart` — `debugPrint` en los dos puntos donde se valida `referenciaValida`.
+
+  **Verificación:**
+  - `flutter analyze` → **No issues found**
+  - `flutter test` → **385/385 tests pasan**
+  - APK release: `build/app/outputs/flutter-apk/app-release.apk` (92.4 MB) ✓
+  - AAB release: `build/app/outputs/bundle/release/app-release.aab` (80.5 MB) ✓
+
+- **Verificación completa del proyecto (2026-04-16):**
+  - `flutter analyze` → **No issues found**
+  - `flutter test` → **385/385 tests pasan**
+  - Revisión exhaustiva de todos los archivos modificados: FcmService, NotificacionService, NotificacionBloc, NotificacionItemWidget, CarritoBloc, CarritoState, EdoCtaListBloc, UserDrawer, DrawerFooter, AndroidManifest, AppDelegate.swift, Info.plist, main.dart, endpoints.dart, app_strings.dart
+  - Archivos nuevos verificados: `app_constants.dart`, `app_urls.dart`, `html_utils.dart`, `AvisoDePrivacidadPage`
+  - Tests de widgets e unitarios (html_utils, carrito_referencia, edo_cta_referencia) todos pasan
+
+- **Fix notificaciones push + Aviso de Privacidad (2026-04-16):**
+
+  **Aviso de Privacidad:**
+  - `AvisoDePrivacidadPage.dart` — nueva página WebView con botón refresh, indicador de carga y manejo de error.
+  - `app_urls.dart` (nuevo en `core/constants/`) — URL del aviso de privacidad. Arquitectura limpia: presentación usa `core`, no `data/api`.
+  - `Endpoints.avisodePrivacidad` eliminado de `endpoints.dart` (era violación CA).
+  - `user_drawer.dart` — ListTile "Aviso de Privacidad" entre Cambiar Contraseña y Cerrar Sesión; cierra el Drawer antes de navegar.
+  - `drawer_footer.dart` — eliminado el link y dependencia `url_launcher`; queda solo versión y texto de copia.
+  - `main.dart` — ruta `'aviso_de_privacidad'` registrada.
+
+  **Notificaciones Push — correcciones:**
+  - `FcmService.dart`:
+    - Canal Android creado con `Importance.high` para mostrar banners (heads-up).
+    - `_handleBackgroundMessage` ahora prioriza `data.title`/`data.message` sobre `notification`.
+    - Solo muestra notificación local si `message.notification == null` (evita duplicados en Android).
+    - `Accept: application/json` añadido a todos los headers HTTP.
+  - `NotificacionBloc.dart` — foreground handler prioriza campos `data`, ignora título genérico `'ArjiPagos'`.
+  - `html_utils.dart` (nuevo en `core/utils/`) — función `stripHtml()` centralizada con soporte completo de entidades HTML incluyendo español (`&iacute;`, `&aacute;`, etc.), entidades numéricas hex/decimal.
+  - `notificacion_item_widget.dart` — eliminada `_stripHtml` duplicada; usa la centralizada de `html_utils.dart`.
+  - `NotificacionService.dart` — `Accept: application/json` añadido a `_buildHeaders`.
+  - `AndroidManifest.xml` — `meta-data` con canal FCM por defecto (`arjipagos_notif`).
+  - `Info.plist` — removido `FirebaseAppDelegateProxyEnabled` (re-habilita swizzling FCM en iOS).
+  - `AppDelegate.swift` — simplificado, sin overrides manuales de APNs.
+  - `AppStrings` — strings para canal FCM y página Aviso de Privacidad.
+
+  **Backend Laravel (ArjiApp) — correcciones:**
+  - `PushNotificationService.php`:
+    - Título `'ArjiPagos'` cambiado a `'Estado de Cuenta Vencido'` en `notificarVencido()`.
+    - `data` payload ahora incluye `title` y `message` (texto plano) para que Flutter los lea directamente.
+    - `strip_tags` reemplazado por `html_entity_decode(strip_tags(...))` — evita `&iacute;` literal en el banner.
+  - `migrations/2026_04_16_000001_fix_mobile_type_default_usermobile.php` — elimina `DEFAULT 'android'` del campo `mobile_type`.
 
 - **Release 1.0.10+16 (2026-04-15):**
   - Actualización de dependencias: `badges 3.1.2 → 3.2.0`, `mocktail 1.0.4 → 1.0.5`, `vm_service 15.0.2 → 15.1.0`.

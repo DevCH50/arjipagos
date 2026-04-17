@@ -5,28 +5,138 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 
 // ============================================================================
-// HANDLER DE MENSAJES EN BACKGROUND (debe ser función top-level)
+// CONSTANTE DEL CANAL DE NOTIFICACIONES
+// Definida a nivel de archivo para que la función top-level pueda accederla.
+// IMPORTANTE: el valor debe coincidir con el meta-data en AndroidManifest.xml.
 // ============================================================================
 
-/// Maneja los mensajes de Firebase recibidos en segundo plano.
+/// ID del canal de notificaciones Android registrado en el sistema.
+const String _kFcmChannelId = 'arjipagos_notif';
+
+/// Nombre del archivo de sonido personalizado (sin extensión) en res/raw/.
+/// El archivo debe existir en android/app/src/main/res/raw/notif_sound.mp3
+/// y en ios/Runner/notif_sound.caf para tener efecto.
+const String _kSoundName = 'notif_sound';
+
+// ============================================================================
+// HANDLER DE MENSAJES EN BACKGROUND (función top-level obligatoria)
+// ============================================================================
+
+/// Maneja los mensajes de Firebase recibidos cuando la app está en segundo plano
+/// o terminada.
 ///
-/// Debe ser una función de nivel superior (top-level) para que
-/// Firebase Messaging pueda registrarla como handler de background.
+/// Debe ser función de nivel superior (top-level) con [@pragma('vm:entry-point')]
+/// para que Firebase Messaging pueda registrarla en un isolate separado.
+///
+/// **Android:** muestra notificación local cuando el sistema no la genera
+/// automáticamente:
+///  - Mensaje data-only (sin campo `notification`): el sistema no muestra nada.
+///  - Mensaje `notification` con título y cuerpo vacíos: el sistema mostraría
+///    un globo en blanco; usamos los campos `data` como fallback.
+/// **iOS:** APNs gestiona la notificación directamente; no se requiere acción.
 @pragma('vm:entry-point')
 Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+  // Requerido para usar plugins en el isolate de background.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Log completo del payload para facilitar diagnóstico del backend.
   AppLogger.info(
-    'Mensaje en background recibido — id: ${message.messageId}, '
-    'título: ${message.notification?.title}',
+    'FCM background — notification.title: "${message.notification?.title}" | '
+    'notification.body: "${message.notification?.body}"',
     tag: 'FCM',
   );
-  // Procesamiento adicional puede agregarse aquí según necesidades futuras
+  AppLogger.info(
+    'FCM background — data: ${message.data}',
+    tag: 'FCM',
+  );
+
+  // En iOS el sistema APNs se encarga de mostrar la notificación.
+  if (!Platform.isAndroid) {
+    return;
+  }
+
+  // Los campos `data` tienen PRIORIDAD sobre `notification`.
+  // El backend puede enviar un título genérico (ej: nombre de la app) en
+  // notification.title y el contenido real en data.title / data.message.
+  final dataTitle = message.data['title']?.toString() ?? '';
+  // El campo `message` puede contener HTML; se elimina para mostrar texto plano.
+  final dataBody = stripHtml(
+    message.data['message']?.toString() ??
+    message.data['body']?.toString() ?? '',
+  );
+
+  final systemTitle = message.notification?.title ?? '';
+  final systemBody = message.notification?.body ?? '';
+
+  // Si el backend usa el nombre de la app como título genérico, ignorarlo.
+  final titulo = (dataTitle.isNotEmpty && dataTitle != 'ArjiPagos')
+      ? dataTitle
+      : (systemTitle.isNotEmpty && systemTitle != 'ArjiPagos')
+          ? systemTitle
+          : 'ArjiPagos';
+  final cuerpo = dataBody.isNotEmpty ? dataBody : systemBody;
+
+  // Solo mostrar notificación local cuando el mensaje es data-only (sin campo
+  // `notification`). Si el mensaje tiene campo `notification`, Android ya lo
+  // mostró automáticamente antes de que Dart arrancara — mostrar otra aquí
+  // causaría un duplicado visible al usuario.
+  final esDataOnly = message.notification == null;
+  if (esDataOnly && (titulo.isNotEmpty || cuerpo.isNotEmpty)) {
+    await _mostrarNotificacionLocalAndroid(
+      id: message.hashCode,
+      titulo: titulo,
+      cuerpo: cuerpo,
+    );
+  }
+}
+
+/// Muestra una notificación local en Android con alta importancia (heads-up).
+///
+/// Se invoca desde [_handleBackgroundMessage] cuando el sistema no genera
+/// una notificación automáticamente o la genera con contenido vacío.
+Future<void> _mostrarNotificacionLocalAndroid({
+  required int id,
+  required String titulo,
+  required String cuerpo,
+}) async {
+  final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
+
+  await plugin.initialize(
+    const InitializationSettings(
+      // Ícono monocromático requerido por Android para la barra de estado.
+      android: AndroidInitializationSettings('@drawable/ic_notification'),
+    ),
+  );
+
+  await plugin.show(
+    id,
+    titulo.isNotEmpty ? titulo : null,
+    cuerpo.isNotEmpty ? cuerpo : null,
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        _kFcmChannelId,
+        AppStrings.fcmChannelNombre,
+        channelDescription: AppStrings.fcmChannelDescripcion,
+        importance: Importance.high,
+        priority: Priority.high,
+        // Ícono monocromático en barra de estado (obligatorio desde Android 5+).
+        icon: '@drawable/ic_notification',
+        // Sonido personalizado del canal; si no existe el archivo usa el default.
+        sound: RawResourceAndroidNotificationSound(_kSoundName),
+        playSound: true,
+      ),
+    ),
+  );
 }
 
 // ============================================================================
@@ -35,9 +145,10 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
 
 /// Servicio para gestión de Firebase Cloud Messaging (FCM).
 ///
-/// Maneja la obtención del token del dispositivo, el registro y la eliminación
-/// de dicho token en el backend, y la configuración de handlers para
-/// notificaciones push en primer y segundo plano.
+/// Responsabilidades:
+/// - Obtener el token FCM del dispositivo.
+/// - Registrar y eliminar el token en el backend (login / logout).
+/// - Configurar permisos, canal de notificaciones Android y handlers de FCM.
 class FcmService {
   FcmService();
 
@@ -47,9 +158,8 @@ class FcmService {
 
   /// Determina el tipo de dispositivo para el campo `mobile_type` del backend.
   ///
-  /// - Android → `'Android'`
-  /// - iPad    → `'iPad'`  (shortestSide ≥ 600 dp)
-  /// - iPhone  → `'iPhone'`
+  /// - Android → `'android'`
+  /// - iOS     → `'ios'`
   String obtenerTipoDispositivo() {
     return Platform.isAndroid ? 'android' : 'ios';
   }
@@ -114,6 +224,7 @@ class FcmService {
             url,
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
               'Authorization': 'Bearer $authToken',
             },
             body: json.encode({
@@ -179,6 +290,7 @@ class FcmService {
             url,
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
               'Authorization': 'Bearer $authToken',
             },
             body: json.encode({'token': fcmToken}),
@@ -218,12 +330,15 @@ class FcmService {
 
   /// Configura los permisos y handlers de Firebase Messaging.
   ///
-  /// - Solicita permisos de notificación al usuario (obligatorio en iOS, Android 13+).
-  /// - Configura las opciones de presentación en primer plano para iOS.
-  /// - Registra el handler para mensajes recibidos en background.
+  /// Pasos:
+  /// 1. Solicita permisos de notificación (obligatorio en iOS, Android 13+).
+  /// 2. **Android:** crea el canal de alta importancia `arjipagos_notif`
+  ///    (sin canal explícito FCM usa uno genérico con baja importancia y sin banner).
+  /// 3. **iOS:** configura las opciones de presentación en primer plano.
+  /// 4. Registra el handler para mensajes en background.
   Future<void> configurarHandlers() async {
     try {
-      // Solicitar permisos al usuario (requerido en iOS, opcional en Android 13+)
+      // 1. Solicitar permisos al usuario.
       final NotificationSettings settings =
           await FirebaseMessaging.instance.requestPermission(
         alert: true,
@@ -237,14 +352,37 @@ class FcmService {
         tag: 'FCM',
       );
 
-      // Configurar opciones de presentación en primer plano para iOS
+      // 2. Crear canal de notificaciones Android (requerido para Android 8.0+).
+      if (Platform.isAndroid) {
+        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          _kFcmChannelId,
+          AppStrings.fcmChannelNombre,
+          description: AppStrings.fcmChannelDescripcion,
+          importance: Importance.high,
+          // Sonido personalizado del canal. Archivo: res/raw/notif_sound.mp3
+          // NOTA: Android no permite cambiar el sonido de un canal ya creado.
+          // Si el canal ya existe en el dispositivo, desinstalar y reinstalar la
+          // app para que el nuevo sonido tenga efecto.
+          sound: RawResourceAndroidNotificationSound(_kSoundName),
+          playSound: true,
+        );
+
+        await FlutterLocalNotificationsPlugin()
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(channel);
+
+        AppLogger.info('Canal de notificaciones Android creado: $_kFcmChannelId', tag: 'FCM');
+      }
+
+      // 3. Configurar presentación en primer plano para iOS.
       await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
         alert: true,
         badge: true,
         sound: true,
       );
 
-      // Registrar handler para mensajes en segundo plano
+      // 4. Registrar handler para mensajes en segundo plano.
       FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
 
       AppLogger.info('Handlers de FCM configurados correctamente', tag: 'FCM');

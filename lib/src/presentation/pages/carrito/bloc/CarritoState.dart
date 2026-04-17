@@ -1,6 +1,7 @@
-import 'package:equatable/equatable.dart';
+import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
+import 'package:equatable/equatable.dart';
 
 /// Estado del BLoC de Carrito.
 class CarritoState extends Equatable {
@@ -116,6 +117,17 @@ class CarritoState extends Equatable {
     }
     return allIds.join('D');
   }
+
+  /// Longitud actual de la referencia de pago.
+  int get longitudReferencia => referenciaPago.length;
+
+  /// Indica si la referencia cabe dentro del límite de Adquira México.
+  ///
+  /// Cuando es `false`, el pago no puede procesarse y el usuario debe
+  /// reducir la cantidad de pagos seleccionados.
+  bool get referenciaValida =>
+      referenciaPago.isEmpty ||
+      referenciaPago.length <= AppConstants.maxLongitudReferencia;
 
   @override
   List<Object?> get props => [

@@ -76,14 +76,6 @@ abstract class Endpoints {
   static const String facturas = '/api/v1/facturas/list';
 
   // ============================================================================
-  // LEGALES / INFORMACIÓN
-  // ============================================================================
-
-  /// URL completa del Aviso de Privacidad (página web externa)
-  static const String avisodePrivacidad =
-      'https://arjipagos.moriah.mx/aviso-de-privacidad';
-
-  // ============================================================================
   // DISPOSITIVO (FCM)
   // ============================================================================
 

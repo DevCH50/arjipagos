@@ -154,7 +154,7 @@ lib/src/
 - Guarda todo lo que ya esta aprobado y funcionando bien
 - No borrar nada sin preguntar
 - Asegúrate de que todos los widgets y pantallas estén bien optimizados para Android e iOS y en ambos temas, oscuros y claros
-- Para tareas específicas utiliza subagentes, por ejemplo para crear un widget, utiliza un subagente para crear el widget, otro para crear el bloc, otro para crear el evento, otro para crear el estado, etc.
+- En la medida de lo posible usa agentes y/o subagentes, por ejemplo para crear un widget, utiliza un subagente para crear el widget, otro para crear el bloc, otro para crear el evento, otro para crear el estado, etc.
 - Debes asegurarte de no romper nada y que se apegue estrictamente a las arquitecturas limpias y la inyección de dependencias
 - Si tienes dudas, pregunta, antes de proceder
 - Si tienes que crear un nuevo archivo, asegúrate de que esté bien comentado y que esté bien estructurado
@@ -177,3 +177,4 @@ lib/src/
 - No uses emojis en los nombres de los archivos de prueba
 - Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.
 - Todos los strings hardcodeados en el código que deberían estar en AppStrings
+- No te metas al backend a menos que el usuario te lo pida.

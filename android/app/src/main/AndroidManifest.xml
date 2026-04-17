@@ -34,6 +34,21 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Canal predeterminado para FCM (Android 8.0+).
+             Debe coincidir con _kFcmChannelId en FcmService.dart. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="arjipagos_notif"/>
+        <!-- Ícono monocromático (blanco/transparente) para notificaciones push.
+             Se usa cuando el sistema genera la notificación directamente (mensajes
+             con campo `notification` recibidos en background). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification"/>
+        <!-- Color de acento del ícono de notificación en la barra de estado. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

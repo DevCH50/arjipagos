@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
@@ -72,15 +73,39 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   /// y lo despacha al BLoC para actualizar la UI sin llamada de red.
   void _onFcmForegroundMessage(RemoteMessage message) {
     AppLogger.info(
-      'FCM foreground — título: ${message.notification?.title}',
+      'FCM foreground — notification.title: "${message.notification?.title}" | '
+      'notification.body: "${message.notification?.body}"',
       tag: 'FCM',
     );
+    AppLogger.info(
+      'FCM foreground — data: ${message.data}',
+      tag: 'FCM',
+    );
+
+    // Los campos `data` tienen PRIORIDAD sobre `notification`.
+    // El backend puede enviar un título genérico en notification.title y el
+    // contenido real en data.title / data.message (que puede contener HTML).
+    final dataTitle = message.data['title']?.toString() ?? '';
+    final dataBodyRaw = message.data['message']?.toString() ??
+        message.data['body']?.toString() ?? '';
+    // Limpiar HTML del cuerpo para mostrar texto plano en la lista.
+    final dataBody = stripHtml(dataBodyRaw);
+
+    final systemTitle = message.notification?.title ?? '';
+    final systemBody = message.notification?.body ?? '';
+
+    // Si el backend usa el nombre de la app como título genérico, ignorarlo.
+    final titulo = (dataTitle.isNotEmpty && dataTitle != 'ArjiPagos')
+        ? dataTitle
+        : (systemTitle.isNotEmpty && systemTitle != 'ArjiPagos')
+            ? systemTitle
+            : 'ArjiPagos';
 
     final notificacion = Notificacion(
       id: 0, // Sin ID real; se actualiza al abrir la pantalla de notificaciones
       userId: 0,
-      titulo: message.notification?.title ?? '',
-      mensaje: message.notification?.body ?? '',
+      titulo: titulo,
+      mensaje: dataBody.isNotEmpty ? dataBody : systemBody,
       campania: message.data['campania']?.toString() ?? '',
       fecha: DateTime.now(),
       isRead: false,

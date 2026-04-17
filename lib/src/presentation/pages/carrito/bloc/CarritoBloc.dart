@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:arjipagos/src/core/constants/app_constants.dart';
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
@@ -7,6 +8,7 @@ import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC para manejar el carrito de compras.
@@ -62,11 +64,26 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
 
       if (result is Success) {
         final response = (result as Success).data;
-        emit(state.copyWith(
+        final estadoCargado = state.copyWith(
           isLoading: false,
           alumnos: response.alumnos,
           pagosSeleccionados: pagosSeleccionados,
-        ));
+        );
+        emit(estadoCargado);
+
+        // Validación defensiva: si los pagos guardados en storage forman una
+        // referencia que ya excede el límite, avisar al usuario para que la reduzca.
+        if (!estadoCargado.referenciaValida) {
+          debugPrint(
+            '[CARRITO] ⚠ Referencia excede límite al cargar carrito\n'
+            '  referencia  : "${estadoCargado.referenciaPago}"\n'
+            '  longitud    : ${estadoCargado.longitudReferencia} chars\n'
+            '  límite máx  : ${AppConstants.maxLongitudReferencia} chars',
+          );
+          emit(estadoCargado.copyWith(
+            errorMessage: AppStrings.carritoReferenciaExcede,
+          ));
+        }
       } else {
         emit(state.copyWith(
           isLoading: false,
@@ -118,7 +135,21 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     Emitter<CarritoState> emit,
   ) async {
     if (state.cantidadPagos == 0) {
-      emit(state.copyWith(errorMessage: 'No hay pagos seleccionados'));
+      emit(state.copyWith(errorMessage: AppStrings.carritoSinPagos));
+      return;
+    }
+
+    // Validar que la referencia no exceda el límite de Adquira México.
+    // Esto protege contra datos cargados desde versiones anteriores de la app
+    // y como segunda barrera ante la validación en EdoCta.
+    if (!state.referenciaValida) {
+      debugPrint(
+        '[CARRITO] ⚠ Referencia excede límite al intentar pagar\n'
+        '  referencia  : "${state.referenciaPago}"\n'
+        '  longitud    : ${state.longitudReferencia} chars\n'
+        '  límite máx  : ${AppConstants.maxLongitudReferencia} chars',
+      );
+      emit(state.copyWith(errorMessage: AppStrings.carritoReferenciaExcede));
       return;
     }
 

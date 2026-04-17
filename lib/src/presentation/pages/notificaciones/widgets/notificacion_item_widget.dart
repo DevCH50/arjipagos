@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,7 @@ class NotificacionItemWidget extends StatelessWidget {
           : null,
       leading: _buildLeading(colorScheme, noLeida),
       title: Text(
-        _stripHtml(notificacion.titulo),
+        stripHtml(notificacion.titulo),
         style: textTheme.bodyMedium?.copyWith(
           fontWeight: noLeida ? FontWeight.bold : FontWeight.normal,
           color: colorScheme.onSurface,
@@ -39,7 +40,7 @@ class NotificacionItemWidget extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        _stripHtml(notificacion.mensaje),
+        stripHtml(notificacion.mensaje),
         style: textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurfaceVariant,
         ),
@@ -96,73 +97,6 @@ class NotificacionItemWidget extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  /// Elimina etiquetas HTML y decodifica entidades para mostrar texto plano.
-  ///
-  /// Maneja entidades numéricas decimales (&#NNN;), hexadecimales (&#xHHH;)
-  /// y las entidades nombradas más comunes, incluyendo caracteres en español.
-  String _stripHtml(String html) {
-    // 1. Eliminar todas las etiquetas HTML
-    String texto = html.replaceAll(RegExp(r'<[^>]*>'), '');
-
-    // 2. Decodificar entidades numéricas hexadecimales (ej: &#x27; → ')
-    texto = texto.replaceAllMapped(
-      RegExp(r'&#x([0-9a-fA-F]+);'),
-      (m) {
-        final code = int.tryParse(m.group(1)!, radix: 16);
-        return code != null ? String.fromCharCode(code) : m.group(0)!;
-      },
-    );
-
-    // 3. Decodificar entidades numéricas decimales (ej: &#039; → ')
-    texto = texto.replaceAllMapped(
-      RegExp(r'&#([0-9]+);'),
-      (m) {
-        final code = int.tryParse(m.group(1)!);
-        return code != null ? String.fromCharCode(code) : m.group(0)!;
-      },
-    );
-
-    // 4. Decodificar entidades nombradas comunes
-    const entidades = <String, String>{
-      '&nbsp;': ' ',
-      '&amp;': '&',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&quot;': '"',
-      '&apos;': "'",
-      // Vocales con tilde (minúsculas y mayúsculas)
-      '&aacute;': 'á', '&Aacute;': 'Á',
-      '&eacute;': 'é', '&Eacute;': 'É',
-      '&iacute;': 'í', '&Iacute;': 'Í',
-      '&oacute;': 'ó', '&Oacute;': 'Ó',
-      '&uacute;': 'ú', '&Uacute;': 'Ú',
-      '&uuml;': 'ü', '&Uuml;': 'Ü',
-      '&ntilde;': 'ñ', '&Ntilde;': 'Ñ',
-      // Puntuación especial en español
-      '&iexcl;': '¡', '&iquest;': '¿',
-      // Comillas tipográficas
-      '&lsquo;': '\u2018', '&rsquo;': '\u2019',
-      '&ldquo;': '\u201C', '&rdquo;': '\u201D',
-      '&laquo;': '«', '&raquo;': '»',
-      // Guiones y puntos suspensivos
-      '&mdash;': '\u2014', '&ndash;': '\u2013',
-      '&hellip;': '\u2026',
-      // Símbolos frecuentes
-      '&copy;': '©', '&reg;': '®', '&trade;': '™',
-      '&euro;': '€', '&cent;': '¢', '&pound;': '£',
-      '&bull;': '•', '&middot;': '·',
-    };
-
-    for (final entry in entidades.entries) {
-      texto = texto.replaceAll(entry.key, entry.value);
-    }
-
-    // 5. Normalizar espacios múltiples y saltos de línea
-    return texto
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
   }
 
   /// Calcula una representación relativa de la fecha respecto al momento actual.
