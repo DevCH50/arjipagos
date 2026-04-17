@@ -49,7 +49,7 @@ class AlumnoCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: alumno.esBaja
                           ? Theme.of(context).colorScheme.error
-                          : Colors.green.shade600,
+                          : Theme.of(context).colorScheme.tertiary,
                     ),
                   ),
                 ),

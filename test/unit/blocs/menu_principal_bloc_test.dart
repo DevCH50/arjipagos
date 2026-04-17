@@ -148,7 +148,7 @@ void main() {
 
     group('MenuPrincipalInitialEvent', () {
       blocTest<MenuPrincipalBloc, MenuPrincipalState>(
-        'emite error cuando getUserSession devuelve null',
+        'emite isLoading=false sin error cuando getUserSession devuelve null (caso normal sin sesión)',
         setUp: () {
           when(() => mockGetUserSession.run()).thenAnswer((_) async => null);
         },
@@ -158,19 +158,10 @@ void main() {
           // Estado de carga
           isA<MenuPrincipalState>()
               .having((s) => s.isLoading, 'isLoading', isTrue),
-          // Estado de error sin sesión
+          // Sin sesión es un caso normal (SplashPage navega a login), no se emite error
           isA<MenuPrincipalState>()
               .having((s) => s.isLoading, 'isLoading', isFalse)
-              .having(
-                (s) => s.errorMessage,
-                'errorMessage',
-                'No se pudo cargar la información del usuario',
-              )
-              .having(
-                (s) => s.menuItems,
-                'menuItems',
-                hasLength(MenuPrincipalState.defaultMenuItems.length),
-              ),
+              .having((s) => s.errorMessage, 'errorMessage', isNull),
         ],
         verify: (_) {
           verify(() => mockGetUserSession.run()).called(1);
