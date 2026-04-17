@@ -3,6 +3,8 @@ import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginState.dart';
+import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
+import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart'; // MenuPrincipalRegistrarFcm
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -21,6 +23,15 @@ class LoginResponse extends StatelessWidget {
           if (responseState.data.status == 1) {
             final data = responseState.data as AuthResponse;
             bloc?.add(LoginSaveUserSession(authResponse: data));
+            // Registrar token FCM con el accessToken directo.
+            context.read<MenuPrincipalBloc>().add(
+              MenuPrincipalRegistrarFcm(accessToken: data.accessToken),
+            );
+            // Re-cargar datos del usuario después de que la sesión se guarde.
+            final menuBloc = context.read<MenuPrincipalBloc>();
+            Future.delayed(const Duration(milliseconds: 500), () {
+              menuBloc.add(const MenuPrincipalInitialEvent());
+            });
             Navigator.pushNamedAndRemoveUntil(
               context,
               'menu_principal',

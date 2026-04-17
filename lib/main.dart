@@ -45,14 +45,22 @@ void main() async {
   // Inicializar Firebase (requerido para FCM)
   try {
     await Firebase.initializeApp();
-    // Configurar permisos y handlers de notificaciones push
-    await FcmService().configurarHandlers();
   } catch (e) {
     AppLogger.error('Error al inicializar Firebase: $e', tag: 'Main');
   }
 
   await configureDependencies();
   runApp(const MyApp());
+
+  // Configurar permisos y handlers de FCM después de que la UI esté lista.
+  // requestPermission() necesita la UI renderizada para mostrar el diálogo.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await FcmService().configurarHandlers();
+    } catch (e) {
+      AppLogger.error('Error al configurar FCM: $e', tag: 'Main');
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {

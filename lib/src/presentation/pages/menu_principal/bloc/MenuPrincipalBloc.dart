@@ -21,6 +21,7 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
   MenuPrincipalBloc(this.authUseCases, this.edoCtaUseCases, this.fcmService)
       : super(const MenuPrincipalState()) {
     on<MenuPrincipalInitialEvent>(_onInitialEvent);
+    on<MenuPrincipalRegistrarFcm>(_onRegistrarFcm);
     on<MenuItemSelected>(_onMenuItemSelected);
     on<MenuPrincipalLogout>(_onLogout);
   }
@@ -70,11 +71,8 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
           emit(state.copyWith(isLoading: false));
         }
       } else {
-        emit(state.copyWith(
-          isLoading: false,
-          menuItems: MenuPrincipalState.defaultMenuItems,
-          errorMessage: AppStrings.menuNoPudoCargar,
-        ));
+        // Sin sesión activa — caso normal al arrancar sin estar logueado.
+        emit(state.copyWith(isLoading: false));
       }
     } catch (e) {
       emit(state.copyWith(
@@ -94,6 +92,15 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
     emit(state.copyWith(selectedItemId: event.itemId));
     // Resetear el ID para permitir seleccionar el mismo item de nuevo
     emit(state.copyWith(selectedItemId: null));
+  }
+
+  /// Maneja el registro del token FCM tras login exitoso.
+  /// Recibe el accessToken directamente para evitar condición de carrera.
+  Future<void> _onRegistrarFcm(
+    MenuPrincipalRegistrarFcm event,
+    Emitter<MenuPrincipalState> emit,
+  ) async {
+    _registrarTokenFcm(event.accessToken);
   }
 
   /// Registra el token FCM del dispositivo en el backend de forma silenciosa.

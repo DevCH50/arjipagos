@@ -173,6 +173,27 @@ class FcmService {
   /// Retorna `null` si ocurre cualquier error durante la obtención.
   Future<String?> obtenerToken() async {
     try {
+      // En iOS, el token APNS se registra de forma asíncrona después del arranque.
+      // FCM necesita el token APNS antes de poder generar el token FCM.
+      // Se reintenta hasta 5 veces con 2 segundos de espera entre intentos.
+      if (Platform.isIOS) {
+        String? apnsToken;
+        int intentos = 0;
+        while (apnsToken == null && intentos < 5) {
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          if (apnsToken == null) {
+            AppLogger.warning('APNS token no disponible, reintentando (${intentos + 1}/5)...', tag: 'FCM');
+            await Future.delayed(const Duration(seconds: 2));
+            intentos++;
+          }
+        }
+        if (apnsToken == null) {
+          AppLogger.warning('No se pudo obtener APNS token después de 5 intentos', tag: 'FCM');
+          return null;
+        }
+        AppLogger.info('APNS token obtenido correctamente', tag: 'FCM');
+      }
+
       final String? token = await FirebaseMessaging.instance.getToken();
 
       if (token != null && token.isNotEmpty) {
