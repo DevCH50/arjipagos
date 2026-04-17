@@ -23,9 +23,9 @@ class CambiarContrasenaResponse extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(
+        icon: Icon(
           Icons.check_circle_outline,
-          color: Colors.green,
+          color: Theme.of(context).colorScheme.tertiary,
           size: 48,
         ),
         title: const Text(AppStrings.cambiarContrasenaActualizada),

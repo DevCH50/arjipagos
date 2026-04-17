@@ -36,11 +36,11 @@ class UserDrawer extends StatelessWidget {
       title: AppStrings.logoutTitle,
       message: AppStrings.logoutMessage,
       icon: Icons.logout,
-      iconColor: Colors.orange,
+      iconColor: Theme.of(context).colorScheme.primary,
       confirmText: AppStrings.logoutConfirm,
       cancelText: AppStrings.cancel,
-      confirmButtonColor: Colors.red,
-      confirmTextColor: Colors.white,
+      confirmButtonColor: Theme.of(context).colorScheme.primary,
+      confirmTextColor: Theme.of(context).colorScheme.onPrimary,
     );
 
     if (!shouldLogout) {

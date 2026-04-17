@@ -33,23 +33,29 @@ class HomeHeaderWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _InfoChip(
-            label: 'Familia ID',
-            value: alumnosResponse.familiaId.toString(),
-            icon: Icons.family_restroom,
-            isDark: isDark,
+          Flexible(
+            child: _InfoChip(
+              label: 'Familia ID',
+              value: alumnosResponse.familiaId.toString(),
+              icon: Icons.family_restroom,
+              isDark: isDark,
+            ),
           ),
-          _InfoChip(
-            label: 'Ciclo Escolar',
-            value: alumnosResponse.cicloPredeterminado.toString(),
-            icon: Icons.calendar_today,
-            isDark: isDark,
+          Flexible(
+            child: _InfoChip(
+              label: 'Ciclo Escolar',
+              value: alumnosResponse.cicloPredeterminado.toString(),
+              icon: Icons.calendar_today,
+              isDark: isDark,
+            ),
           ),
-          _InfoChip(
-            label: alumnosCount == 1 ? AppStrings.homeStudent : AppStrings.homeStudents,
-            value: alumnosCount.toString(),
-            icon: Icons.people,
-            isDark: isDark,
+          Flexible(
+            child: _InfoChip(
+              label: alumnosCount == 1 ? AppStrings.homeStudent : AppStrings.homeStudents,
+              value: alumnosCount.toString(),
+              icon: Icons.people,
+              isDark: isDark,
+            ),
           ),
         ],
       ),
@@ -80,6 +86,8 @@ class _InfoChip extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -88,6 +96,8 @@ class _InfoChip extends StatelessWidget {
         ),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,

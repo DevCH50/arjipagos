@@ -47,7 +47,9 @@ class AlumnoCard extends StatelessWidget {
                     height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: alumno.esBaja ? Colors.red : Colors.green,
+                      color: alumno.esBaja
+                          ? Theme.of(context).colorScheme.error
+                          : Colors.green.shade600,
                     ),
                   ),
                 ),

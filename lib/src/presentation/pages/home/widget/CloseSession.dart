@@ -61,7 +61,7 @@ class CloseSession extends StatelessWidget {
       title: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
+            Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.primary),
             const SizedBox(width: 12),
           ],
           Expanded(child: Text(title)),
@@ -82,12 +82,12 @@ class CloseSession extends StatelessWidget {
             Navigator.pop(context, true);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: confirmButtonColor ?? Theme.of(context).primaryColor,
+            backgroundColor: confirmButtonColor ?? Theme.of(context).colorScheme.primary,
           ),
           child: Text(
             confirmText,
             style: TextStyle(
-              color: confirmTextColor ?? Colors.white,
+              color: confirmTextColor ?? Theme.of(context).colorScheme.onPrimary,
             ),
           ),
         ),

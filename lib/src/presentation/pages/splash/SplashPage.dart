@@ -1,4 +1,3 @@
-import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashBloc.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashState.dart';
@@ -40,33 +39,38 @@ class _SplashView extends StatelessWidget {
               context, 'login', (route) => false);
         }
       },
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.splashGradientStart,
-                AppColors.splashGradientEnd,
-              ],
+      child: Builder(
+        builder: (context) {
+          final colorScheme = Theme.of(context).colorScheme;
+          return Scaffold(
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.primary,
+                    colorScheme.secondary,
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _SpinningLogo(),
+                    SizedBox(height: 48),
+                    _SplashTitle(),
+                    SizedBox(height: 8),
+                    _SplashSubtitle(),
+                    SizedBox(height: 32),
+                    _MatrixPercent(),
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _SpinningLogo(),
-                SizedBox(height: 48),
-                _SplashTitle(),
-                SizedBox(height: 8),
-                _SplashSubtitle(),
-                SizedBox(height: 32),
-                _MatrixPercent(),
-              ],
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

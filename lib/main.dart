@@ -1,6 +1,6 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/blocProvider.dart';
-import 'package:arjipagos/src/core/theme/app_theme.dart';
+import 'package:arjipagos/src/core/theme/arji/arji_theme.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:firebase_core/firebase_core.dart';

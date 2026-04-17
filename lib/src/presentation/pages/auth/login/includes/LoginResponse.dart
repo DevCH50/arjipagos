@@ -48,7 +48,11 @@ class LoginResponse extends StatelessWidget {
       builder: (context, state) {
         final responseState = state.response;
         if (responseState is Loading) {
-          return const Center(child: CircularProgressIndicator(color: Colors.blue));
+          return Center(
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          );
         }
         return const SizedBox.shrink();
       },

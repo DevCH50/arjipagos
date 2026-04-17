@@ -32,18 +32,31 @@ class PagoItem extends StatelessWidget {
         final puedeSeleccionar = _calcularPuedeSeleccionar(state);
         final backgroundColor = _calcularColorFondo(isSeleccionado, isDark);
 
-        return Container(
-          color: backgroundColor,
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+        return InkWell(
+          onTap: () => _onTap(context, puedeSeleccionar, isSeleccionado),
+          child: Container(
+            color: backgroundColor,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildCheckbox(context, isSeleccionado, puedeSeleccionar),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTitulo(theme),
+                      const SizedBox(height: 4),
+                      _buildSubtitulo(theme),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildTrailing(theme, isSeleccionado, isDark),
+              ],
             ),
-            leading: _buildCheckbox(context, isSeleccionado, puedeSeleccionar),
-            title: _buildTitulo(theme),
-            subtitle: _buildSubtitulo(theme),
-            trailing: _buildTrailing(theme, isSeleccionado, isDark),
-            onTap: () => _onTap(context, puedeSeleccionar, isSeleccionado),
           ),
         );
       },
@@ -96,9 +109,9 @@ class PagoItem extends StatelessWidget {
   /// Construye el subtítulo con fecha y estado.
   Widget _buildSubtitulo(ThemeData theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
         Row(
           children: [
             Icon(
@@ -107,10 +120,14 @@ class PagoItem extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 4),
-            Text(
-              'Vence: ${pago.fechaVencimiento}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            Flexible(
+              child: Text(
+                'Vence: ${pago.fechaVencimiento}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -124,6 +141,7 @@ class PagoItem extends StatelessWidget {
   /// Construye el trailing con monto y número de pago.
   Widget _buildTrailing(ThemeData theme, bool isSeleccionado, bool isDark) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [

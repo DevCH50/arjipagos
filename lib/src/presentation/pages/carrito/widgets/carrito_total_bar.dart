@@ -22,9 +22,7 @@ class CarritoTotalBar extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? theme.colorScheme.surfaceContainerHigh
-                : Colors.white,
+            color: theme.colorScheme.surfaceContainerHigh,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),

@@ -20,8 +20,10 @@ class PrimaryElevatedButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final bgColor = color ?? colorScheme.primary;
-    // Si usa color personalizado, texto oscuro; si usa el tema, usa onPrimary
-    final textColor = color != null ? Colors.black54 : colorScheme.onPrimary;
+    // Calcula texto legible según la luminancia del fondo
+    final textColor = color != null
+        ? (color!.computeLuminance() > 0.5 ? Colors.black87 : Colors.white)
+        : colorScheme.onPrimary;
 
     return ElevatedButton(
       onPressed: onPressed,
