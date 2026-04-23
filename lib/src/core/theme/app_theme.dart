@@ -44,10 +44,9 @@ class AppTheme {
   // CONSTRUCTOR DE TEMA
   // ============================================================================
 
-  /// TextTheme con Roboto Flex (cuerpo y display), coloreado según el esquema.
-  /// Sigue el mismo patrón de util.dart del tema cafecito.
+  /// TextTheme con Inter (cuerpo y display), coloreado según el esquema.
   static TextTheme _buildTextTheme(ColorScheme colorScheme) {
-    final base = GoogleFonts.robotoFlexTextTheme();
+    final base = GoogleFonts.interTextTheme();
     return base.apply(
       bodyColor: colorScheme.onSurface,
       displayColor: colorScheme.onSurface,

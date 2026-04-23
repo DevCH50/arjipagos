@@ -142,6 +142,7 @@ lib/src/
 
 ## Reglas del código
 
+- Antes de implementar, asegúrate de planificar en modo plan y luego escribe.
 - Todo en español (comentarios, commits, documentación)
 - Widgets < 200 líneas
 - No utilizar más de 3 niveles de anidación de widgets
@@ -154,30 +155,23 @@ lib/src/
 - Guarda todo lo que ya esta aprobado y funcionando bien
 - No borrar nada sin preguntar
 - Asegúrate de que todos los widgets y pantallas estén bien optimizados para Android e iOS y en ambos temas, oscuros y claros
-- En la medida de lo posible usa agentes y/o subagentes, por ejemplo para crear un widget, utiliza un subagente para crear el widget, otro para crear el bloc, otro para crear el evento, otro para crear el estado, etc.
+- En la medida de lo posible usa agentes, por ejemplo para crear un widget, utiliza un subagente para crear el widget, otro para crear el bloc, otro para crear el evento, otro para crear el estado, etc.
 - Debes asegurarte de no romper nada y que se apegue estrictamente a las arquitecturas limpias y la inyección de dependencias
 - Si tienes dudas, pregunta, antes de proceder
 - Si tienes que crear un nuevo archivo, asegúrate de que esté bien comentado y que esté bien estructurado
 - No Toast, utiliza SnackBar para mostrar mensajes de error o éxito
 - Quita del git, todo aquello que no debe ir o que es peligroso que este en git. Me refiero al  
   remoto. Incluye la carpeta "otros".
-- No uses emojis en los nombres de los archivos
-- No uses emojis en los nombres de las carpetas
-- No uses emojis en los nombres de los widgets
-- No uses emojis en los nombres de los eventos
-- No uses emojis en los nombres de los estados
-- No uses emojis en los nombres de los repositorios
-- No uses emojis en los nombres de los casos de uso
-- No uses emojis en los nombres de los modelos
-- No uses emojis en los nombres de las entidades
-- No uses emojis en los nombres de las interfaces
-- No uses emojis en los nombres de los servicios
-- No uses emojis en los nombres de las utilidades
-- No uses emojis en los nombres de los archivos de configuración
-- No uses emojis en los nombres de los archivos de prueba
 - Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.
 - Todos los strings hardcodeados en el código que deberían estar en AppStrings
 - No te metas al backend a menos que el usuario te lo pida.
-- Revisa minuciosamente que en iOS y Android no tenga fallos o errores, que todo funcione          
-  perfectamente bien, y que se vea en todas los distintos tamaños de pantallas tando de iOS como   
+- Revisa minuciosamente que en iOS y Android no tenga fallos o errores, que todo funcione  
+  perfectamente bien, y que se vea en todas los distintos tamaños de pantallas tando de iOS como  
   de Android
+- Para GIT solo del proyecto actual ArjiPagos, y solo de los archivos que tengan cambios. No  
+  incluyas archivos de log, ni de editor, ni de version de sistema operativo, ni nada por el estilo.
+- No me refiero a los archivos que estan en el .gitignore, sino a los archivos que no son  
+  necesarios para el funcionamiento del proyecto. Por ejemplo: .claude, .idea, .vscode, etc.  
+  Estos archivos solo me deben servir a mi para trabajar en el proyecto.
+- Tambien cuando tengas que ejecutar algun comando en la consola, asegurate de que se  
+  ejecute correctamente y que no haya ningun error.
