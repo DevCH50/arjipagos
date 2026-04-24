@@ -128,6 +128,20 @@ class AppColors {
   static const Color dialogBodyTextDark = Color(0xFFBDBDBD);
 
   // ============================================================================
+  // COLORES DE PANTALLAS DE AUTENTICACIÓN (fondo imagen)
+  // Cambiar aquí afecta Login y Register sin tocar ningún widget.
+  // ============================================================================
+
+  /// Overlay oscuro sobre la imagen de fondo.
+  static const Color authBackgroundOverlay = Colors.black54;
+
+  /// Color principal de texto/iconos sobre fondo oscuro (títulos, iconos).
+  static const Color authTextPrimary = Colors.white;
+
+  /// Color secundario para enlaces y botones de texto sobre fondo oscuro.
+  static const Color authTextSecondary = Colors.white70;
+
+  // ============================================================================
   // UTILIDADES
   // ============================================================================
 

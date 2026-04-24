@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
@@ -46,7 +47,7 @@ class LoginContent extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.authTextPrimary,
                     ),
                   ),
                 ),
@@ -112,6 +113,9 @@ class LoginContent extends StatelessWidget {
                 const SizedBox(height: 12),
                 // Enlace de recuperación de contraseña
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.authTextSecondary,
+                  ),
                   onPressed: () {
                     final bloc = BlocProvider.of<LoginBloc>(context);
                     Navigator.of(context).push(
@@ -123,14 +127,11 @@ class LoginContent extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text(
-                    AppStrings.loginForgotPassword,
-                    style: TextStyle(color: Colors.white70),
-                  ),
+                  child: const Text(AppStrings.loginForgotPassword),
                 ),
                 const SizedBox(height: 8),
                 const NoTienesCuentaAun(
-                  color: Color.fromARGB(111, 65, 34, 5),
+                  textColor: AppColors.authTextSecondary,
                   mensaje:
                       'Ponte en contacto con tu colegio para que te proporcionen tu cuenta.',
                   titulo: '¿No tienes una cuenta?',

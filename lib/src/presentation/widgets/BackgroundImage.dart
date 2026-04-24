@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Widget reutilizable para mostrar una imagen de fondo con overlay.
@@ -33,7 +34,7 @@ class BackgroundImage extends StatelessWidget {
   const BackgroundImage({
     super.key,
     this.assetPath = 'assets/img/background_shopping.jpg',
-    this.overlayColor = Colors.black54,
+    this.overlayColor = AppColors.authBackgroundOverlay,
     this.blendMode = BlendMode.darken,
     this.fit = BoxFit.cover,
   });

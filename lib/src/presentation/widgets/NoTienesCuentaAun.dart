@@ -4,16 +4,20 @@ import 'package:flutter/material.dart';
 /// Widget que muestra un enlace para información de cuentas.
 ///
 /// Compatible con tema claro y oscuro.
-/// El color del texto se adapta automáticamente.
+/// - [color]: color de acento (icono y botón). Por defecto usa [ColorScheme.primary].
+/// - [textColor]: color del texto del enlace. Por defecto usa [ColorScheme.onSurface].
+///   Pasar [Colors.white] cuando el widget esté sobre un fondo oscuro/imagen.
 class NoTienesCuentaAun extends StatelessWidget {
-  final Color color;
+  final Color? color;
+  final Color? textColor;
   final String mensaje;
   final String titulo;
   final IconData icono;
 
   const NoTienesCuentaAun({
     super.key,
-    required this.color,
+    this.color,
+    this.textColor,
     required this.mensaje,
     required this.titulo,
     required this.icono,
@@ -21,28 +25,18 @@ class NoTienesCuentaAun extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        InkWell(
-          onTap: () => _showInfoDialog(context),
-          child: Text(
-            titulo,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              decoration: TextDecoration.underline,
-              decorationColor: Colors.white,
-            ),
-          ),
-        ),
-      ],
+    final theme = Theme.of(context);
+    final accentColor = color ?? theme.colorScheme.primary;
+    final linkColor = textColor ?? theme.colorScheme.primary;
+
+    return TextButton(
+      style: TextButton.styleFrom(foregroundColor: linkColor),
+      onPressed: () => _showInfoDialog(context, theme, accentColor),
+      child: Text(titulo),
     );
   }
 
-  void _showInfoDialog(BuildContext context) {
-    final theme = Theme.of(context);
-
+  void _showInfoDialog(BuildContext context, ThemeData theme, Color accentColor) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -60,12 +54,11 @@ class NoTienesCuentaAun extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icono, size: 60, color: color),
+                Icon(icono, size: 60, color: accentColor),
                 const SizedBox(height: 16),
                 Text(
                   AppStrings.noTienesCuentaAtencion,
-                  style: TextStyle(
-                    fontSize: 22,
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
                   ),
@@ -74,8 +67,7 @@ class NoTienesCuentaAun extends StatelessWidget {
                 Text(
                   mensaje,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
@@ -88,20 +80,14 @@ class NoTienesCuentaAun extends StatelessWidget {
                       Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: color,
+                      backgroundColor: accentColor,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      AppStrings.understood,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text(AppStrings.understood),
                   ),
                 ),
               ],

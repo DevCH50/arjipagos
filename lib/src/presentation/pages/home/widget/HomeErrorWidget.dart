@@ -38,8 +38,7 @@ class HomeErrorWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               AppStrings.error,
-              style: TextStyle(
-                fontSize: 20,
+              style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,
               ),

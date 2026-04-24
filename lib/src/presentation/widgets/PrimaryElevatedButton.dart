@@ -18,7 +18,8 @@ class PrimaryElevatedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bgColor = color ?? colorScheme.primary;
     // Calcula texto legible según la luminancia del fondo
     final textColor = color != null
@@ -32,7 +33,10 @@ class PrimaryElevatedButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
       ),
-      child: Text(text, style: TextStyle(fontSize: 18, color: textColor)),
+      child: Text(
+        text,
+        style: theme.textTheme.labelLarge?.copyWith(fontSize: 18, color: textColor),
+      ),
     );
   }
 }

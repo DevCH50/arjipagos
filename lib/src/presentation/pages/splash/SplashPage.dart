@@ -162,12 +162,13 @@ class _SplashTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    return Text(
       AppStrings.appName,
       style: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
-        color: Colors.white,
+        color: onPrimary,
       ),
     );
   }
@@ -179,11 +180,12 @@ class _SplashSubtitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    return Text(
       AppStrings.appDescription,
       style: TextStyle(
         fontSize: 14,
-        color: Colors.white70,
+        color: onPrimary.withValues(alpha: 0.7),
       ),
     );
   }

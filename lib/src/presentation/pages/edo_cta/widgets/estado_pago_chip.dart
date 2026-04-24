@@ -35,8 +35,7 @@ class EstadoPagoChip extends StatelessWidget {
       ),
       child: Text(
         isVencido ? AppStrings.edoCtaVencido : AppStrings.edoCtaPendiente,
-        style: TextStyle(
-          fontSize: 11,
+        style: theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w500,
           color: textColor,
         ),

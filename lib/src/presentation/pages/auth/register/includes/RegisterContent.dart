@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
@@ -29,14 +30,14 @@ class RegisterContent extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.person_add, size: 60, color: Colors.white), // 25% más pequeño
+                const Icon(Icons.person_add, size: 60, color: AppColors.authTextPrimary),
                 const SizedBox(height: 8),
                 const Text(
                   AppStrings.registerTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.authTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 20),

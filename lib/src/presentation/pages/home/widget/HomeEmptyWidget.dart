@@ -32,8 +32,7 @@ class HomeEmptyWidget extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             AppStrings.homeNoStudents,
-            style: TextStyle(
-              fontSize: 16,
+            style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),

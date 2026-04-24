@@ -49,7 +49,7 @@ class CarritoAlumnoCard extends StatelessWidget {
       ),
       title: Text(
         item.alumno.nombre,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         '${AppStrings.alumnoGroupLabel} ${item.alumno.grupo}',

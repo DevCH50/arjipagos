@@ -31,7 +31,7 @@ class AlumnoItem extends StatelessWidget {
         ),
         title: Text(
           alumno.alumno,
-          style: TextStyle(
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             decoration: alumno.esBaja ? TextDecoration.lineThrough : null,
           ),
@@ -47,7 +47,7 @@ class AlumnoItem extends StatelessWidget {
                 child: Chip(
                   label: Text(
                     AppStrings.alumnoBaja,
-                    style: TextStyle(
+                    style: theme.textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       color: AppColors.getAlumnoBajaText(isDark),
                     ),
@@ -83,7 +83,7 @@ class AlumnoItem extends StatelessWidget {
               showBorder: true,
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(alumno.alumno, style: const TextStyle(fontSize: 18))),
+            Expanded(child: Text(alumno.alumno, style: theme.textTheme.titleMedium?.copyWith(fontSize: 18))),
           ],
         ),
         content: SingleChildScrollView(
@@ -96,7 +96,7 @@ class AlumnoItem extends StatelessWidget {
               const Divider(),
               Text(
                 AppStrings.alumnoBecasLabel,
-                style: TextStyle(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface,
                 ),
@@ -134,7 +134,7 @@ class AlumnoItem extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
             ),
