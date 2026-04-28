@@ -19,6 +19,26 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Mantenimiento y actualización de dependencias — v1.0.15+21 (2026-04-28):**
+
+  **Verificación completa:**
+  - `flutter analyze` → **No issues found**
+  - `flutter test` → **385/385 tests pasan**
+
+  **Dependencias actualizadas (minor/patch, sin major-version bumps):**
+  - `build` 4.0.5 → 4.0.6
+  - `build_runner` 2.14.0 → 2.14.1
+  - `vm_service` 15.1.0 → 15.2.0
+  - Código generado (injectable) regenerado con `build_runner build`
+
+  **Builds release generados:**
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (89 MB) ✓
+  - AAB: `build/app/outputs/bundle/release/app-release.aab` (77 MB) ✓
+
+  **Flutter SDK:** 3.41.6 • Dart 3.11.4 (estable, sin actualizaciones pendientes de SDK)
+
+  **Nota:** 37 paquetes tienen versiones major disponibles (firebase, flutter_local_notifications, injectable, etc.) — pendientes de evaluación de breaking changes antes de actualizar.
+
 - **Íconos y sonido en notificaciones push — v1.0.11+17 (2026-04-17):**
 
   **Android:**
