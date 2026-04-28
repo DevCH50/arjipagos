@@ -24,5 +24,10 @@
       "Bash(wc:*)",
       "Bash(./scripts/release.sh:*)"
     ]
-  }
+  },
+  "mcpServers": {
+    "context-mode": {
+      "command": "context-mode"
+    }
+  }  
 }
