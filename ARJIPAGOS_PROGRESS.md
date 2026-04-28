@@ -19,7 +19,7 @@ _(ninguno)_
 
 ### Completado recientemente
 
-- **Mantenimiento y actualización de dependencias — v1.0.15+21 (2026-04-28):**
+- **Mantenimiento y actualización de dependencias — v1.0.15+22 (2026-04-28):**
 
   **Verificación completa:**
   - `flutter analyze` → **No issues found**
@@ -32,8 +32,8 @@ _(ninguno)_
   - Código generado (injectable) regenerado con `build_runner build`
 
   **Builds release generados:**
-  - APK: `build/app/outputs/flutter-apk/app-release.apk` (89 MB) ✓
-  - AAB: `build/app/outputs/bundle/release/app-release.aab` (77 MB) ✓
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (92.5 MB) ✓
+  - AAB: `build/app/outputs/bundle/release/app-release.aab` (80.5 MB) ✓
 
   **Flutter SDK:** 3.41.6 • Dart 3.11.4 (estable, sin actualizaciones pendientes de SDK)
 
