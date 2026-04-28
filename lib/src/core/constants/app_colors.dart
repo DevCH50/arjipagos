@@ -141,6 +141,48 @@ class AppColors {
   /// Color secundario para enlaces y botones de texto sobre fondo oscuro.
   static const Color authTextSecondary = Colors.white70;
 
+  /// Color de error en campos de texto sobre fondo oscuro/imagen.
+  static const Color authErrorColor = Colors.yellowAccent;
+
+  /// Fondo semitransparente para botones de icono sobre fondos oscuros.
+  static const Color authIconBackground = Colors.black26;
+
+  /// Sombra de texto sobre fondos oscuros.
+  static const Color authShadowText = Colors.black87;
+
+  // ============================================================================
+  // COLORES DE LOGO CIRCULAR
+  // ============================================================================
+
+  /// Fondo sólido blanco del círculo que envuelve el logo.
+  static const Color logoCircleBackground = Colors.white;
+
+  /// Sombra del contenedor circular del logo (splash).
+  static const Color logoCircleShadow = Colors.black26;
+
+  /// Fondo blanco semi-transparente del logo (superposición).
+  static Color logoCircleBackgroundAlpha =
+      Colors.white.withValues(alpha: 0.9);
+
+  /// Sombra suave del contenedor circular del logo.
+  static Color logoCircleBoxShadow =
+      Colors.black.withValues(alpha: 0.1);
+
+  // ============================================================================
+  // CONTRASTE EN BOTONES
+  // ============================================================================
+
+  /// Texto oscuro sobre fondos de alta luminancia (botones claros).
+  static const Color onLightBackground = Colors.black87;
+
+  // ============================================================================
+  // SOMBRAS ADAPTATIVAS DE CONTENEDORES
+  // ============================================================================
+
+  /// Sombra de contenedor flotante adaptada al tema claro/oscuro.
+  static Color getBoxShadow(bool isDark) =>
+      Colors.black.withValues(alpha: isDark ? 0.3 : 0.1);
+
   // ============================================================================
   // UTILIDADES
   // ============================================================================

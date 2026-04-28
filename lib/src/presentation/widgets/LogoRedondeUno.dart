@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class LogoRedondoUno extends StatelessWidget {
@@ -21,10 +22,10 @@ class LogoRedondoUno extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.9),
+        color: AppColors.logoCircleBackgroundAlpha,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.logoCircleBoxShadow,
             blurRadius: blurRadius,
             spreadRadius: spreadRadius,
           ),

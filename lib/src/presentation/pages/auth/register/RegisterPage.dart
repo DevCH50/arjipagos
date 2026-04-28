@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/includes/RegisterContent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/includes/RegisterResponse.dart';
@@ -41,9 +42,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: const EdgeInsets.only(left: 8, top: 8),
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.authTextPrimary),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.black26,
+                        backgroundColor: AppColors.authIconBackground,
                       ),
                     ),
                   ),

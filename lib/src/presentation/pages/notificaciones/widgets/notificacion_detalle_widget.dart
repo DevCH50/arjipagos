@@ -111,6 +111,24 @@ class _DetalleContenido extends StatelessWidget {
                   textStyle: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurface,
                   ),
+                  // En modo oscuro, los colores CSS hardcodeados del HTML
+                  // (ej: azul oscuro para nombre del alumno) son invisibles.
+                  // Sobreescribimos cualquier color inline para que use el color del tema.
+                  customStylesBuilder: (element) {
+                    final isDark =
+                        Theme.of(context).brightness == Brightness.dark;
+                    if (isDark &&
+                        (element.attributes['style']?.contains('color') ??
+                            false)) {
+                      final c = colorScheme.onSurface;
+                      int ch(double v) =>
+                          (v * 255.0).round().clamp(0, 255);
+                      final hex =
+                          '#${ch(c.r).toRadixString(16).padLeft(2, '0')}${ch(c.g).toRadixString(16).padLeft(2, '0')}${ch(c.b).toRadixString(16).padLeft(2, '0')}';
+                      return {'color': hex};
+                    }
+                    return null;
+                  },
                 ),
               ],
             ),

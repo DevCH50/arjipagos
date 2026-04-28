@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
@@ -26,7 +27,7 @@ class TotalSeleccionadoBar extends StatelessWidget {
             color: theme.colorScheme.surfaceContainerHigh,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                color: AppColors.getBoxShadow(isDark),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),

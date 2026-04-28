@@ -147,7 +147,7 @@ class RegisterContent extends StatelessWidget {
                   },
                   child: const Text(
                     AppStrings.registerYaTienesCuenta,
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.authTextPrimary),
                   ),
                 ),
               ],

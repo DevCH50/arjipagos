@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashBloc.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
@@ -129,11 +130,11 @@ class _SpinningLogoState extends State<_SpinningLogo>
           width: 120,
           height: 120,
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.logoCircleBackground,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black26,
+                color: AppColors.logoCircleShadow,
                 blurRadius: 20,
                 offset: Offset(0, 10),
               ),
@@ -204,13 +205,9 @@ class _MatrixPercent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // El splash siempre tiene fondo oscuro (degradado café). Elegimos el
-    // token correcto según el modo activo para garantizar contraste:
-    //   • Modo claro → inversePrimary: color primario para superficies oscuras/inversas.
-    //   • Modo oscuro → primary: en el tema oscuro el primario ya es claro (#F0BB9E).
-    final color = colorScheme.brightness == Brightness.dark
-        ? colorScheme.primary
-        : colorScheme.inversePrimary;
+    // El fondo del splash es un gradiente sobre colorScheme.primary.
+    // onPrimary garantiza contraste en ambos temas (claro y oscuro).
+    final color = colorScheme.onPrimary;
 
     return BlocBuilder<SplashBloc, SplashState>(
       buildWhen: (prev, curr) => prev.progress != curr.progress,

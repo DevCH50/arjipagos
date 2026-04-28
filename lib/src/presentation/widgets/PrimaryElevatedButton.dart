@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Botón primario elevado reutilizable.
@@ -23,7 +24,9 @@ class PrimaryElevatedButton extends StatelessWidget {
     final bgColor = color ?? colorScheme.primary;
     // Calcula texto legible según la luminancia del fondo
     final textColor = color != null
-        ? (color!.computeLuminance() > 0.5 ? Colors.black87 : Colors.white)
+        ? (color!.computeLuminance() > 0.5
+            ? AppColors.onLightBackground
+            : AppColors.textOnPrimary)
         : colorScheme.onPrimary;
 
     return ElevatedButton(

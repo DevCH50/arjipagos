@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
@@ -38,11 +39,11 @@ class DefaultTextField extends StatefulWidget {
     this.validator,
     this.useThemeColors = false,
     // Valores por defecto para fondos oscuros/imagen
-    this.errorColor = Colors.yellowAccent,
+    this.errorColor = AppColors.authErrorColor,
     this.errorFontSize = 14.0,
     this.errorFontWeight = FontWeight.w500,
     this.errorMaxLines = 2,
-    this.errorBorderColor = Colors.yellowAccent,
+    this.errorBorderColor = AppColors.authErrorColor,
     this.errorWithShadow = true,
   });
 
@@ -135,11 +136,11 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
       validator: widget.validator,
       keyboardType: widget.keyboardType,
       obscureText: _obscureText,
-      style: const TextStyle(color: Colors.white),
-      cursorColor: Colors.white,
+      style: const TextStyle(color: AppColors.authTextPrimary),
+      cursorColor: AppColors.authTextPrimary,
       decoration: InputDecoration(
         filled: false,
-        label: Text(widget.label, style: const TextStyle(color: Colors.white)),
+        label: Text(widget.label, style: const TextStyle(color: AppColors.authTextPrimary)),
         errorText: widget.errorText,
         errorStyle: TextStyle(
           color: widget.errorColor,
@@ -148,31 +149,31 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
           shadows: widget.errorWithShadow
               ? [
                   const Shadow(
-                    color: Colors.black87,
+                    color: AppColors.authShadowText,
                     blurRadius: 3,
                   ),
                 ]
               : null,
         ),
         errorMaxLines: widget.errorMaxLines,
-        prefixIcon: Icon(widget.icon, color: Colors.white),
+        prefixIcon: Icon(widget.icon, color: AppColors.authTextPrimary),
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
                   _obscureText
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: Colors.white70,
+                  color: AppColors.authTextSecondary,
                 ),
                 onPressed: _togglePasswordVisibility,
                 tooltip: _obscureText ? AppStrings.mostrarContrasena : AppStrings.ocultarContrasena,
               )
             : null,
         enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
+          borderSide: BorderSide(color: AppColors.authTextPrimary),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
+          borderSide: BorderSide(color: AppColors.authTextPrimary),
         ),
         errorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: widget.errorBorderColor),
@@ -190,7 +191,7 @@ class _DefaultTextFieldState extends State<DefaultTextField> {
 //
 // Para fondos Oscuros / con imagen (Login, Register):
 //   useThemeColors: false   ← default
-//   errorColor: Colors.yellowAccent
+//   errorColor: AppColors.authErrorColor
 //   errorFontSize: 14.0
 //   errorFontWeight: FontWeight.w600
 //   errorWithShadow: true

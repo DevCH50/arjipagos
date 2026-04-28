@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
@@ -71,10 +72,10 @@ class RegisterResponse extends StatelessWidget {
 
           if (response is Loading) {
             return Container(
-              color: Colors.black54,
+              color: AppColors.authBackgroundOverlay,
               child: const Center(
                 child: SpinKitFadingCircle(
-                  color: Colors.white,
+                  color: AppColors.authTextPrimary,
                   size: 50,
                 ),
               ),
