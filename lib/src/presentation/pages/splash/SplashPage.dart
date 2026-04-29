@@ -163,13 +163,13 @@ class _SplashTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    final color = Theme.of(context).colorScheme.onPrimary;
     return Text(
       AppStrings.appName,
       style: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
-        color: onPrimary,
+        color: color,
       ),
     );
   }
@@ -181,12 +181,12 @@ class _SplashSubtitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    final color = Theme.of(context).colorScheme.onPrimary;
     return Text(
       AppStrings.appDescription,
       style: TextStyle(
         fontSize: 14,
-        color: onPrimary.withValues(alpha: 0.7),
+        color: color.withValues(alpha: 0.7),
       ),
     );
   }
@@ -203,12 +203,7 @@ class _MatrixPercent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // El fondo del splash es un gradiente sobre colorScheme.primary.
-    // onPrimary garantiza contraste en ambos temas (claro y oscuro).
-    final color = colorScheme.onPrimary;
-
+    final color = Theme.of(context).colorScheme.onPrimary;
     return BlocBuilder<SplashBloc, SplashState>(
       buildWhen: (prev, curr) => prev.progress != curr.progress,
       builder: (context, state) {
@@ -222,9 +217,9 @@ class _MatrixPercent extends StatelessWidget {
             color: color,
             letterSpacing: 6,
             shadows: [
-              Shadow(color: color, blurRadius: 4),
-              Shadow(color: color, blurRadius: 12),
-              Shadow(color: color, blurRadius: 20),
+              Shadow(color: color.withValues(alpha: 0.9), blurRadius: 4),
+              Shadow(color: color.withValues(alpha: 0.6), blurRadius: 14),
+              Shadow(color: color.withValues(alpha: 0.2), blurRadius: 24),
             ],
           ),
         );
