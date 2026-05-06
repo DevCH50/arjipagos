@@ -19,6 +19,32 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **FrontEnd Web PagosTutor en ArjiApp — 2026-05-06:**
+
+  Módulo web completo que replica la funcionalidad de Estados de Cuenta, Carrito y Pago Adquira
+  del app Flutter, pero para usuarios con roles PADRE, MADRE o TUTOR que acceden desde el navegador.
+
+  **Archivos creados en `/home/carlos/Projects/Laravel/ArjiApp`:**
+  - `app/Http/Controllers/PagosTutor/PagosTutorController.php`
+  - `app/Services/PagosTutor/PagosTutorService.php`
+  - `app/Http/Requests/PagosTutor/PagosTutorRequest.php`
+  - `routes/pagostutor.php` — 6 rutas del módulo
+  - `resources/js/Layouts/SideLeftPagosTutor.vue` — sidebar exclusivo PADRE/MADRE/TUTOR
+  - `resources/js/Layouts/PagosTutorLayout.vue` — layout independiente con drawer móvil
+  - `resources/js/Pages/PagosTutor/EstadosCuenta.vue` — lista alumnos + pagos + carrito reactivo + form Adquira
+  - `resources/js/Pages/PagosTutor/Facturas.vue` — tabla/cards con búsqueda, PDF y XML
+  - `resources/js/Pages/PagosTutor/PagoCompletado.vue` — resultado del pago (éxito/error)
+
+  **Archivos modificados (mínimo):**
+  - `routes/web.php` → `require __DIR__.'/pagostutor.php';`
+  - `bootstrap/app.php` → CSRF exception para `pagostutor/pago-resultado`
+
+  **Rutas disponibles:** `/pagostutor/estados-cuenta`, `/pagostutor/facturas`, `/pagostutor/pago-completado`, `/pagostutor/pago-resultado` (callback Adquira)
+
+  **Lógica:** `PagosTutorService` delega el procesamiento del pago a `EstadosCuentaAPIController::pagoRealizadoAdquira` — sin duplicar la lógica de tickets/estados.
+
+  **Verificación arjipagos Flutter:** 385/385 tests pasan, árbol limpio.
+
 - **Mantenimiento y actualización de dependencias — v1.0.15+22 (2026-04-28):**
 
   **Verificación completa:**
