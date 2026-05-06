@@ -151,7 +151,7 @@ lib/src/
 - Material Design 3
 - Revisa que tengas todos los permisos necesarios tanto para iOS como para Android tanto de manera implícita como explícita
 - Archivos bien comentados
-- Guardar todo el progreso en ARJIPAGOS_PROGRESS.md
+- Guardar todo el progreso en ARJIPAGOS_PROGRESS.md — solo trabajo realizado dentro del proyecto arjipagos; nunca registrar cambios de otros proyectos (ArjiApp, backend, etc.)
 - Guarda todo lo que ya esta aprobado y funcionando bien
 - No borrar nada sin preguntar
 - Asegúrate de que todos los widgets y pantallas estén bien optimizados para Android e iOS y en ambos temas, oscuros y claros
