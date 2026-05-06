@@ -8,6 +8,7 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
+import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
@@ -20,6 +21,11 @@ import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarTodasLeidasUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:mocktail/mocktail.dart';
 
 // ============================================================================
@@ -113,5 +119,39 @@ EdoCtaUseCases createMockEdoCtaUseCases({
 }) {
   return EdoCtaUseCases(
     getEstadosDeCuenta: getEstadosDeCuenta ?? MockGetEstadosDeCuentaUseCase(),
+  );
+}
+
+// ============================================================================
+// MOCKS DE NOTIFICACIONES
+// ============================================================================
+
+/// Mock del repositorio de notificaciones.
+class MockNotificacionRepository extends Mock implements NotificacionRepository {}
+
+/// Mock del caso de uso de obtener notificaciones paginadas.
+class MockGetNotificacionesUseCase extends Mock implements GetNotificacionesUseCase {}
+
+/// Mock del caso de uso de obtener conteo de no leídas.
+class MockGetCountNoLeidasUseCase extends Mock implements GetCountNoLeidasUseCase {}
+
+/// Mock del caso de uso de marcar una notificación como leída.
+class MockMarcarLeidaUseCase extends Mock implements MarcarLeidaUseCase {}
+
+/// Mock del caso de uso de marcar todas las notificaciones como leídas.
+class MockMarcarTodasLeidasUseCase extends Mock implements MarcarTodasLeidasUseCase {}
+
+/// Crea un NotificacionUseCases con todos los use cases mockeados.
+NotificacionUseCases createMockNotificacionUseCases({
+  MockGetNotificacionesUseCase? getNotificaciones,
+  MockGetCountNoLeidasUseCase? getCountNoLeidas,
+  MockMarcarLeidaUseCase? marcarLeida,
+  MockMarcarTodasLeidasUseCase? marcarTodasLeidas,
+}) {
+  return NotificacionUseCases(
+    getNotificaciones: getNotificaciones ?? MockGetNotificacionesUseCase(),
+    getCountNoLeidas: getCountNoLeidas ?? MockGetCountNoLeidasUseCase(),
+    marcarLeida: marcarLeida ?? MockMarcarLeidaUseCase(),
+    marcarTodasLeidas: marcarTodasLeidas ?? MockMarcarTodasLeidasUseCase(),
   );
 }

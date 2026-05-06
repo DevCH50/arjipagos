@@ -1,9 +1,11 @@
 /// Datos de prueba para los tests unitarios.
 ///
-/// Contiene factories y datos mock para User, Alumno, AuthResponse y AlumnoResponse.
+/// Contiene factories y datos mock para User, Alumno, AuthResponse, AlumnoResponse
+/// y Notificacion.
 library;
 
 import 'package:arjipagos/src/domain/models/Alumno.dart';
+import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
@@ -251,4 +253,56 @@ class TestAlumnoResponse {
         'ciclo_predeterminado': '2024-2025',
         'alumnos': [],
       };
+}
+
+/// Datos de prueba para Notificacion.
+class TestNotificacion {
+  /// Notificación no leída con texto plano.
+  static Notificacion get noLeida => Notificacion(
+        id: 1,
+        userId: 10,
+        titulo: 'Estado de Cuenta Vencido',
+        mensaje: 'Tu pago de enero ha vencido.',
+        campania: 'estado_cuenta',
+        fecha: DateTime(2024, 1, 15, 10, 0),
+        isRead: false,
+      );
+
+  /// Notificación ya leída.
+  static Notificacion get leida => Notificacion(
+        id: 2,
+        userId: 10,
+        titulo: 'Pago Confirmado',
+        mensaje: 'Tu pago fue procesado correctamente.',
+        campania: 'pago',
+        fecha: DateTime(2024, 1, 14, 9, 0),
+        isRead: true,
+      );
+
+  /// Lista de la primera página: una no leída y una leída.
+  static List<Notificacion> get listaPagina1 => [noLeida, leida];
+
+  /// Lista de la segunda página (para tests de paginación).
+  static List<Notificacion> get listaPagina2 => [
+        Notificacion(
+          id: 3,
+          userId: 10,
+          titulo: 'Recordatorio de Pago',
+          mensaje: 'Tu próximo pago vence en 5 días.',
+          campania: 'recordatorio',
+          fecha: DateTime(2024, 1, 13, 8, 0),
+          isRead: false,
+        ),
+      ];
+
+  /// Notificación simulada recibida por FCM en foreground.
+  static Notificacion get foreground => Notificacion(
+        id: 0,
+        userId: 0,
+        titulo: 'Nueva Notificación',
+        mensaje: 'Tienes un nuevo aviso.',
+        campania: 'general',
+        fecha: DateTime(2024, 1, 16, 11, 0),
+        isRead: false,
+      );
 }

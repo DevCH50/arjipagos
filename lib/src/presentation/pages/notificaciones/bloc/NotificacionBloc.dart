@@ -31,7 +31,13 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   /// Suscripción al stream de notificaciones tocadas desde background.
   StreamSubscription<RemoteMessage>? _fcmBackgroundTapSub;
 
-  NotificacionBloc(this.notificacionUseCases) : super(const NotificacionState()) {
+  NotificacionBloc(
+    this.notificacionUseCases, {
+    // Parámetros opcionales para facilitar el testing sin Firebase real.
+    Stream<RemoteMessage>? fcmForegroundStream,
+    Stream<RemoteMessage>? fcmBackgroundTapStream,
+    Future<RemoteMessage?> Function()? getInitialMessage,
+  }) : super(const NotificacionState()) {
     on<NotificacionInicialEvent>(_onNotificacionInicialEvent);
     on<CargarMasNotificacionesEvent>(_onCargarMasNotificaciones);
     on<MarcarLeidaEvent>(_onMarcarLeida);
@@ -43,15 +49,19 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
 
     // Caso 1: app en primer plano → FCM entrega el mensaje directamente.
     _fcmForegroundSub =
-        FirebaseMessaging.onMessage.listen(_onFcmForegroundMessage);
+        (fcmForegroundStream ?? FirebaseMessaging.onMessage)
+            .listen(_onFcmForegroundMessage);
 
     // Caso 2: app en background → usuario toca la notificación del sistema.
-    _fcmBackgroundTapSub = FirebaseMessaging.onMessageOpenedApp.listen((_) {
+    _fcmBackgroundTapSub =
+        (fcmBackgroundTapStream ?? FirebaseMessaging.onMessageOpenedApp)
+            .listen((_) {
       add(const NotificacionAbiertaDesdeBackgroundEvent());
     });
 
     // Caso 3: app terminada → la notificación la lanzó; leer el mensaje inicial.
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
+    (getInitialMessage ?? FirebaseMessaging.instance.getInitialMessage)()
+        .then((message) {
       if (message != null) {
         add(const NotificacionAbiertaDesdeBackgroundEvent());
       }
