@@ -154,8 +154,8 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
         allIds.addAll(ids);
       }
 
-      if (allIds.join('D').length > AppConstants.maxLongitudReferencia) {
-        final refSimulada = allIds.join('D');
+      final refSimulada = AppConstants.generarReferencia(allIds);
+      if (refSimulada.length > AppConstants.maxLongitudReferencia) {
         AppLogger.warning(
           'Tope máximo de referencia alcanzado\n'
           '  referencia  : "$refSimulada"\n'

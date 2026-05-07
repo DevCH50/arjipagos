@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Constantes numéricas de la aplicación ArjiPagos.
 ///
 /// Centraliza valores enteros y de configuración que no son strings
@@ -13,4 +15,18 @@ abstract final class AppConstants {
   /// `"5358D5359D5360"`. Si la referencia supera este límite, Adquira rechaza
   /// la transacción. Los IDs deben ir completos — nunca se truncan.
   static const int maxLongitudReferencia = 30;
+
+  /// Separador de referencia según plataforma: 'I' en iOS, 'A' en Android.
+  static const String _sepIOS = 'I';
+  static const String _sepAndroid = 'A';
+
+  /// Genera la referencia de pago uniendo los IDs de EstadoDeCuenta con el
+  /// separador de plataforma ('I' en iOS, 'A' en Android).
+  ///
+  /// Ejemplo iOS:     `[5358, 5359, 5360]` → `"5358I5359I5360"`
+  /// Ejemplo Android: `[5358, 5359, 5360]` → `"5358A5359A5360"`
+  static String generarReferencia(List<int> ids) {
+    final sep = defaultTargetPlatform == TargetPlatform.iOS ? _sepIOS : _sepAndroid;
+    return ids.join(sep);
+  }
 }

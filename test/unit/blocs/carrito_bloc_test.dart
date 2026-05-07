@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -231,7 +232,7 @@ void main() {
         alumnos: [testAlumno],
         pagosSeleccionados: const {1: [1, 2]},
       );
-      expect(state.referenciaPago, contains('D'));
+      expect(state.referenciaPago, AppConstants.generarReferencia([1, 2]));
     });
   });
 }

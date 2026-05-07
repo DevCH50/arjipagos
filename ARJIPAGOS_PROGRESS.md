@@ -19,6 +19,25 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Refactor: separador de referencia de pago por plataforma — v1.0.18+25 (2026-05-07):**
+
+  **Cambio:**
+  - El separador entre IDs de estados de cuenta era `'D'` fijo. Ahora es `'I'` en iOS y `'A'` en Android.
+  - Fuente única: `AppConstants.generarReferencia(List<int> ids)` — único lugar donde vive el separador.
+  - `PagoRequest.generarReferencia`, `CarritoState.referenciaPago` y `EdoCtaListBloc` delegan a `AppConstants`.
+
+  **Verificación completa:**
+  - `flutter analyze` → **No issues found**
+  - `flutter test` → **406/406 tests pasan**
+  - Test `carrito_bloc_test.dart` actualizado: usa `AppConstants.generarReferencia` como valor esperado (compatible con cualquier plataforma).
+
+  **Archivos modificados:**
+  - `lib/src/core/constants/app_constants.dart` — fuente única + constantes `_sepIOS`/`_sepAndroid`
+  - `lib/src/domain/models/PagoRequest.dart` — delega a `AppConstants`
+  - `lib/src/presentation/pages/carrito/bloc/CarritoState.dart` — delega a `AppConstants`
+  - `lib/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart` — delega a `AppConstants`
+  - `test/unit/blocs/carrito_bloc_test.dart` — aserción actualizada
+
 - **Mantenimiento y actualización de dependencias — v1.0.15+22 (2026-04-28):**
 
   **Verificación completa:**

@@ -115,7 +115,7 @@ class CarritoState extends Equatable {
     for (final pagosIds in pagosSeleccionados.values) {
       allIds.addAll(pagosIds);
     }
-    return allIds.join('D');
+    return AppConstants.generarReferencia(allIds);
   }
 
   /// Longitud actual de la referencia de pago.

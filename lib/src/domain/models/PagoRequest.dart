@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/constants/app_constants.dart';
+
 /// Modelo que representa los datos necesarios para procesar un pago.
 ///
 /// Contiene todos los parámetros requeridos por Adquira México.
@@ -49,6 +51,6 @@ class PagoRequest {
 
   /// Genera la referencia a partir de una lista de IDs de estados de cuenta.
   static String generarReferencia(List<int> estadosCuentaIds) {
-    return estadosCuentaIds.join('D');
+    return AppConstants.generarReferencia(estadosCuentaIds);
   }
 }
