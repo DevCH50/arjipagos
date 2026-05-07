@@ -142,6 +142,8 @@ lib/src/
 
 ## Reglas del código
 
+- Busca la mejor manera de hacer tu trabajo sin consumir tantos tokens.
+- Usa agentes y subagentes, en la medida de lo posible.
 - Antes de implementar, asegúrate de planificar en modo plan y luego escribe.
 - Todo en español (comentarios, commits, documentación)
 - Widgets < 200 líneas
@@ -155,7 +157,6 @@ lib/src/
 - Guarda todo lo que ya esta aprobado y funcionando bien
 - No borrar nada sin preguntar
 - Asegúrate de que todos los widgets y pantallas estén bien optimizados para Android e iOS y en ambos temas, oscuros y claros
-- En la medida de lo posible usa agentes, por ejemplo para crear un widget, utiliza un subagente para crear el widget, otro para crear el bloc, otro para crear el evento, otro para crear el estado, etc.
 - Debes asegurarte de no romper nada y que se apegue estrictamente a las arquitecturas limpias y la inyección de dependencias
 - Si tienes dudas, pregunta, antes de proceder
 - Si tienes que crear un nuevo archivo, asegúrate de que esté bien comentado y que esté bien estructurado
