@@ -7,15 +7,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// Utiliza flutter_secure_storage para encriptar datos como
 /// tokens de autenticación y credenciales de usuario.
 ///
-/// En Android usa EncryptedSharedPreferences.
+/// En Android usa cifrado propio (v10+, migración automática desde EncryptedSharedPreferences).
 /// En iOS usa Keychain.
 class SecureStorage {
   late final FlutterSecureStorage _storage;
 
   SecureStorage() {
-    // Opciones de Android para mayor seguridad
+    // v10+: encryptedSharedPreferences eliminado; datos migrados automáticamente.
     const androidOptions = AndroidOptions(
-      encryptedSharedPreferences: true,
       resetOnError: true,
     );
 

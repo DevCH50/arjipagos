@@ -111,18 +111,19 @@ Future<void> _mostrarNotificacionLocalAndroid({
 }) async {
   final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
 
+  // v21: initialize() y show() usan parámetros nombrados.
   await plugin.initialize(
-    const InitializationSettings(
+    settings: const InitializationSettings(
       // Ícono monocromático requerido por Android para la barra de estado.
       android: AndroidInitializationSettings('@drawable/ic_notification'),
     ),
   );
 
   await plugin.show(
-    id,
-    titulo.isNotEmpty ? titulo : null,
-    cuerpo.isNotEmpty ? cuerpo : null,
-    const NotificationDetails(
+    id: id,
+    title: titulo.isNotEmpty ? titulo : null,
+    body: cuerpo.isNotEmpty ? cuerpo : null,
+    notificationDetails: const NotificationDetails(
       android: AndroidNotificationDetails(
         _kFcmChannelId,
         AppStrings.fcmChannelNombre,
