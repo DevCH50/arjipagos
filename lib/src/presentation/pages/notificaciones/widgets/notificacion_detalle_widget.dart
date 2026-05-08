@@ -45,7 +45,7 @@ class _NotificacionDetalleWidgetState
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.65,
+      initialChildSize: 0.75,
       minChildSize: 0.4,
       maxChildSize: 0.92,
       builder: (context, scrollController) {
