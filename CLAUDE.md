@@ -93,18 +93,10 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 
 | Archivo           | Valor fijo                                    | Motivo                                           |
 | ----------------- | --------------------------------------------- | ------------------------------------------------ |
-| `project.pbxproj` | `LastUpgradeCheck = 1510`                     | Xcode beta lo sube a 2630; revertir si cambia    |
-| `Runner.xcscheme` | `LastUpgradeVersion = "1510"`                 | Mismo motivo                                     |
+| `project.pbxproj` | `LastUpgradeCheck = 2630`                     | Valor correcto para Xcode 26.3 estable           |
+| `Runner.xcscheme` | `LastUpgradeVersion = "2630"`                 | Mismo motivo                                     |
 | `Runner.xcscheme` | `LaunchAction buildConfiguration = "Release"` | Necesario para Archive/Distribute                |
 | `Podfile`         | `objective_c` usa `dwarf`                     | XCFramework precompilado — no puede generar dSYM |
-
-### Advertencia — Xcode beta / actualizaciones de Xcode
-
-Si Xcode muestra el dialogo **"Update to recommended settings"** al abrir el proyecto:
-
-- **RECHAZAR** (click en "Later" o "Don't Update")
-- Si se acepta, `LastUpgradeCheck` y `LastUpgradeVersion` subirán a 2630+
-- Revertir con: `git checkout ios/Runner.xcodeproj/project.pbxproj ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme`
 
 ### Errores conocidos y soluciones
 
