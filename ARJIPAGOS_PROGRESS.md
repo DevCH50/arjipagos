@@ -19,6 +19,26 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Fix: referencia con cero final para pago único — v1.0.19+26 (2026-05-08):**
+
+  **Cambio:**
+  - Cuando solo hay un ID en la referencia, se añade `sep + "0"` al final: `3399I0` (iOS) / `3399A0` (Android).
+  - Aplica únicamente para un solo item; múltiples IDs siguen usando el separador entre ellos sin cambio.
+  - Implementado en `AppConstants.generarReferencia`.
+
+  **Verificación completa:**
+  - `flutter analyze` → **No issues found**
+  - `flutter test` → **412/412 tests pasan**
+  - Nuevos tests en `test/unit/core/app_constants_test.dart` (6 casos: Android e iOS, item único e ID largo, múltiples IDs).
+  - Comentarios obsoletos actualizados en `carrito_referencia_test.dart` y `edo_cta_referencia_test.dart`.
+
+  **Archivos modificados:**
+  - `lib/src/core/constants/app_constants.dart`
+  - `test/unit/core/app_constants_test.dart` _(nuevo)_
+  - `test/unit/blocs/carrito_referencia_test.dart`
+  - `test/unit/blocs/edo_cta_referencia_test.dart`
+  - `pubspec.yaml` → `1.0.19+26`
+
 - **Refactor: separador de referencia de pago por plataforma — v1.0.18+25 (2026-05-07):**
 
   **Cambio:**

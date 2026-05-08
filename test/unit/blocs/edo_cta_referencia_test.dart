@@ -115,7 +115,7 @@ void main() {
       // Caso base: primer pago siempre permitido
       // ---------------------------------------------------------------------------
       blocTest<EdoCtaListBloc, EdoCtaListState>(
-        'permite seleccionar el primer pago (referencia = 5 chars, dentro del límite)',
+        'permite seleccionar el primer pago (referencia = 7 chars, dentro del límite)',
         build: () => createBloc(),
         seed: () => EdoCtaListState(
           alumnos: [alumno],

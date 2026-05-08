@@ -23,10 +23,15 @@ abstract final class AppConstants {
   /// Genera la referencia de pago uniendo los IDs de EstadoDeCuenta con el
   /// separador de plataforma ('I' en iOS, 'A' en Android).
   ///
-  /// Ejemplo iOS:     `[5358, 5359, 5360]` → `"5358I5359I5360"`
-  /// Ejemplo Android: `[5358, 5359, 5360]` → `"5358A5359A5360"`
+  /// Ejemplo iOS un item:      `[3399]`              → `"3399I0"`
+  /// Ejemplo Android un item:  `[3399]`              → `"3399A0"`
+  /// Ejemplo iOS varios:       `[5358, 5359, 5360]`  → `"5358I5359I5360"`
+  /// Ejemplo Android varios:   `[5358, 5359, 5360]`  → `"5358A5359A5360"`
   static String generarReferencia(List<int> ids) {
     final sep = defaultTargetPlatform == TargetPlatform.iOS ? _sepIOS : _sepAndroid;
+    if (ids.length == 1) {
+      return '${ids.first}${sep}0';
+    }
     return ids.join(sep);
   }
 }

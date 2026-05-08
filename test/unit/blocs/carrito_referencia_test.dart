@@ -130,7 +130,7 @@ void main() {
         const state = CarritoState(
           pagosSeleccionados: {1: [99999999]},
         );
-        // "99999999" = 8 chars ≤ 30
+        // "99999999A0" = 10 chars ≤ 30
         expect(state.referenciaValida, isTrue);
       },
     );
