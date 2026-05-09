@@ -9,6 +9,9 @@ import 'package:equatable/equatable.dart';
 /// - [notificaciones] lista acumulada de todas las páginas cargadas.
 /// - [noLeidas] contador para el badge; se actualiza de forma independiente.
 /// - [hayNueva] verdadero cuando acaba de llegar una notificación en foreground.
+/// - [debeNavegar] verdadero cuando el usuario abrió la app tocando una notificación
+///   de sistema (background/terminada). La UI navega a [NotificacionesPage] y luego
+///   emite [ResetDebeNavegarEvent] para volver a false.
 /// - [isLoading] verdadero durante la carga inicial de la primera página.
 /// - [isCargandoMas] verdadero mientras se carga una página adicional (paginación).
 /// - [hayMas] falso cuando el servidor ya no devuelve más registros.
@@ -24,6 +27,11 @@ class NotificacionState extends Equatable {
   /// Verdadero cuando acaba de llegar una notificación en foreground.
   /// Activa el punto rojo pulsante en el AppBar. Se limpia al tocar la campana.
   final bool hayNueva;
+
+  /// Verdadero cuando el usuario abrió la app tocando una notificación del sistema
+  /// (app en background o terminada). MenuPrincipalPage navega a NotificacionesPage
+  /// y emite ResetDebeNavegarEvent para volver a false.
+  final bool debeNavegar;
 
   /// Indica si se está realizando la carga inicial (primera página).
   final bool isLoading;
@@ -45,6 +53,7 @@ class NotificacionState extends Equatable {
     this.notificaciones = const [],
     this.noLeidas = 0,
     this.hayNueva = false,
+    this.debeNavegar = false,
     this.isLoading = false,
     this.isCargandoMas = false,
     this.hayMas = true,
@@ -65,6 +74,7 @@ class NotificacionState extends Equatable {
     List<Notificacion>? notificaciones,
     int? noLeidas,
     bool? hayNueva,
+    bool? debeNavegar,
     bool? isLoading,
     bool? isCargandoMas,
     bool? hayMas,
@@ -76,6 +86,7 @@ class NotificacionState extends Equatable {
       notificaciones: notificaciones ?? this.notificaciones,
       noLeidas: noLeidas ?? this.noLeidas,
       hayNueva: hayNueva ?? this.hayNueva,
+      debeNavegar: debeNavegar ?? this.debeNavegar,
       isLoading: isLoading ?? this.isLoading,
       isCargandoMas: isCargandoMas ?? this.isCargandoMas,
       hayMas: hayMas ?? this.hayMas,
@@ -91,6 +102,7 @@ class NotificacionState extends Equatable {
         notificaciones,
         noLeidas,
         hayNueva,
+        debeNavegar,
         isLoading,
         isCargandoMas,
         hayMas,

@@ -1,5 +1,5 @@
-# Plataforma mínima iOS 13.0
-platform :ios, '13.0'
+# Plataforma mínima iOS 15.0 (requerido por Firebase SDK 12.x)
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -44,8 +44,8 @@ post_install do |installer|
     # Forzar deployment target mínimo a 13.0 en todos los pods
     # para evitar warnings de linking con Flutter que requiere iOS 13.0
     target.build_configurations.each do |config|
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       end
       # objective_c es un native asset de Flutter (XCFramework precompilado),
       # no un pod. El fix real está en el Run Script del Runner target (abajo).
@@ -57,10 +57,8 @@ post_install do |installer|
         config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
       end
 
-      # firebase_core 3.x contiene warnings de deprecación en su código Objective-C
-      # (deepLinkURLScheme deprecated, conflicting parameter types) que no podemos
-      # corregir directamente ya que es código de terceros. Se suprimen los warnings
-      # para este pod hasta que se migre a firebase_core 4.x.
+      # firebase_core 4.x puede contener warnings de terceros que no podemos corregir.
+      # Se suprimen para mantener builds limpios.
       if target.name == 'firebase_core'
         config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
@@ -70,6 +68,34 @@ post_install do |installer|
       # No se puede corregir directamente en código de terceros.
       # Se suprimen warnings hasta migrar a share_plus 13.x.
       if target.name == 'share_plus'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
+
+      # firebase_messaging 16.x contiene warnings en su plugin Obj-C (FLTFirebaseMessagingPlugin.m).
+      # No se pueden corregir en código de terceros.
+      if target.name == 'firebase_messaging'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
+
+      # flutter_local_notifications 21.x contiene warnings en su plugin Obj-C.
+      # No se pueden corregir en código de terceros.
+      if target.name == 'flutter_local_notifications'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
+
+      # flutter_secure_storage_darwin 0.3.x: warning Swift var/let en FlutterSecureStorage.swift.
+      # No se puede corregir en código de terceros.
+      if target.name == 'flutter_secure_storage_darwin'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
+
+      # webview_flutter_wkwebview 3.25.x: SecTrustGetCertificateAtIndex deprecated iOS 15.
+      # API aún funcional; se suprime hasta que el paquete migre a SecTrustCopyCertificateChain.
+      if target.name == 'webview_flutter_wkwebview'
         config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
       end

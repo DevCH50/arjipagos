@@ -4,6 +4,7 @@ import 'package:arjipagos/src/core/theme/arji/arji_theme.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/RegisterPage.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
@@ -48,6 +49,11 @@ void main() async {
   } catch (e) {
     AppLogger.error('Error al inicializar Firebase: $e', tag: 'Main');
   }
+
+  // Registrar el handler de mensajes en background ANTES de runApp.
+  // Firebase docs requieren que esto ocurra antes de que el engine arranque,
+  // para que el isolate de background pueda localizar la función en tiempo de ejecución.
+  FirebaseMessaging.onBackgroundMessage(handleFcmBackgroundMessage);
 
   await configureDependencies();
   runApp(const MyApp());

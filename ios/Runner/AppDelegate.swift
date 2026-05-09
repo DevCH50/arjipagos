@@ -22,18 +22,14 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
   }
 
-  // Permite mostrar notificaciones como banner cuando la app está en foreground
+  // Muestra notificaciones como banner cuando la app está en foreground
   // y garantiza que FCM dispare FirebaseMessaging.onMessage en Dart.
   override func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
-    if #available(iOS 14.0, *) {
-      completionHandler([.banner, .sound, .badge])
-    } else {
-      completionHandler([.alert, .sound, .badge])
-    }
+    completionHandler([.banner, .sound, .badge])
   }
 
   // Maneja errores de registro APNS para diagnóstico.

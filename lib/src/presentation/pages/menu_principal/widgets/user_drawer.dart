@@ -56,16 +56,16 @@ class UserDrawer extends StatelessWidget {
     // Obtener sesión ANTES de limpiarla (el token se necesita para el DELETE de FCM).
     final authResponse = await authUseCases.getUserSession.run();
 
-    // Eliminar token FCM del backend (best-effort, no bloquea el logout).
+    // Eliminar token FCM del backend ANTES de limpiar la sesión local.
+    // El authToken debe ser válido en el momento del DELETE — por eso se awaita aquí.
     if (authResponse != null) {
-      fcmService.obtenerToken().then((fcmToken) {
-        if (fcmToken != null) {
-          fcmService.eliminarToken(
-            authToken: authResponse.accessToken,
-            fcmToken: fcmToken,
-          );
-        }
-      });
+      final fcmToken = await fcmService.obtenerToken();
+      if (fcmToken != null) {
+        await fcmService.eliminarToken(
+          authToken: authResponse.accessToken,
+          fcmToken: fcmToken,
+        );
+      }
     }
 
     // Limpiar sesión local (AWAITED — crítico antes de navegar).

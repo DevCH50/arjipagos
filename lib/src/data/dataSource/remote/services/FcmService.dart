@@ -9,6 +9,7 @@ import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -24,8 +25,8 @@ import 'package:http/http.dart' as http;
 const String _kFcmChannelId = 'arjipagos_notif';
 
 /// Nombre del archivo de sonido personalizado (sin extensión) en res/raw/.
-/// El archivo debe existir en android/app/src/main/res/raw/notif_sound.mp3
-/// y en ios/Runner/notif_sound.caf para tener efecto.
+/// El archivo existe en android/app/src/main/res/raw/notif_sound.wav
+/// y en ios/Runner/notif_sound.wav incluido en el bundle.
 const String _kSoundName = 'notif_sound';
 
 // ============================================================================
@@ -37,6 +38,8 @@ const String _kSoundName = 'notif_sound';
 ///
 /// Debe ser función de nivel superior (top-level) con [@pragma('vm:entry-point')]
 /// para que Firebase Messaging pueda registrarla en un isolate separado.
+/// Se registra en main() ANTES de runApp() con
+/// [FirebaseMessaging.onBackgroundMessage].
 ///
 /// **Android:** muestra notificación local cuando el sistema no la genera
 /// automáticamente:
@@ -45,9 +48,11 @@ const String _kSoundName = 'notif_sound';
 ///    un globo en blanco; usamos los campos `data` como fallback.
 /// **iOS:** APNs gestiona la notificación directamente; no se requiere acción.
 @pragma('vm:entry-point')
-Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+Future<void> handleFcmBackgroundMessage(RemoteMessage message) async {
   // Requerido para usar plugins en el isolate de background.
   WidgetsFlutterBinding.ensureInitialized();
+  // Firebase debe inicializarse explícitamente en el isolate de background.
+  await Firebase.initializeApp();
 
   // Log completo del payload para facilitar diagnóstico del backend.
   AppLogger.info(
@@ -102,7 +107,7 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
 
 /// Muestra una notificación local en Android con alta importancia (heads-up).
 ///
-/// Se invoca desde [_handleBackgroundMessage] cuando el sistema no genera
+/// Se invoca desde [handleFcmBackgroundMessage] cuando el sistema no genera
 /// una notificación automáticamente o la genera con contenido vacío.
 Future<void> _mostrarNotificacionLocalAndroid({
   required int id,
@@ -357,7 +362,9 @@ class FcmService {
   /// 2. **Android:** crea el canal de alta importancia `arjipagos_notif`
   ///    (sin canal explícito FCM usa uno genérico con baja importancia y sin banner).
   /// 3. **iOS:** configura las opciones de presentación en primer plano.
-  /// 4. Registra el handler para mensajes en background.
+  ///
+  /// El handler de mensajes en background se registra en main() antes de runApp()
+  /// con [FirebaseMessaging.onBackgroundMessage].
   Future<void> configurarHandlers() async {
     try {
       // 1. Solicitar permisos al usuario.
@@ -381,7 +388,7 @@ class FcmService {
           AppStrings.fcmChannelNombre,
           description: AppStrings.fcmChannelDescripcion,
           importance: Importance.high,
-          // Sonido personalizado del canal. Archivo: res/raw/notif_sound.mp3
+          // Sonido personalizado del canal. Archivo: res/raw/notif_sound.wav
           // NOTA: Android no permite cambiar el sonido de un canal ya creado.
           // Si el canal ya existe en el dispositivo, desinstalar y reinstalar la
           // app para que el nuevo sonido tenga efecto.
@@ -403,9 +410,6 @@ class FcmService {
         badge: true,
         sound: true,
       );
-
-      // 4. Registrar handler para mensajes en segundo plano.
-      FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
 
       AppLogger.info('Handlers de FCM configurados correctamente', tag: 'FCM');
     } catch (e) {

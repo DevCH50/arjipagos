@@ -1,5 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
@@ -8,7 +9,6 @@ import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC para manejar el carrito de compras.
@@ -74,11 +74,10 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         // Validación defensiva: si los pagos guardados en storage forman una
         // referencia que ya excede el límite, avisar al usuario para que la reduzca.
         if (!estadoCargado.referenciaValida) {
-          debugPrint(
-            '[CARRITO] ⚠ Referencia excede límite al cargar carrito\n'
-            '  referencia  : "${estadoCargado.referenciaPago}"\n'
-            '  longitud    : ${estadoCargado.longitudReferencia} chars\n'
-            '  límite máx  : ${AppConstants.maxLongitudReferencia} chars',
+          AppLogger.warning(
+            'Referencia excede límite al cargar carrito — "${estadoCargado.referenciaPago}" '
+            '(${estadoCargado.longitudReferencia}/${AppConstants.maxLongitudReferencia} chars)',
+            tag: 'Carrito',
           );
           emit(estadoCargado.copyWith(
             errorMessage: AppStrings.carritoReferenciaExcede,
@@ -143,11 +142,10 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     // Esto protege contra datos cargados desde versiones anteriores de la app
     // y como segunda barrera ante la validación en EdoCta.
     if (!state.referenciaValida) {
-      debugPrint(
-        '[CARRITO] ⚠ Referencia excede límite al intentar pagar\n'
-        '  referencia  : "${state.referenciaPago}"\n'
-        '  longitud    : ${state.longitudReferencia} chars\n'
-        '  límite máx  : ${AppConstants.maxLongitudReferencia} chars',
+      AppLogger.warning(
+        'Referencia excede límite al intentar pagar — "${state.referenciaPago}" '
+        '(${state.longitudReferencia}/${AppConstants.maxLongitudReferencia} chars)',
+        tag: 'Carrito',
       );
       emit(state.copyWith(errorMessage: AppStrings.carritoReferenciaExcede));
       return;
@@ -176,14 +174,10 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         referencia: state.referenciaPago,
       );
 
-      // Log para debug
-      debugPrint('=== DATOS DE PAGO ===');
-      debugPrint('Referencia: ${pagoRequest.referencia}');
-      debugPrint('Importe: ${pagoRequest.importe}');
-      debugPrint('User ID: ${pagoRequest.userId}');
-      debugPrint('URL Retorno: ${pagoRequest.urlRetorno}');
-      debugPrint('Params: ${pagoRequest.toMap()}');
-      debugPrint('=====================');
+      AppLogger.debug(
+        'Pago — ref: ${pagoRequest.referencia} | importe: ${pagoRequest.importe} | userId: ${pagoRequest.userId}',
+        tag: 'Carrito',
+      );
 
       // Construir datos para el WebView
       emit(state.copyWith(

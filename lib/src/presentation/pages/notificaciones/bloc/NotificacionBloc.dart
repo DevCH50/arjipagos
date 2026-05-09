@@ -46,6 +46,7 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     on<NotificacionForegroundRecibidaEvent>(_onNotificacionForegroundRecibida);
     on<ResetNuevaNotificacionEvent>(_onResetNuevaNotificacion);
     on<NotificacionAbiertaDesdeBackgroundEvent>(_onNotificacionAbiertaDesdeBackground);
+    on<ResetDebeNavegarEvent>(_onResetDebeNavegar);
 
     // Caso 1: app en primer plano → FCM entrega el mensaje directamente.
     _fcmForegroundSub =
@@ -408,16 +409,28 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     emit(state.copyWith(hayNueva: false));
   }
 
+  /// Apaga la señal de navegación automática.
+  ///
+  /// Se dispara desde [MenuPrincipalPage] justo después de haber navegado
+  /// a [NotificacionesPage], para evitar re-navegaciones en reconstrucciones.
+  void _onResetDebeNavegar(
+    ResetDebeNavegarEvent event,
+    Emitter<NotificacionState> emit,
+  ) {
+    emit(state.copyWith(debeNavegar: false));
+  }
+
   /// Maneja la apertura de la app desde una notificación en background o terminada.
   ///
-  /// Activa el indicador visual de inmediato y luego refresca el contador
-  /// real desde el servidor para que el badge muestre el número correcto.
+  /// Activa [hayNueva] (punto rojo pulsante) y [debeNavegar] (señal para que
+  /// [MenuPrincipalPage] navegue automáticamente a [NotificacionesPage]).
+  /// Luego refresca el contador real desde el servidor.
   Future<void> _onNotificacionAbiertaDesdeBackground(
     NotificacionAbiertaDesdeBackgroundEvent event,
     Emitter<NotificacionState> emit,
   ) async {
-    // Activar el punto rojo pulsante de inmediato.
-    emit(state.copyWith(hayNueva: true));
+    // Activar el punto rojo pulsante y la señal de navegación automática.
+    emit(state.copyWith(hayNueva: true, debeNavegar: true));
 
     // Refrescar el contador real desde el servidor.
     try {

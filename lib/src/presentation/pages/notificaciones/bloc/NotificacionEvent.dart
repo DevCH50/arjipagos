@@ -85,7 +85,18 @@ class ResetNuevaNotificacionEvent extends NotificacionEvent {
 /// Evento para cuando el usuario abre la app tocando una notificación
 /// que llegó mientras la app estaba en background o completamente cerrada.
 ///
-/// Activa el indicador visual [hayNueva] y refresca el contador desde el servidor.
+/// Activa [hayNueva] y [debeNavegar], y refresca el contador desde el servidor.
+/// [MenuPrincipalPage] reacciona a [debeNavegar] para navegar automáticamente
+/// a [NotificacionesPage] y luego emite [ResetDebeNavegarEvent].
 class NotificacionAbiertaDesdeBackgroundEvent extends NotificacionEvent {
   const NotificacionAbiertaDesdeBackgroundEvent();
+}
+
+/// Evento para limpiar la señal de navegación automática.
+///
+/// Se emite desde [MenuPrincipalPage] inmediatamente después de haber
+/// disparado la navegación a [NotificacionesPage], para evitar re-navegaciones
+/// en reconstrucciones posteriores del widget.
+class ResetDebeNavegarEvent extends NotificacionEvent {
+  const ResetDebeNavegarEvent();
 }

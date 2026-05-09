@@ -7,8 +7,9 @@
 /// - MarcarTodasLeidasEvent (marcar todas)
 /// - ActualizarContadorEvent (refresh badge)
 /// - NotificacionForegroundRecibidaEvent (push en foreground)
-/// - ResetNuevaNotificacionEvent (apagar indicador)
-/// - NotificacionAbiertaDesdeBackgroundEvent (apertura desde notif)
+/// - ResetNuevaNotificacionEvent (apagar indicador de nueva notif)
+/// - NotificacionAbiertaDesdeBackgroundEvent (apertura desde notif → debeNavegar)
+/// - ResetDebeNavegarEvent (limpiar señal de navegación automática)
 library;
 
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
@@ -444,7 +445,7 @@ void main() {
 
   group('NotificacionAbiertaDesdeBackgroundEvent', () {
     blocTest<NotificacionBloc, NotificacionState>(
-      'activa hayNueva y actualiza noLeidas desde el servidor',
+      'activa hayNueva y debeNavegar, actualiza noLeidas desde el servidor',
       build: buildBloc,
       setUp: () {
         when(() => mockGetCountNoLeidas.run())
@@ -454,15 +455,17 @@ void main() {
           bloc.add(const NotificacionAbiertaDesdeBackgroundEvent()),
       expect: () => [
         isA<NotificacionState>()
-            .having((s) => s.hayNueva, 'hayNueva', true),
+            .having((s) => s.hayNueva, 'hayNueva', true)
+            .having((s) => s.debeNavegar, 'debeNavegar', true),
         isA<NotificacionState>()
             .having((s) => s.hayNueva, 'hayNueva', true)
+            .having((s) => s.debeNavegar, 'debeNavegar', true)
             .having((s) => s.noLeidas, 'noLeidas', 4),
       ],
     );
 
     blocTest<NotificacionBloc, NotificacionState>(
-      'mantiene hayNueva=true aunque falle el contador',
+      'mantiene hayNueva=true y debeNavegar=true aunque falle el contador',
       build: buildBloc,
       setUp: () {
         when(() => mockGetCountNoLeidas.run())
@@ -472,8 +475,27 @@ void main() {
           bloc.add(const NotificacionAbiertaDesdeBackgroundEvent()),
       expect: () => [
         isA<NotificacionState>()
-            .having((s) => s.hayNueva, 'hayNueva', true),
+            .having((s) => s.hayNueva, 'hayNueva', true)
+            .having((s) => s.debeNavegar, 'debeNavegar', true),
         // No emite segundo estado porque el error no produce emit en este handler
+      ],
+    );
+  });
+
+  // ============================================================================
+  // ResetDebeNavegarEvent
+  // ============================================================================
+
+  group('ResetDebeNavegarEvent', () {
+    blocTest<NotificacionBloc, NotificacionState>(
+      'apaga debeNavegar sin afectar hayNueva',
+      build: buildBloc,
+      seed: () => const NotificacionState(hayNueva: true, debeNavegar: true),
+      act: (bloc) => bloc.add(const ResetDebeNavegarEvent()),
+      expect: () => [
+        isA<NotificacionState>()
+            .having((s) => s.debeNavegar, 'debeNavegar', false)
+            .having((s) => s.hayNueva, 'hayNueva', true),
       ],
     );
   });

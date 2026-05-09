@@ -4,6 +4,9 @@ import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincip
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/user_drawer.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/user_header.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
+import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/widgets/notificacion_badge_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,28 +15,61 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// Muestra las opciones principales de la aplicación después del login.
 /// Incluye información del usuario y lista de módulos disponibles.
-class MenuPrincipalPage extends StatelessWidget {
+///
+/// Detecta cuándo el usuario abrió la app desde una notificación de sistema
+/// (background o app terminada) y navega automáticamente a [NotificacionesPage].
+class MenuPrincipalPage extends StatefulWidget {
   const MenuPrincipalPage({super.key});
 
   @override
+  State<MenuPrincipalPage> createState() => _MenuPrincipalPageState();
+}
+
+class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Caso app terminada: getInitialMessage puede haber disparado
+    // NotificacionAbiertaDesdeBackgroundEvent antes de que esta página
+    // se montara; verificar el estado inicial del BLoC tras el primer frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bloc = context.read<NotificacionBloc>();
+      if (bloc.state.debeNavegar) {
+        bloc.add(const ResetDebeNavegarEvent());
+        Navigator.of(context).pushNamed('notificaciones');
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.menuPrincipalTitle),
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: AppStrings.menuMiCuenta,
-            onPressed: () => Scaffold.of(context).openDrawer(),
+    return BlocListener<NotificacionBloc, NotificacionState>(
+      // Caso app en background: el usuario toca la notificación mientras
+      // la app ya está corriendo; el BLoC transiciona debeNavegar a true.
+      listenWhen: (prev, curr) => curr.debeNavegar && !prev.debeNavegar,
+      listener: (context, state) {
+        context.read<NotificacionBloc>().add(const ResetDebeNavegarEvent());
+        Navigator.of(context).pushNamed('notificaciones');
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(AppStrings.menuPrincipalTitle),
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: AppStrings.menuMiCuenta,
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ),
+          actions: [
+            // Botón de notificaciones con badge de no leídas
+            const NotificacionBadgeButton(),
+          ],
         ),
-        actions: [
-          // Botón de notificaciones con badge de no leídas
-          const NotificacionBadgeButton(),
-        ],
+        drawer: const UserDrawer(),
+        body: const _MenuPrincipalBody(),
       ),
-      drawer: const UserDrawer(),
-      body: const _MenuPrincipalBody(),
     );
   }
 }
