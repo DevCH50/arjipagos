@@ -33,7 +33,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
     // NotificacionAbiertaDesdeBackgroundEvent antes de que esta página
     // se montara; verificar el estado inicial del BLoC tras el primer frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final bloc = context.read<NotificacionBloc>();
       if (bloc.state.debeNavegar) {
         bloc.add(const ResetDebeNavegarEvent());

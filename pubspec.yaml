@@ -16,10 +16,10 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.19+26
+version: 1.0.19+27
 
 environment:
-  sdk: ^3.10.4
+  sdk: ^3.11.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -65,14 +65,14 @@ dependencies:
 
   # Badge para el contador de notificaciones no leídas
   badges: ^3.1.2
-  share_plus: ^12.0.2
+  share_plus: ^13.1.0
   path_provider: ^2.1.5
 
   # Abrir URLs en el navegador externo (Aviso de Privacidad, etc.)
   url_launcher: ^6.3.1
 
   # Leer versión y build number de la app en tiempo de ejecución
-  package_info_plus: ^9.0.1
+  package_info_plus: ^10.1.0
 
 dev_dependencies:
   flutter_test:

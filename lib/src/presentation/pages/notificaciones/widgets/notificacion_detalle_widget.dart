@@ -43,18 +43,7 @@ class _NotificacionDetalleWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.75,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
-      builder: (context, scrollController) {
-        return _DetalleContenido(
-          notificacion: widget.notificacion,
-          scrollController: scrollController,
-        );
-      },
-    );
+    return _DetalleContenido(notificacion: widget.notificacion);
   }
 }
 
@@ -64,59 +53,71 @@ class _NotificacionDetalleWidgetState
 /// y respetar el límite de anidación de 3 niveles.
 class _DetalleContenido extends StatelessWidget {
   final Notificacion notificacion;
-  final ScrollController scrollController;
 
-  const _DetalleContenido({
-    required this.notificacion,
-    required this.scrollController,
-  });
+  const _DetalleContenido({required this.notificacion});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // viewPaddingOf: inset físico real del OS (home indicator iOS, gesture nav
+    // Android), consistente en todos los dispositivos sin importar si un widget
+    // padre ya consumió el padding de MediaQuery.
+    final bottomPad = 24.0 + MediaQuery.viewPaddingOf(context).bottom;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? colorScheme.surfaceContainerHighest : colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    // ConstrainedBox + mainAxisSize.min: el sheet se ajusta al contenido y
+    // nunca supera el 85% de pantalla, garantizando que el último texto quede
+    // siempre justo encima del borde inferior sin espacio vacío inconsistente.
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        maxWidth: 600,
       ),
-      child: Column(
-        children: [
-          _buildHandle(colorScheme),
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 32 + MediaQuery.of(context).padding.bottom),
-              children: [
-                Text(
-                  notificacion.titulo,
-                  style: textTheme.titleLarge?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? colorScheme.surfaceContainerHighest : colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHandle(colorScheme),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPad),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notificacion.titulo,
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _formatearFecha(notificacion.fecha),
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Divider(color: colorScheme.outlineVariant),
+                    const SizedBox(height: 12),
+                    HtmlWidget(
+                      _procesarHtml(notificacion.mensaje, isDark, colorScheme),
+                      textStyle: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _formatearFecha(notificacion.fecha),
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Divider(color: colorScheme.outlineVariant),
-                const SizedBox(height: 12),
-                HtmlWidget(
-                  _procesarHtml(notificacion.mensaje, isDark, colorScheme),
-                  textStyle: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
