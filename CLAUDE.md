@@ -62,6 +62,11 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 - APK: `build/app/outputs/flutter-apk/app-release.apk`
 - AAB: `build/app/outputs/bundle/release/app-release.aab`
 
+**Reglas de versionado — OBLIGATORIAS:**
+
+1. La versión en `pubspec.yaml` debe ser MAYOR a la publicada en Play Store y App Store. Si coincide o es menor, incrementar patch +1 y build number +1 (ej: `1.0.19+27` → `1.0.20+28`).
+2. Si ya existe una versión en `pubspec.yaml` que aún NO ha sido publicada en ninguna tienda, NO crear ni incrementar a una nueva versión. Usar esa versión pendiente para el release. Solo crear versión nueva si el usuario lo indica explícitamente.
+
 **Verificar antes de release a producción:**
 
 - `ApiConfig.isProduction = true`
@@ -160,7 +165,7 @@ lib/src/
 - Debes asegurarte de no romper nada y que se apegue estrictamente a las arquitecturas limpias y la inyección de dependencias
 - Si tienes dudas, pregunta, antes de proceder
 - Si tienes que crear un nuevo archivo, asegúrate de que esté bien comentado y que esté bien estructurado
-- No Toast, utiliza SnackBar para mostrar mensajes de error o éxito
+- No Toast, no SnackBar — utiliza `AlertDialog` (con `showDialog`) para mostrar mensajes de éxito o error al usuario. Usar `dialogContext` del builder para `Navigator.pop` del dialog, y `context` externo solo para navegar fuera de la pantalla.
 - Quita del git, todo aquello que no debe ir o que es peligroso que este en git. Me refiero al  
   remoto. Incluye la carpeta "otros".
 - Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.

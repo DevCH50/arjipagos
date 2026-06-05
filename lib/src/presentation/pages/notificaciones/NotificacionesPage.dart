@@ -128,13 +128,20 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
     );
   }
 
-  /// Escucha cambios de estado para mostrar SnackBar de error.
+  /// Escucha cambios de estado para mostrar diálogo de error.
   void _onStateChange(BuildContext context, NotificacionState state) {
     if (state.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Error'),
           content: Text(state.errorMessage!),
-          behavior: SnackBarBehavior.floating,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Aceptar'),
+            ),
+          ],
         ),
       );
     }

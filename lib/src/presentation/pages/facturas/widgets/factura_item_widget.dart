@@ -140,8 +140,18 @@ class _FacturaItemWidgetState extends State<FacturaItemWidget> {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.facturasZipSinDatos)),
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Sin datos'),
+          content: const Text(AppStrings.facturasZipSinDatos),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
       );
       return;
     }
@@ -177,8 +187,18 @@ class _FacturaItemWidgetState extends State<FacturaItemWidget> {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.facturasErrorCompartir)),
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text(AppStrings.facturasErrorCompartir),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
       );
     } finally {
       if (mounted) {
