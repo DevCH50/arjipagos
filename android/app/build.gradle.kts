@@ -3,8 +3,8 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // The Flutter Gradle Plugin must be applied after the Android plugin.
+    // Incluye soporte Kotlin built-in desde Flutter 3.27+, no requiere kotlin-android explícito.
     id("dev.flutter.flutter-gradle-plugin")
     // Plugin de Google Services para Firebase Cloud Messaging (FCM)
     id("com.google.gms.google-services")
