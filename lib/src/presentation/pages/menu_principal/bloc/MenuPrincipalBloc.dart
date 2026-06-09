@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
@@ -6,6 +8,7 @@ import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC que gestiona el estado del Menú Principal.
@@ -17,12 +20,24 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
   final EdoCtaUseCases edoCtaUseCases;
   final FcmService fcmService;
 
+  StreamSubscription<String>? _tokenRefreshSub;
+
   MenuPrincipalBloc(this.authUseCases, this.edoCtaUseCases, this.fcmService)
       : super(const MenuPrincipalState()) {
     on<MenuPrincipalInitialEvent>(_onInitialEvent);
     on<MenuPrincipalRegistrarFcm>(_onRegistrarFcm);
     on<MenuItemSelected>(_onMenuItemSelected);
     on<MenuPrincipalLogout>(_onLogout);
+
+    // Escucha renovaciones automáticas de token FCM para mantener el backend
+    // sincronizado cuando Firebase rota el token (reinstalación, Play Services, etc.).
+    _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(_onFcmTokenRefresh);
+  }
+
+  @override
+  Future<void> close() {
+    _tokenRefreshSub?.cancel();
+    return super.close();
   }
 
   /// Maneja el evento inicial.
@@ -134,6 +149,27 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
   ) async {
     await _eliminarTokenFcm();
     await authUseCases.logout.run();
+  }
+
+  /// Re-registra el token FCM en el backend cuando Firebase lo rota
+  /// automáticamente (reinstalación, actualización de Google Play Services, etc.).
+  void _onFcmTokenRefresh(String newToken) {
+    Future(() async {
+      try {
+        final authResponse = await authUseCases.getUserSession.run();
+        if (authResponse == null) {
+          return;
+        }
+        await fcmService.registrarToken(
+          authToken: authResponse.accessToken,
+          fcmToken: newToken,
+          mobileType: fcmService.obtenerTipoDispositivo(),
+        );
+        AppLogger.info('Token FCM renovado y re-registrado en backend', tag: 'FCM');
+      } catch (e) {
+        AppLogger.warning('No se pudo actualizar token FCM renovado: $e', tag: 'FCM');
+      }
+    });
   }
 
   /// Elimina el token FCM del backend de forma silenciosa antes del logout.

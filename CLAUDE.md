@@ -18,7 +18,7 @@ flutter test --coverage                  # Tests con cobertura
 
 # Build
 flutter build apk --release              # APK para Android
-flutter build ios --release              # Build para iOS
+./scripts/build_ios.sh                   # Build iOS (restaura LastUpgradeCheck automáticamente)
 
 # Release (script automatizado)
 ./scripts/release.sh                     # Build APK
@@ -82,6 +82,7 @@ Siempre ejecutar esta secuencia antes de Archive o build en dispositivo físico,
 flutter clean
 flutter pub get
 cd ios && pod install
+./scripts/build_ios.sh    # En lugar de `flutter build ios` directo
 ```
 
 Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
@@ -116,13 +117,10 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 - Causa: `LaunchAction` en `Runner.xcscheme` apunta a Debug
 - Solución: asegurar `buildConfiguration = "Release"` y `selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"` en `LaunchAction`
 
-**Advertencia: `flutter build ios` resetea `LastUpgradeCheck` / `LastUpgradeVersion` a `1510`**
+**Nota: `flutter build ios` resetea `LastUpgradeCheck` / `LastUpgradeVersion` a `1510`**
 
 - Causa: Flutter 3.x no reconoce Xcode 26.3 (2630) y lo degrada a su versión conocida más reciente
-- Efecto: el build iOS igual pasa, pero Xcode muestra banner "upgrade project" al abrir el workspace
-- Solución: después de cualquier `flutter build ios` restaurar manualmente:
-  - `ios/Runner.xcodeproj/project.pbxproj` → `LastUpgradeCheck = 2630`
-  - `ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme` → `LastUpgradeVersion = "2630"`
+- Solución: usar siempre `./scripts/build_ios.sh` en lugar de `flutter build ios` directo — el script restaura los valores automáticamente
 
 ## Arquitectura
 
