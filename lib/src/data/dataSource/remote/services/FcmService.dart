@@ -158,6 +158,14 @@ Future<void> _mostrarNotificacionLocalAndroid({
 class FcmService {
   FcmService();
 
+  /// Stream de renovaciones automáticas del token FCM.
+  ///
+  /// Se expone desde el servicio (en vez de usar `FirebaseMessaging.instance`
+  /// directamente en los BLoCs) para mantener la capa de presentación
+  /// desacoplada de Firebase y poder mockearlo en tests.
+  Stream<String> get onTokenRefresh =>
+      FirebaseMessaging.instance.onTokenRefresh;
+
   // ============================================================================
   // TIPO DE DISPOSITIVO
   // ============================================================================

@@ -52,6 +52,10 @@ void main() {
     mockFcmService = MockFcmService();
     // Stub obtenerToken para que _registrarTokenFcm no lance MissingStubError
     when(() => mockFcmService.obtenerToken()).thenAnswer((_) async => null);
+    // Stub del stream de renovación de token: el BLoC lo escucha en su
+    // constructor vía FcmService.onTokenRefresh (ya desacoplado de Firebase).
+    when(() => mockFcmService.onTokenRefresh)
+        .thenAnswer((_) => const Stream<String>.empty());
     // Inicializar bloc por defecto para que tearDown siempre funcione
     bloc = createBloc();
   });

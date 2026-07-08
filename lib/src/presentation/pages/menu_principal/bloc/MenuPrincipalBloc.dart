@@ -8,7 +8,6 @@ import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC que gestiona el estado del Menú Principal.
@@ -31,7 +30,9 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
 
     // Escucha renovaciones automáticas de token FCM para mantener el backend
     // sincronizado cuando Firebase rota el token (reinstalación, Play Services, etc.).
-    _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(_onFcmTokenRefresh);
+    // Se escucha vía FcmService (no FirebaseMessaging.instance) para mantener el
+    // BLoC desacoplado de Firebase y testeable con un mock.
+    _tokenRefreshSub = fcmService.onTokenRefresh.listen(_onFcmTokenRefresh);
   }
 
   @override
