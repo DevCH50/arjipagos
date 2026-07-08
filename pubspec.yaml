@@ -58,7 +58,7 @@ dependencies:
   firebase_messaging: ^16.2.0
 
   # Notificaciones locales (foreground notifications)
-  flutter_local_notifications: ^22.0.0
+  flutter_local_notifications: ^22.0.1
 
   # Render de HTML enriquecido en NotificacionesPage
   flutter_widget_from_html_core: ^0.17.2

@@ -116,7 +116,7 @@ Future<void> _mostrarNotificacionLocalAndroid({
 }) async {
   final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
 
-  // v21: initialize() y show() usan parámetros nombrados.
+  // v22: initialize() y show() usan parámetros nombrados.
   await plugin.initialize(
     settings: const InitializationSettings(
       // Ícono monocromático requerido por Android para la barra de estado.

@@ -19,6 +19,22 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Actualización de SDK y dependencias seguras (2026-07-08):**
+
+  **Cambios:**
+  - Flutter SDK: `3.44.0` → `3.44.5` (stable, `flutter upgrade`). Dart 3.12.0.
+  - `flutter pub upgrade` — 24 dependencias actualizadas dentro de constraints (minor/patch): `equatable`, `firebase_core`, `firebase_messaging`, `package_info_plus`, `path_provider`, `share_plus`, `webview_flutter`, `build_runner`, `timezone`, `sqflite_common`, entre otras.
+  - DI regenerado con `build_runner`.
+
+  **Verificación:** `flutter analyze` → sin issues · `flutter test` → 412 tests pasan.
+
+  **Evaluados y aplicados los saltos MAYORES (mismo día, tras verificación en worktree aislado):**
+  - `flutter_local_notifications` 21 → **22.0.1** (constraint en `pubspec.yaml`: `^21.0.0` → `^22.0.1`). Verificado: `flutter analyze` limpio, 412 tests pasan, **build APK debug nativo Android exitoso**. El código de `FcmService` ya usaba la API de parámetros nombrados compatible con v22 (comentario actualizado a v22). Sin cambios de código necesarios.
+  - `xml` 6 → **7.0.1** (transitivo, sin uso directo). `image` 4.8 → 4.9.1 (transitivo).
+  - **Pendiente de verificar en Mac antes del próximo release iOS:** Archive de FLN 22 en iOS (no verificable en Linux; API Dart idéntica, riesgo bajo).
+
+  **NO subibles (bloqueados por constraints de otros paquetes/SDK, requieren forzar):** `flutter_secure_storage_darwin`→0.4.0, `injectable_generator`→3.1.0, `package_config`→3.0.0, `analyzer`→14. Se dejan como están.
+
 - **Fix: referencia con cero final para pago único — v1.0.19+26 (2026-05-08):**
 
   **Cambio:**
