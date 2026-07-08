@@ -21,6 +21,8 @@ import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/facturas/GetFacturasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
@@ -119,6 +121,18 @@ EdoCtaUseCases createMockEdoCtaUseCases({
 }) {
   return EdoCtaUseCases(
     getEstadosDeCuenta: getEstadosDeCuenta ?? MockGetEstadosDeCuentaUseCase(),
+  );
+}
+
+/// Mock del caso de uso de obtener facturas.
+class MockGetFacturasUseCase extends Mock implements GetFacturasUseCase {}
+
+/// Crea un FacturaUseCases con todos los use cases mockeados.
+FacturaUseCases createMockFacturaUseCases({
+  MockGetFacturasUseCase? getFacturas,
+}) {
+  return FacturaUseCases(
+    getFacturas: getFacturas ?? MockGetFacturasUseCase(),
   );
 }
 

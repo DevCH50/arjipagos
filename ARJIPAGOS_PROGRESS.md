@@ -19,6 +19,20 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Cobertura de tests para blindar upgrades de riesgo (2026-07-08):** +120 tests nuevos (412 → 532), `flutter analyze` sin issues.
+
+  **Hallazgo clave:** los Services usan funciones top-level `http.post(...)` sin inyectar `http.Client`. Se testean con `http.runWithClient(body, () => MockClient(...))` — intercepta el cliente vía Zone **sin tocar código de producción**.
+
+  **Nuevos archivos de test:**
+  - Services HTTP (`test/unit/services/`): Auth, Pago, Home, EdoCta, Factura, Notificacion, FCM (parte REST). Cubren parsing, status codes, sesión y errores Timeout/Socket.
+  - Storage (`test/unit/local/`): SharedPref (mock oficial `setMockInitialValues`) y SecureStorage (mock del MethodChannel en memoria).
+  - BLoCs faltantes (`test/unit/blocs/`): Factura, CambiarContrasena, Register, Splash.
+  - Widget HTML: `notificacion_detalle_widget_test.dart` (blinda `flutter_widget_from_html_core`/`xml` + despacho de MarcarLeidaEvent con MockBloc).
+  - Pago/WebView: `pago_response_handler_test.dart` (lógica pura de éxito/fallo de pago).
+  - Helper: `test/helpers/mocks.dart` extendido con `MockGetFacturasUseCase` + `createMockFacturaUseCases`.
+
+  **Límites documentados (NO cubribles por unit test):** parte nativa de `flutter_local_notifications` (`initialize`/`show`/canales), keychain/keystore de `flutter_secure_storage`, y platform view de `webview_flutter` (`WebViewController` no monta en `flutter test`). Su cobertura real es el build + smoke en dispositivo; la API de webview la cubre `flutter analyze` en compilación.
+
 - **Actualización de SDK y dependencias seguras (2026-07-08):**
 
   **Cambios:**
