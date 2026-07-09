@@ -19,6 +19,26 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Release 1.0.21+29 — verificación, bump, build e instalación (2026-07-09):**
+
+  **Verificación previa (todo OK):**
+  - `flutter analyze` → sin issues. `flutter test` → **532 tests pasando**.
+  - Flutter 3.44.5 / Dart 3.12.2. Árbol de trabajo limpio.
+  - Dependencias directas ya al día; los paquetes "outdated" son transitivos/dev en sus *newest resolvable versions* (subir a `Latest` exigiría *major bumps* incompatibles → no se tocaron).
+
+  **Cambios versionados y pusheados a `main`:**
+  - `CLAUDE.md`: simplificada regla de agentes (commit `bf2ecab`).
+  - `pubspec.yaml`: `1.0.20+28` → **`1.0.21+29`** (commit `f7616e1`).
+
+  **Builds release generados (versión 1.0.21+29):**
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (93.2 MB)
+  - AAB: `build/app/outputs/bundle/release/app-release.aab` (91.8 MB) — para Play Store
+  - Prerrequisitos verificados antes de compilar: `ApiConfig.isProduction = true` y permiso `INTERNET` en AndroidManifest.
+
+  **Instalación en dispositivo:** falló con `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (firma distinta a la app instalada). Se resolvió con `adb uninstall mx.moriah.arjipagos` + `adb install` (instalación limpia, sin sesión previa).
+
+  **Nota iOS:** los 532 tests son agnósticos de plataforma y pasan; el build/archive nativo de iOS requiere macOS + Xcode (`./scripts/build_ios.sh`), no compilable desde este entorno Linux.
+
 - **Cobertura de tests para blindar upgrades de riesgo (2026-07-08):** +120 tests nuevos (412 → 532), `flutter analyze` sin issues.
 
   **Hallazgo clave:** los Services usan funciones top-level `http.post(...)` sin inyectar `http.Client`. Se testean con `http.runWithClient(body, () => MockClient(...))` — intercepta el cliente vía Zone **sin tocar código de producción**.
