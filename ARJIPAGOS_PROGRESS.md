@@ -37,6 +37,13 @@ _(ninguno)_
 
   **Instalación en dispositivo:** falló con `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (firma distinta a la app instalada). Se resolvió con `adb uninstall mx.moriah.arjipagos` + `adb install` (instalación limpia, sin sesión previa).
 
+  **Verificación en runtime del login (build debug en dispositivo, 2026-07-09):** flujo end-to-end contra producción sin un solo error.
+  - `POST /api/v1/login` → **200** (~1.3 s), `[Auth] Login exitoso`.
+  - Cascada post-login toda **200**: `POST /dispositivo/registrar` (Token FCM registrado), `POST /alumno/estado-de-cuenta-sin-pagar/` (alumnos cargados), `GET /notificaciones/no-leidas`, `GET /notificaciones?page=1` (20 elementos).
+  - Cero respuestas 4xx/5xx, cero excepciones, cero timeouts.
+  - Confirmado: el `Logger` emite trazas `[NETWORK]/[Auth]/[FCM]/[EdoCta]` en debug y queda silenciado en release (comportamiento correcto). Para ver la petición de login hay que usar `flutter run` en debug, no `--release`.
+  - Nota operativa: instalar debug sobre release (o viceversa) falla por firma → hay que `adb uninstall mx.moriah.arjipagos` antes.
+
   **Nota iOS:** los 532 tests son agnósticos de plataforma y pasan; el build/archive nativo de iOS requiere macOS + Xcode (`./scripts/build_ios.sh`), no compilable desde este entorno Linux.
 
 - **Cobertura de tests para blindar upgrades de riesgo (2026-07-08):** +120 tests nuevos (412 → 532), `flutter analyze` sin issues.
