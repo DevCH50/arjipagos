@@ -146,7 +146,7 @@ lib/src/
 ## Reglas del código
 
 - Busca la mejor manera de hacer tu trabajo sin consumir tantos tokens.
-- Usa agentes y subagentes, en la medida de lo posible.
+- Usa agentes y subagentes.
 - Antes de implementar, asegúrate de planificar en modo plan y luego escribe.
 - Todo en español (comentarios, commits, documentación)
 - Widgets < 200 líneas
