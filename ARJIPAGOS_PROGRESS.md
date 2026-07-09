@@ -39,7 +39,9 @@ _(ninguno)_
   - AAB: `build/app/outputs/bundle/release/app-release.aab` (91.8 MB) — para Play Store
   - Prerrequisitos verificados: `ApiConfig.isProduction = true` y permiso `INTERNET` en AndroidManifest.
 
-  **Pendiente de prueba manual recomendada:** verificar visualmente en emulador API 35 (Android 15) que carrito y estado de cuenta no queden tapados por la barra de gestos.
+  **Verificación en dispositivo real (Oppo CPH2639, Android 16, navegación por gestos — 2026-07-09):** probado vía `adb screencap` en las dos pantallas con barra inferior fija (peor escenario para edge-to-edge). Resultado OK en ambas:
+  - **Carrito** y **Estados de Cuenta**: barra de estado limpia y AppBar correctamente debajo (inset superior OK); barras inferiores fijas (Pagar / Continuar) completas, tocables y con margen respecto a la barra de gestos (inset inferior OK vía `SafeArea`).
+  - Cero contenido tapado, cero botones recortados o pegados a la línea de gestos. Fix confirmado en runtime.
 
 - **Release 1.0.21+29 — verificación, bump, build e instalación (2026-07-09):**
 
