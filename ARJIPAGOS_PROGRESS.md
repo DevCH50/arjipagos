@@ -19,6 +19,28 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Fix edge-to-edge para Android 15 / SDK 35 (2026-07-09):**
+
+  **Motivo:** Google Play mostró la acción recomendada _"Es posible que la vista de extremo a extremo no funcione para todos los usuarios"_ al subir la versión `28 (1.0.20)`. A partir de Android 15, las apps orientadas al SDK 35 se dibujan de extremo a extremo por defecto y deben gestionar los insets de las barras de sistema.
+
+  **Cambios aplicados:**
+  - `lib/main.dart`: se agregó `await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` — equivalente a `enableEdgeToEdge()` nativo; declara el modo borde-a-borde y elimina la advertencia de Play Store.
+  - `android/app/src/main/res/values/styles.xml` y `values-night/styles.xml`: se removió `android:windowFullscreen=true` de `LaunchTheme` (fullscreen deprecado en SDK 35 e incompatible con el manejo de insets edge-to-edge). Se conservan `windowDrawsSystemBarBackgrounds` y `windowLayoutInDisplayCutoutMode=shortEdges`.
+
+  **Verificación de insets (sin cambios necesarios, ya correctos):**
+  - Barras inferiores fijas (`CarritoTotalBar`, `TotalSeleccionadoBar`): montadas como `bottomNavigationBar` con `SafeArea` interno dentro del `Container` de color → pintan detrás de la barra de navegación y el contenido queda por encima.
+  - Pantallas con AppBar: el `Scaffold` maneja el inset superior automáticamente.
+  - Pantallas sin AppBar: `SafeArea` en Login y Register (con fondo full-bleed detrás vía `Positioned.fill`/`BackgroundImage`); Splash es full-bleed intencional (logo centrado).
+
+  **Validación:** `flutter analyze lib/main.dart` sin issues. `flutter test` → **532 tests pasando**. Los cambios en XML no afectan el análisis. Los 532 tests son agnósticos de plataforma (aplican a iOS y Android); el archive nativo de iOS requiere macOS + Xcode.
+
+  **Builds release regenerados con el fix (versión 1.0.21+29, sin cambio de versión por seguir pendiente de publicar):**
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (93.2 MB)
+  - AAB: `build/app/outputs/bundle/release/app-release.aab` (91.8 MB) — para Play Store
+  - Prerrequisitos verificados: `ApiConfig.isProduction = true` y permiso `INTERNET` en AndroidManifest.
+
+  **Pendiente de prueba manual recomendada:** verificar visualmente en emulador API 35 (Android 15) que carrito y estado de cuenta no queden tapados por la barra de gestos.
+
 - **Release 1.0.21+29 — verificación, bump, build e instalación (2026-07-09):**
 
   **Verificación previa (todo OK):**

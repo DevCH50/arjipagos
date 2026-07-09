@@ -30,6 +30,11 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Android 15 (SDK 35): activar edge-to-edge explícitamente.
+  // Equivale a enableEdgeToEdge() nativo; resuelve la advertencia de Play Store
+  // y asegura que el contenido se dibuje de borde a borde correctamente.
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   // Barra de estado transparente con iconos claros para el splash/auth (fondo oscuro).
   // Las páginas con AppBar la sobreescriben automáticamente vía AppBarTheme.
   SystemChrome.setSystemUIOverlayStyle(
