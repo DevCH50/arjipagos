@@ -19,6 +19,30 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Actualización de Flutter/Dart y verificación cross-platform (2026-07-09):**
+
+  **Actualización del toolchain:**
+  - Flutter `3.44.1` → **`3.44.6`** (`flutter upgrade`); Dart `3.12.1` → **`3.12.2`**.
+  - Antes de actualizar hubo que descartar un `pubspec.lock` modificado dentro del checkout del SDK de Flutter (`~/develop/flutter`), no del proyecto.
+  - `flutter doctor` sin problemas.
+
+  **Dependencias del proyecto:**
+  - `flutter pub upgrade --major-versions` → `No dependencies changed`. Las dependencias directas ya estaban en su última versión mayor resoluble.
+  - `flutter pub outdated` → **directas: todas al día**. Los ~15 paquetes "outdated" restantes son transitivos fijados por el propio SDK de Flutter y su tooling (`matcher`, `meta`, `vector_math`, `test_api`, `injectable_generator`, `analyzer`, etc.); subirlos exigiría *major bumps* incompatibles → no se tocaron.
+  - `pubspec.yaml` y `pubspec.lock` quedaron **sin cambios**.
+
+  **Verificación minuciosa en ambas plataformas (todo OK):**
+  - `flutter analyze` → **sin issues**.
+  - `flutter test` → **532/532 pasan**.
+  - **Android:** `flutter build apk --release` → `app-release.apk` (93.2 MB) ✅.
+  - **iOS:** secuencia obligatoria (`flutter clean` → `pub get` → `pod install` → `./scripts/build_ios.sh`) → `Runner.app` (59.9 MB) ✅. El script restauró `LastUpgradeCheck`/`LastUpgradeVersion` a **2630**.
+    - Nota: el primer intento de build iOS crasheó con `PathNotFoundException` sobre `build/ios/Release-iphoneos` (bug conocido de la herramienta Flutter tras `flutter clean`, no del código). Se resolvió creando el directorio y reintentando; compiló limpio.
+
+  **Cambios versionados y pusheados a `main`:**
+  - `ios/Runner.xcodeproj/.../swiftpm/Package.resolved` (commit `a7b2dc3`) y `ios/Runner.xcworkspace/.../swiftpm/Package.resolved` (commit `3a1b7c5`): Swift PM alineó los pins de Firebase iOS que trajo el nuevo Flutter — firebase-ios-sdk **12.15.0**, app-check **11.3.1**, GoogleUtilities **8.1.2**, promises **2.4.1**, nanopb **2.30910.1**, GoogleAppMeasurement **12.15.0**.
+  - Se eliminaron 4 `flutter_*.log` (reportes de crash, basura local ya gitignoreada) para no dejar residuos.
+  - Sin cambio de versión de la app (sigue **1.0.21+29**, pendiente de publicar).
+
 - **Fix edge-to-edge para Android 15 / SDK 35 (2026-07-09):**
 
   **Motivo:** Google Play mostró la acción recomendada _"Es posible que la vista de extremo a extremo no funcione para todos los usuarios"_ al subir la versión `28 (1.0.20)`. A partir de Android 15, las apps orientadas al SDK 35 se dibujan de extremo a extremo por defecto y deben gestionar los insets de las barras de sistema.

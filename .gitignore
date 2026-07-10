@@ -79,8 +79,10 @@ mygit_*.sh
 /.gitignore
 
 # Credenciales de Firebase (no subir al repositorio)
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
+# Comodines para blindar también duplicados de Finder (ej: "GoogleService-Info 2.plist")
+# y respaldos manuales (ej: "GoogleService-Info_viejito.plist").
+android/app/google-services*.json
+ios/Runner/GoogleService-Info*.plist
 /android/.gitignore
 /ios/.gitignore
 /linux/.gitignore
