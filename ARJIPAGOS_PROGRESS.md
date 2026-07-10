@@ -19,6 +19,34 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Bundle ID de iOS: intento de migración a `mx.moriah` y REVERSIÓN a `com.example` (2026-07-09):**
+
+  **Resultado final:** iOS se queda en **`com.example.arjipagos`** (NO se migra). Android sigue en `mx.moriah.arjipagos`. Las dos plataformas con bundle distinto, a propósito.
+
+  **Qué pasó:** se cambió por error el bundle de iOS a `mx.moriah.arjipagos` (commit `17974cd`) creyendo que Apple rechazaría `com.example.*`. Al intentar el Archive salió *App Record Creation Error* (SKU/App Name en uso). Se descubrió que **la app iOS YA está publicada en el App Store con `com.example.arjipagos`** (versiones 1.0.1–1.0.20 live, 1.0.21 es la siguiente). El bundle ID de un registro de App Store es **permanente**: cambiarlo crearía una app nueva y dejaría huérfana la existente (usuarios, reseñas). Por eso se **revirtió**.
+
+  **Reversión aplicada:**
+  - `project.pbxproj`: 6 referencias `PRODUCT_BUNDLE_IDENTIFIER` de vuelta a `com.example.arjipagos` / `.RunnerTests`.
+  - `GoogleService-Info.plist`: restaurado el de **com.example** (`GOOGLE_APP_ID` `...ios:0dd1bf...7a337b`), re-descargado de Firebase (la app iOS com.example sigue existiendo en el proyecto). La app iOS `mx.moriah` registrada en Firebase queda inerte, sin usarse.
+  - Eliminados duplicados basura de plists (`_viejito`, ` 2`, `_2`).
+
+  **Verificación final (todo OK):**
+  - `.app` compilado: `CFBundleIdentifier` = `com.example.arjipagos`, plist empaquetado idéntico, `1.0.21 (30)`.
+  - Runtime confirmado: app instalada y corriendo en iPhone 17, FCM inicializado (log swizzling `I-FCM001000`, normal).
+  - Coherencia Firebase: Android e iOS en el mismo proyecto (`arjipagos`, sender `359262554914`), cada uno con su `GOOGLE_APP_ID`.
+  - `flutter analyze` sin issues; **532/532 tests**; config crítica iOS intacta (`LastUpgradeCheck`/`Version` = 2630).
+
+  **Se conserva del intento (mejora válida):**
+  - `.gitignore`: comodines `ios/Runner/GoogleService-Info*.plist` y `android/app/google-services*.json` para blindar duplicados/respaldos (evita subir API keys).
+  - `pubspec.yaml`: **1.0.21+29 → 1.0.21+30** (el build 29 ya se había usado en el registro).
+
+  **Lección:** antes de proponer cambiar un bundle/applicationId, verificar si la app ya está publicada en la tienda con ese identificador. Un identificador ya publicado es fijo e intocable.
+
+  **Notas de build conocidas (no bloqueantes):**
+  - Crash `PathNotFoundException` en `build/ios/Release-iphoneos` tras `flutter clean` → bug de la herramienta; se esquiva con `mkdir -p` y reintento.
+  - Warnings *"Stale file … outside allowed root paths"* al archivar → artefactos viejos en `build/ios`; se resuelven borrando esa carpeta + Clean Build Folder.
+  - `Missing package product 'FlutterGeneratedPluginSwiftPackage'` al correr en dispositivo → caché SPM de Xcode; se resuelve con File → Packages → Reset Package Caches (el paquete en disco está OK).
+
 - **Actualización de Flutter/Dart y verificación cross-platform (2026-07-09):**
 
   **Actualización del toolchain:**
