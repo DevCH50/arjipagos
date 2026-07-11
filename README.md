@@ -55,9 +55,9 @@ Olvídate de las filas, los horarios de oficina y los pagos en efectivo. Con Arj
 ## Descarga la App
 
 <p align="center">
-  <a href="https://apps.apple.com/mx/app/arjipagos/id6760574386"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="50"></a>
+  <a href="https://apps.apple.com/mx/app/arjipagos/id6760574386" target="_blank" rel="noopener"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="50"></a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://play.google.com/store/apps/details?id=mx.moriah.arjipagos"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="50"></a>
+  <a href="https://play.google.com/store/apps/details?id=mx.moriah.arjipagos" target="_blank" rel="noopener"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="50"></a>
 </p>
 
 ---
