@@ -94,7 +94,7 @@ No. La descarga y uso de Arjipagos es completamente gratuita.
 
 ¿Tienes dudas o necesitas ayuda? Contáctanos:
 
-- **Email:** devch@arji.edu.mx
+- **Email:** arjipagos_informe@arji.edu.mx
 - **Sitio web:** [arjipagos.moriah.mx](https://arjipagos.moriah.mx)
 
 ---
