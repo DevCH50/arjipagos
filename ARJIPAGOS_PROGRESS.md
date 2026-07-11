@@ -19,6 +19,22 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Fix build iOS (Swift Package Manager + Firebase) y release 1.0.22+31 (2026-07-10):**
+
+  **Contexto:** tras actualizar a Flutter 3.44.6, el proyecto quedó usando Swift Package Manager (Firebase migró de CocoaPods a SPM; `Podfile.lock` solo tiene `Flutter`). Esto introdujo varios fallos al compilar/archivar. Todo resuelto y **Archive validado OK** en App Store Connect.
+
+  **Problemas resueltos y blindajes permanentes (en `ios/Podfile` `post_install`):**
+  - **Firebase exige iOS 15.0 pero el SPM generado quedaba en 13.0:** Flutter regenera `FlutterGeneratedPluginSwiftPackage/Package.swift` con `.iOS("13.0")` en cada `pub get`/`clean`, y su corrección nativa (`updateMinimumDeployment`) solo aplica en `flutter build ios` CLI, no al compilar desde Xcode. **Fix:** el `post_install` fuerza `.iOS("15.0")` en cada `pod install` (que corre en el flujo manual y en todo `flutter build`).
+  - **`LastUpgradeCheck`/`LastUpgradeVersion` se degradaban a 1510:** el `post_install` los restaura a **2630** en cada `pod install` (corre después de la degradación de Flutter). Ya no requiere pasos manuales.
+  - **No aparecía el simulador como destino:** las configs `Release`/`Profile` tienen `SUPPORTED_PLATFORMS = iphoneos` (correcto para archives de dispositivo). Se decidió flujo **solo-dispositivo** (los simuladores consumen mucho espacio): `LaunchAction` (botón Run) = **Release** → instala build AOT autónomo en el iPhone que sobrevive cerrar/reabrir. Un build Debug en dispositivo físico es tethered-only y crashea al reabrirlo suelto. `ArchiveAction` sigue en Release.
+  - Se corrigió el malentendido en CLAUDE.md (la `LaunchAction` no controla el Archive; eso es la `ArchiveAction`).
+
+  **Limpieza de espacio (~56 GB liberados):** iOS DeviceSupport (33 GB), `.gradle/caches` (6.8 GB), DerivedData (5.3 GB), `build/` (12 GB). Además se eliminaron carpetas huérfanas de Firebase en `ios/Pods/` (basura pre-SPM: 69 MB → 8.4 MB).
+
+  **Versión:** subida a **1.0.22+31** (App Store rechazó 1.0.21 porque ya está aprobada/cerrada). `aps-environment = production`, `isProduction = true`, bundle `com.example.arjipagos` — todo verificado antes del Archive.
+
+  **Verificación:** `xcodebuild` de simulador (`BUILD SUCCEEDED`) y `flutter build ios --release` (`Built Runner.app 55.3MB`) sin errores; Archive validado en App Store Connect (falta el Upload final, pendiente para mañana).
+
 - **Bundle ID de iOS: intento de migración a `mx.moriah` y REVERSIÓN a `com.example` (2026-07-09):**
 
   **Resultado final:** iOS se queda en **`com.example.arjipagos`** (NO se migra). Android sigue en `mx.moriah.arjipagos`. Las dos plataformas con bundle distinto, a propósito.

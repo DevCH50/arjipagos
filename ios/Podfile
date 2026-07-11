@@ -129,7 +129,47 @@ post_install do |installer|
     # Marcar como "siempre ejecutar" para suprimir el warning de Xcode:
     # "Run script phase will be run during every build because it does not specify any outputs"
     phase.always_out_of_date = '1'
+
+    # --- Blindaje permanente de LastUpgradeCheck = 2630 ---
+    # `flutter build ios` / `flutter run` degradan LastUpgradeCheck a 1510 porque
+    # Flutter 3.x no reconoce Xcode 26.3 (2630). Como `pod install` corre DESPUÉS
+    # de esa degradación, aquí lo restauramos al valor correcto en cada build.
+    runner_project.root_object.attributes['LastUpgradeCheck'] = '2630'
+
     runner_project.save
     puts "✔ Run Script '#{phase_name}' configurado en Runner"
+    puts "✔ LastUpgradeCheck fijado en 2630 (project.pbxproj)"
+  end
+
+  # --- Blindaje permanente de LastUpgradeVersion = "2630" en el scheme ---
+  # El scheme es un XML aparte que Flutter también degrada a 1510. Se corrige
+  # por texto porque no lo gestiona el objeto de proyecto de xcodeproj.
+  scheme_path = File.join(runner_project.path.to_s, 'xcshareddata', 'xcschemes', 'Runner.xcscheme')
+  if File.exist?(scheme_path)
+    original = File.read(scheme_path)
+    fixed = original.gsub(/LastUpgradeVersion = "\d+"/, 'LastUpgradeVersion = "2630"')
+    if fixed != original
+      File.write(scheme_path, fixed)
+      puts "✔ LastUpgradeVersion fijado en 2630 (Runner.xcscheme)"
+    end
+  end
+
+  # --- Blindaje permanente de la plataforma iOS del Swift Package generado ---
+  # Flutter regenera FlutterGeneratedPluginSwiftPackage/Package.swift con el default
+  # .iOS("13.0"), pero Firebase (firebase-core / firebase-messaging) exige iOS 15.0.
+  # La corrección de Flutter (updateMinimumDeployment) SOLO se aplica al hacer
+  # `flutter build ios` por CLI; al compilar desde Xcode (flutter assemble) NO se aplica,
+  # así que el flujo `flutter pub get` → `pod install` → build en Xcode deja 13.0 y falla
+  # la resolución de paquetes. Aquí forzamos 15.0 en cada `pod install` (que es parte del
+  # flujo manual y de todo `flutter build`), garantizando que Xcode siempre resuelva bien.
+  spm_manifest = File.join(__dir__, 'Flutter', 'ephemeral', 'Packages', 'FlutterGeneratedPluginSwiftPackage', 'Package.swift')
+  if File.exist?(spm_manifest)
+    manifest = File.read(spm_manifest)
+    # Sube cualquier .iOS("10..14.x") a 15.0; nunca degrada 15.0 o superior.
+    patched = manifest.gsub(/\.iOS\("1[0-4](?:\.\d+)?"\)/, '.iOS("15.0")')
+    if patched != manifest
+      File.write(spm_manifest, patched)
+      puts "✔ FlutterGeneratedPluginSwiftPackage forzado a iOS 15.0"
+    end
   end
 end
