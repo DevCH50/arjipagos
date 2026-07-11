@@ -19,6 +19,16 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Verificación integral + build de release Android 1.0.22+31 (2026-07-10):**
+
+  **Verificación:** `flutter analyze` sin issues; **532 tests pasan** (`flutter test`, todo verde). `flutter pub get` sincronizado. Precondiciones de producción confirmadas: `ApiConfig.isProduction = true` y permiso `INTERNET` en `AndroidManifest.xml`.
+
+  **Versión:** se mantiene **1.0.22+31** (pendiente de publicar; no se incrementa por regla de versionado #2).
+
+  **Builds Android:** `app-release.apk` (93.2 MB) y `app-release.aab` (91.8 MB) generados sin errores. No se instaló en dispositivo (ninguno conectado por ADB).
+
+  **Nota deps:** 15 paquetes con versiones nuevas pero con constraints incompatibles; NO se actualizan sin autorización para no romper el entorno.
+
 - **Fix build iOS (Swift Package Manager + Firebase) y release 1.0.22+31 (2026-07-10):**
 
   **Contexto:** tras actualizar a Flutter 3.44.6, el proyecto quedó usando Swift Package Manager (Firebase migró de CocoaPods a SPM; `Podfile.lock` solo tiene `Flutter`). Esto introdujo varios fallos al compilar/archivar. Todo resuelto y **Archive validado OK** en App Store Connect.
