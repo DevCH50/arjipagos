@@ -72,6 +72,9 @@ otros/
 assets/arji/*.zip
 assets/arji/WhatsApp*/
 
+# Capturas de errores para depuración (uso local, no se declaran en pubspec)
+assets/errores/
+
 # Scripts locales de git
 mygit_*.sh
 
