@@ -19,6 +19,16 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **`flutter pub upgrade` — paso 2, sin cambiar constraints (2026-07-30):**
+
+  **Alcance real:** el `--dry-run` previo mostró que solo **1 dependencia** podía moverse dentro de los constraints actuales: `jni` **1.0.2 → 1.0.3** (patch, transitiva de `path_provider_android`). Único cambio en el repo: 2 líneas de `pubspec.lock` (versión + sha256). Era lo esperado tras el upgrade de 26 dependencias del 2026-07-29.
+
+  **Lo que NO se tocó:** 19 paquetes tienen versiones nuevas **incompatibles con los constraints** y requerirían `--major-versions`, que no se ejecutó. Entre ellos `injectable_generator 3.1.1`, que sigue bloqueado por el SDK (fija `test_api 0.7.11`) — ver la nota de `819da44`. También quedan atrás `analyzer 14.1.0`, `package_config 3.0.0`, `record_use 1.0.0` y `lean_builder 1.2.0`.
+
+  **Verificación:** `flutter analyze` limpio, **569 tests en verde**, APK (93.2 MB) y AAB (91.9 MB) recompilados sin errores. Como `jni` tiene componente nativo, no bastaba con compilar: se instaló en dispositivo y se comprobó que el proceso arranca y **sobrevive** (sin `FATAL` ni `AndroidRuntime` en logcat, sin errores de `path_provider`/`jni`).
+
+  **iOS:** no afectado — `jni` llega vía `path_provider_android`, que es exclusivo de Android.
+
 - **Selección de pagos con ámbito de `ciclo_id` (2026-07-29):**
 
   **Qué cambia:** las reglas de selección existentes (orden de ID ascendente al seleccionar, arrastre de los de ID mayor al deseleccionar, quitar del carrito solo el más alto) **no se modificaron**; ahora se evalúan **dentro de cada ciclo por separado**. Un pago del ciclo A ya no condiciona el orden de selección del ciclo B.
