@@ -1338,6 +1338,45 @@ end
 "Toolchain ... does not provide the required capabilities: [JAVA_COMPILER]" porque el
 JDK del sistema es un JRE; Flutter pasa su propio JDK. Usar siempre `flutter build`.
 
+### Sesión 2026-07-30 (b) — Verificación integral post-AGP 9 y revisión de actualizaciones
+
+Auditoría completa tras el cambio de toolchain, sin modificar código de la app.
+
+**Resultado de la verificación**
+
+| Comprobación                    | Resultado                                  |
+| ------------------------------- | ------------------------------------------ |
+| `flutter analyze`               | Sin issues                                 |
+| `flutter test`                  | 569 tests pasando                          |
+| `flutter build apk --release`   | OK (93.0 MB)                               |
+| `flutter build appbundle --release` | OK (91.5 MB)                           |
+| `ApiConfig.isProduction`        | `true`                                     |
+
+**Estado de actualizaciones — nada por subir**
+
+- `flutter upgrade --verify-only` → **ya en la última estable (3.44.8 / Dart 3.12.2)**.
+- `flutter pub upgrade` → `pubspec.lock` **sin cambios**; `pub outdated` reporta
+  *direct dependencies: all up-to-date* y "already using the newest resolvable versions".
+- Lo que aparece en la columna *Latest* está bloqueado por el SDK de Flutter, no por el
+  proyecto: `injectable_generator` 3.1.1 (ver sección propia — el SDK fija `test_api`
+  0.7.11), más `analyzer`, `_fe_analyzer_shared`, `meta`, `matcher` y `vector_math`,
+  que los fija la propia versión de Flutter. **No forzar con `dependency_overrides`.**
+
+**Permisos y configuración por plataforma (revisados, correctos)**
+
+- **Android** — `AndroidManifest.xml`: `INTERNET`, `ACCESS_NETWORK_STATE`,
+  `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`.
+- **iOS** — `Info.plist`: `NSUserNotificationUsageDescription` y `UIBackgroundModes`;
+  `IPHONEOS_DEPLOYMENT_TARGET = 15.0` uniforme en todas las configuraciones.
+- **iOS — anclas críticas intactas:** `LastUpgradeCheck = 2630` en `project.pbxproj`,
+  `LastUpgradeVersion = "2630"` en `Runner.xcscheme`, y los bloques del `Podfile`
+  (`objective_c` con `dwarf` y el forzado de plataforma `.iOS("15.0")`).
+
+**Límite conocido:** iOS no se compila desde este entorno Linux; el Archive y la prueba
+en dispositivo iOS siguen requiriendo la Mac. La verificación de iOS aquí es estática
+(configuración, permisos y anclas de proyecto), y el código Dart es compartido y ya está
+cubierto por el `analyze` y los 569 tests.
+
 ---
 
 ## Próximas tareas
