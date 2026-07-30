@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
@@ -27,7 +29,9 @@ void main() {
   EdoCtaListBloc createBloc() {
     return EdoCtaListBloc(
       createMockEdoCtaUseCases(getEstadosDeCuenta: mockGetEstadosDeCuenta),
-      mockSharedPref,
+      // Storage real sobre el SharedPref mockeado: así los tests del BLoC
+      // también ejercitan la (de)serialización con ámbito de ciclo.
+      SeleccionPagosStorage(mockSharedPref),
     );
   }
 
@@ -111,7 +115,9 @@ void main() {
           isA<EdoCtaListState>().having(
             (s) => s.pagosSeleccionados,
             'pagosSeleccionados',
-            {1: [1]},
+            {
+              TestEstadoDeCuenta.cicloActual: {1: [1]},
+            },
           ),
         ],
       );
@@ -122,7 +128,9 @@ void main() {
         seed: () => EdoCtaListState(
           isLoading: false,
           alumnos: [alumnoTest], // alumno con pagos id=1 e id=2
-          pagosSeleccionados: const {1: [1]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1]},
+          },
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
           alumnoId: 1,
@@ -145,8 +153,10 @@ void main() {
         seed: () => const EdoCtaListState(
           isLoading: false,
           pagosSeleccionados: {
-            1: [100, 101],
-            2: [200],
+            TestEstadoDeCuenta.cicloActual: {
+              1: [100, 101],
+              2: [200],
+            },
           },
         ),
         act: (bloc) => bloc.add(const EdoCtaLimpiarSeleccionEvent()),
@@ -162,33 +172,109 @@ void main() {
   });
 
   group('EdoCtaListState', () {
+    const cicloA = TestEstadoDeCuenta.cicloActual;
+    const cicloB = TestEstadoDeCuenta.cicloAnterior;
+
     test('isPagoSeleccionado retorna true cuando el pago está seleccionado', () {
       const state = EdoCtaListState(
-        pagosSeleccionados: {1: [100, 101]},
-      );
-      expect(state.isPagoSeleccionado(1, 100), true);
-      expect(state.isPagoSeleccionado(1, 101), true);
-      expect(state.isPagoSeleccionado(1, 102), false);
-      expect(state.isPagoSeleccionado(2, 100), false);
-    });
-
-    test('cantidadPagosSeleccionados cuenta correctamente', () {
-      const state = EdoCtaListState(
         pagosSeleccionados: {
-          1: [100, 101],
-          2: [200],
+          cicloA: {1: [100, 101]},
         },
       );
-      expect(state.cantidadPagosSeleccionados, 3);
+      expect(state.isPagoSeleccionado(cicloA, 1, 100), true);
+      expect(state.isPagoSeleccionado(cicloA, 1, 101), true);
+      expect(state.isPagoSeleccionado(cicloA, 1, 102), false);
+      expect(state.isPagoSeleccionado(cicloA, 2, 100), false);
+    });
+
+    test('isPagoSeleccionado distingue el ciclo: el mismo pago en otro ciclo no cuenta', () {
+      const state = EdoCtaListState(
+        pagosSeleccionados: {
+          cicloA: {1: [100]},
+        },
+      );
+      expect(state.isPagoSeleccionado(cicloA, 1, 100), true);
+      expect(state.isPagoSeleccionado(cicloB, 1, 100), false);
+    });
+
+    test('cantidadPagosSeleccionados suma todos los ciclos', () {
+      const state = EdoCtaListState(
+        pagosSeleccionados: {
+          cicloA: {
+            1: [100, 101],
+            2: [200],
+          },
+          cicloB: {
+            1: [300],
+          },
+        },
+      );
+      expect(state.cantidadPagosSeleccionados, 4);
     });
 
     test('puedeSelecionarPago respeta orden de IDs', () {
       const state = EdoCtaListState(
-        pagosSeleccionados: {1: [100]},
+        pagosSeleccionados: {
+          cicloA: {1: [100]},
+        },
       );
       // Puede seleccionar el siguiente (101) pero no saltar al 102
-      expect(state.puedeSelecionarPago(1, 101, [100, 101, 102]), true);
-      expect(state.puedeSelecionarPago(1, 102, [100, 101, 102]), false);
+      expect(state.puedeSelecionarPago(cicloA, 1, 101, [100, 101, 102]), true);
+      expect(state.puedeSelecionarPago(cicloA, 1, 102, [100, 101, 102]), false);
+    });
+
+    test('el orden ascendente se evalúa solo dentro del mismo ciclo', () {
+      // El alumno no tiene nada seleccionado en el ciclo B, aunque sí en el A.
+      const state = EdoCtaListState(
+        pagosSeleccionados: {
+          cicloA: {1: [100]},
+        },
+      );
+
+      // En el ciclo B puede seleccionar su primer pago sin haber tocado el A,
+      // aunque su ID (300) sea mayor que los del ciclo A.
+      expect(state.puedeSelecionarPago(cicloB, 1, 300, [300, 301]), true);
+      // Pero dentro del ciclo B sigue sin poder saltarse el orden.
+      expect(state.puedeSelecionarPago(cicloB, 1, 301, [300, 301]), false);
+    });
+
+    test('totalSeleccionado solo suma pagos seleccionados en su propio ciclo', () {
+      final alumno = Alumno(
+        alumnoId: 1,
+        alumno: 'Test',
+        apPaterno: '',
+        apMaterno: '',
+        nombre: 'Test',
+        becaSep: '',
+        becaArji: '',
+        becaBach: '',
+        becaSp: '',
+        esBaja: false,
+        grupoId: 1,
+        grupo: '',
+        urlPhoto: '',
+        estadoDeCuenta: TestEstadoDeCuenta.listaDosCiclos,
+      );
+
+      // Se selecciona el pago id=1 (ciclo actual, $5000) y el id=10
+      // (ciclo anterior, $4000).
+      final state = EdoCtaListState(
+        alumnos: [alumno],
+        pagosSeleccionados: const {
+          cicloA: {1: [1]},
+          cicloB: {1: [10]},
+        },
+      );
+      expect(state.totalSeleccionado, 9000.0);
+
+      // Si el id=10 se registra bajo el ciclo equivocado, no debe sumarse.
+      final stateMalCiclo = EdoCtaListState(
+        alumnos: [alumno],
+        pagosSeleccionados: const {
+          cicloA: {1: [1, 10]},
+        },
+      );
+      expect(stateMalCiclo.totalSeleccionado, 5000.0);
     });
   });
 }

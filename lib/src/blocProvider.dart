@@ -1,5 +1,5 @@
 import 'package:arjipagos/injection.dart';
-import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -49,12 +49,12 @@ List<BlocProvider> blocProviders = [
   ),
   BlocProvider<EdoCtaListBloc>(
     create: (context) =>
-        EdoCtaListBloc(locator<EdoCtaUseCases>(), locator<SharedPref>())
+        EdoCtaListBloc(locator<EdoCtaUseCases>(), locator<SeleccionPagosStorage>())
           ..add(const EdoCtaListInitialEvent()),
   ),
   BlocProvider<CarritoBloc>(
     create: (context) => CarritoBloc(
-      sharedPref: locator<SharedPref>(),
+      seleccionStorage: locator<SeleccionPagosStorage>(),
       authUseCases: locator<AuthUseCases>(),
       edoCtaUseCases: locator<EdoCtaUseCases>(),
     )..add(const CarritoInitialEvent()),

@@ -10,6 +10,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// - Si aceptaPagosDiversos = false: Se puede eliminar libremente.
 /// - Si aceptaPagosDiversos = true: Solo el pago con ID más alto se puede eliminar.
+///
+/// Se maqueta con `Row` + `Expanded` (mismo patrón que `PagoItem`) en lugar de
+/// `ListTile`: el `trailing` de un `ListTile` recibe un ancho acotado y el
+/// importe junto al botón de quitar lo desbordaban por fracciones de pixel en
+/// pantallas angostas. Aquí el bloque derecho toma su ancho intrínseco y es la
+/// columna de texto la que cede espacio, por lo que el desbordamiento es
+/// imposible en cualquier tamaño de pantalla.
 class CarritoPagoItem extends StatelessWidget {
   final int alumnoId;
   final EstadoDeCuenta pago;
@@ -26,65 +33,107 @@ class CarritoPagoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: Text(
-        pago.descripcionAbreviada,
-        style: theme.textTheme.bodyLarge,
-      ),
-      subtitle: _buildSubtitulo(theme),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            pago.totalFormatted,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Expanded(child: _buildContenido(theme)),
           const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(
-              Icons.remove_circle_outline,
-              color: puedeEliminar
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-            ),
-            tooltip: puedeEliminar
-                ? AppStrings.carritoQuitar
-                : AppStrings.carritoQuitarOrden,
-            onPressed: puedeEliminar ? () => _quitarPago(context) : null,
-          ),
+          _buildTrailing(context, theme),
         ],
       ),
     );
   }
 
-  /// Construye el subtítulo con la fecha y el chip de estado.
-  Widget _buildSubtitulo(ThemeData theme) {
+  /// Construye la columna con título, fecha de vencimiento y estado.
+  Widget _buildContenido(ThemeData theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(pago.descripcionAbreviada, style: theme.textTheme.bodyLarge),
         const SizedBox(height: 4),
-        Row(
-          children: [
-            Icon(
-              Icons.calendar_today,
-              size: 14,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+        _buildVencimiento(theme),
         const SizedBox(height: 4),
         EstadoPagoChip(estadoPago: pago.estadoPago),
       ],
+    );
+  }
+
+  /// Construye la fila de fecha de vencimiento.
+  Widget _buildVencimiento(ThemeData theme) {
+    final estilo = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+    return Row(
+      children: [
+        Icon(
+          Icons.calendar_today,
+          size: 14,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 4),
+        // Flexible + ellipsis: en fechas largas o con fuente ampliada por
+        // accesibilidad el texto se recorta en vez de desbordar la fila.
+        Flexible(
+          child: Text(
+            '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: estilo,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Construye el importe y el botón de quitar del carrito.
+  Widget _buildTrailing(BuildContext context, ThemeData theme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          pago.totalFormatted,
+          // maxLines + softWrap: false evita que el importe se parta carácter
+          // por carácter; al no estar dentro de un ListTile ya dispone de su
+          // ancho intrínseco completo.
+          maxLines: 1,
+          softWrap: false,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _buildBotonQuitar(context, theme),
+      ],
+    );
+  }
+
+  /// Construye el botón de quitar con su tooltip.
+  ///
+  /// Tooltip explícito en vez del parámetro `tooltip` del IconButton: el
+  /// mensaje de "quitar en orden" es largo y, pegado al borde derecho, se
+  /// renderizaba como una cinta vertical ilegible. El margen lo obliga a
+  /// maquetarse como globo ancho y centrado.
+  Widget _buildBotonQuitar(BuildContext context, ThemeData theme) {
+    return Tooltip(
+      message: puedeEliminar
+          ? AppStrings.carritoQuitar
+          : AppStrings.carritoQuitarOrden,
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      preferBelow: false,
+      child: IconButton(
+        icon: Icon(
+          Icons.remove_circle_outline,
+          color: puedeEliminar
+              ? theme.colorScheme.error
+              : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+        ),
+        onPressed: puedeEliminar ? () => _quitarPago(context) : null,
+      ),
     );
   }
 

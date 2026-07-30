@@ -1,7 +1,7 @@
 import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
-import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
@@ -9,19 +9,17 @@ import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.da
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Clave para guardar los pagos seleccionados en SharedPreferences.
-const String _kPagosSeleccionadosKey = 'edo_cta_pagos_seleccionados';
-
 /// BLoC que gestiona el estado de la página de estados de cuenta.
 ///
 /// Maneja la carga de estados de cuenta, selección de pagos
-/// (respetando el orden de ID ascendente) y limpieza de selección.
-/// Los pagos seleccionados se persisten en SharedPreferences.
+/// (respetando el orden de ID ascendente **dentro de cada ciclo**) y limpieza
+/// de selección. Los pagos seleccionados se persisten vía
+/// [SeleccionPagosStorage], que también los comparte con el carrito.
 class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
   final EdoCtaUseCases edoCtaUseCases;
-  final SharedPref sharedPref;
+  final SeleccionPagosStorage seleccionStorage;
 
-  EdoCtaListBloc(this.edoCtaUseCases, this.sharedPref) : super(EdoCtaListState.initial()) {
+  EdoCtaListBloc(this.edoCtaUseCases, this.seleccionStorage) : super(EdoCtaListState.initial()) {
     on<EdoCtaListInitialEvent>(_onInitial);
     on<EdoCtaListRefreshEvent>(_onRefresh);
     on<EdoCtaTogglePagoEvent>(_onTogglePago);
@@ -35,7 +33,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     Emitter<EdoCtaListState> emit,
   ) async {
     // Cargar pagos seleccionados guardados
-    final pagosGuardados = await _cargarPagosSeleccionados();
+    final pagosGuardados = await seleccionStorage.cargar();
     if (pagosGuardados.isNotEmpty) {
       emit(state.copyWith(pagosSeleccionados: pagosGuardados));
     }
@@ -48,7 +46,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     Emitter<EdoCtaListState> emit,
   ) async {
     // Al refrescar, limpiamos las selecciones (en memoria y storage)
-    _guardarPagosSeleccionados({});
+    seleccionStorage.guardar({});
     await _cargarEstadosDeCuenta(emit, limpiarSeleccion: true);
   }
 
@@ -118,15 +116,20 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       orElse: () => throw Exception('Pago no encontrado'),
     );
 
-    // Obtener solo los pagos disponibles en internet, ordenados por ID
+    // El ciclo del pago delimita el ámbito de toda la regla de selección.
+    final cicloId = pago.cicloId;
+
+    // Obtener los pagos disponibles en internet DEL MISMO CICLO, ordenados por
+    // ID. Filtrar por ciclo es lo que impide que un pago de otro ciclo
+    // condicione el orden ascendente de éste.
     final pagosDisponibles = alumno.estadoDeCuenta
-        .where((e) => e.estaDisponibleEnInternet)
+        .where((e) => e.estaDisponibleEnInternet && e.cicloId == cicloId)
         .toList()
       ..sort((a, b) => a.id.compareTo(b.id));
     final idsDisponibles = pagosDisponibles.map((e) => e.id).toList();
 
-    // Obtener los pagos actualmente seleccionados para este alumno
-    final pagosActuales = List<int>.from(state.pagosSeleccionados[alumnoId] ?? []);
+    // Obtener los pagos actualmente seleccionados para este alumno en el ciclo
+    final pagosActuales = List<int>.from(state.pagosDe(cicloId, alumnoId));
     final estaSeleccionado = pagosActuales.contains(pagoId);
 
     if (estaSeleccionado) {
@@ -144,15 +147,16 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       // Simular cómo quedaría la referencia si se añade este pago.
       // Se replica la misma lógica que CarritoState.referenciaPago para
       // garantizar consistencia entre ambos puntos de validación.
-      final mapaSimulado = Map<int, List<int>>.from(state.pagosSeleccionados);
-      final idsSimulados = List<int>.from(mapaSimulado[alumnoId] ?? [])
-        ..add(pagoId);
-      mapaSimulado[alumnoId] = idsSimulados;
-
+      // La referencia agrega los pagos de TODOS los ciclos, igual que
+      // CarritoState.referenciaPago: el ámbito por ciclo aplica al orden de
+      // selección, no al cobro.
       final allIds = <int>[];
-      for (final ids in mapaSimulado.values) {
-        allIds.addAll(ids);
-      }
+      state.pagosSeleccionados.forEach((ciclo, alumnos) {
+        alumnos.forEach((alumnoIdMapa, ids) {
+          allIds.addAll(ids);
+        });
+      });
+      allIds.add(pagoId);
 
       final refSimulada = AppConstants.generarReferencia(allIds);
       if (refSimulada.length > AppConstants.maxLongitudReferencia) {
@@ -172,7 +176,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
 
       if (pago.aceptaPagosDiversos) {
         // Verificar que se puede seleccionar (orden ascendente)
-        if (state.puedeSelecionarPago(alumnoId, pagoId, idsDisponibles)) {
+        if (state.puedeSelecionarPago(cicloId, alumnoId, pagoId, idsDisponibles)) {
           pagosActuales.add(pagoId);
           pagosActuales.sort(); // Mantener ordenados
         } else {
@@ -191,18 +195,30 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       }
     }
 
-    // Crear nuevo mapa de selecciones
-    final nuevosSeleccionados = Map<int, List<int>>.from(state.pagosSeleccionados);
+    // Crear nuevo mapa de selecciones, tocando solo el ciclo afectado
+    final nuevosSeleccionados = <int, Map<int, List<int>>>{};
+    state.pagosSeleccionados.forEach((ciclo, alumnos) {
+      nuevosSeleccionados[ciclo] = Map<int, List<int>>.from(alumnos);
+    });
+
+    final alumnosDelCiclo =
+        Map<int, List<int>>.from(nuevosSeleccionados[cicloId] ?? {});
     if (pagosActuales.isEmpty) {
-      nuevosSeleccionados.remove(alumnoId);
+      alumnosDelCiclo.remove(alumnoId);
     } else {
-      nuevosSeleccionados[alumnoId] = pagosActuales;
+      alumnosDelCiclo[alumnoId] = pagosActuales;
+    }
+
+    if (alumnosDelCiclo.isEmpty) {
+      nuevosSeleccionados.remove(cicloId);
+    } else {
+      nuevosSeleccionados[cicloId] = alumnosDelCiclo;
     }
 
     emit(state.copyWith(pagosSeleccionados: nuevosSeleccionados));
 
     // Guardar en storage
-    _guardarPagosSeleccionados(nuevosSeleccionados);
+    seleccionStorage.guardar(nuevosSeleccionados);
   }
 
   /// Limpia todas las selecciones.
@@ -212,7 +228,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
   ) {
     emit(state.copyWith(pagosSeleccionados: {}));
     // Limpiar del storage
-    _guardarPagosSeleccionados({});
+    seleccionStorage.guardar({});
   }
 
   /// Recarga los pagos seleccionados desde el storage.
@@ -221,44 +237,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     EdoCtaRecargarSeleccionEvent event,
     Emitter<EdoCtaListState> emit,
   ) async {
-    final pagosGuardados = await _cargarPagosSeleccionados();
+    final pagosGuardados = await seleccionStorage.cargar();
     emit(state.copyWith(pagosSeleccionados: pagosGuardados));
-  }
-
-  /// Guarda los pagos seleccionados en SharedPreferences.
-  Future<void> _guardarPagosSeleccionados(Map<int, List<int>> pagos) async {
-    try {
-      // Convertir Map<int, List<int>> a Map<String, dynamic> para JSON
-      final Map<String, dynamic> jsonMap = {};
-      pagos.forEach((key, value) {
-        jsonMap[key.toString()] = value;
-      });
-      await sharedPref.save(_kPagosSeleccionadosKey, jsonMap);
-    } catch (e) {
-      // Si hay error al guardar, solo lo ignoramos (no es crítico)
-    }
-  }
-
-  /// Carga los pagos seleccionados desde SharedPreferences.
-  Future<Map<int, List<int>>> _cargarPagosSeleccionados() async {
-    try {
-      final data = await sharedPref.readMap(_kPagosSeleccionadosKey);
-      if (data == null) {
-        return {};
-      }
-
-      // Convertir Map<String, dynamic> a Map<int, List<int>>
-      final Map<int, List<int>> result = {};
-      data.forEach((key, value) {
-        final alumnoId = int.tryParse(key);
-        if (alumnoId != null && value is List) {
-          result[alumnoId] = List<int>.from(value.map((e) => e as int));
-        }
-      });
-      return result;
-    } catch (e) {
-      // Si hay error al leer, retornar vacío
-      return {};
-    }
   }
 }

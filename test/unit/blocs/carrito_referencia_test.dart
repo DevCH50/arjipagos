@@ -14,6 +14,7 @@ library;
 
 import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
@@ -31,6 +32,10 @@ import '../../helpers/test_data.dart';
 // =============================================================================
 // HELPERS DE DATOS
 // =============================================================================
+
+/// Ciclo por defecto de los pagos de estos tests. La validación de longitud de
+/// referencia no depende del ciclo, pero la selección sí se agrupa por él.
+const int _kCiclo = 2024;
 
 /// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos (10001, …).
 Alumno _alumnoConPagos(int cantidadPagos) => Alumno(
@@ -51,6 +56,8 @@ Alumno _alumnoConPagos(int cantidadPagos) => Alumno(
         cantidadPagos,
         (i) => EstadoDeCuenta(
           id: 10001 + i,
+          cicloId: _kCiclo,
+          nivelId: 1,
           descripcionCorta: 'Pago ${10001 + i}',
           total: 1000.0,
           totalFormatted: '\$1,000.00',
@@ -100,7 +107,9 @@ void main() {
       () {
         const state = CarritoState(
           pagosSeleccionados: {
-            1: [10001, 10002, 10003, 10004, 10005],
+            _kCiclo: {
+              1: [10001, 10002, 10003, 10004, 10005],
+            },
           },
         );
         // "10001D10002D10003D10004D10005" = 29 chars
@@ -115,7 +124,9 @@ void main() {
       () {
         const state = CarritoState(
           pagosSeleccionados: {
-            1: [10001, 10002, 10003, 10004, 10005, 10006],
+            _kCiclo: {
+              1: [10001, 10002, 10003, 10004, 10005, 10006],
+            },
           },
         );
         // "10001D10002D10003D10004D10005D10006" = 35 chars
@@ -128,7 +139,9 @@ void main() {
       'es true para un único pago de IDs largos',
       () {
         const state = CarritoState(
-          pagosSeleccionados: {1: [99999999]},
+          pagosSeleccionados: {
+            _kCiclo: {1: [99999999]},
+          },
         );
         // "99999999A0" = 10 chars ≤ 30
         expect(state.referenciaValida, isTrue);
@@ -145,7 +158,9 @@ void main() {
     test('calcula la longitud de la referencia correctamente', () {
       const state = CarritoState(
         pagosSeleccionados: {
-          1: [100, 200, 300],
+          _kCiclo: {
+            1: [100, 200, 300],
+          },
         },
       );
       // "100D200D300" = 11 chars
@@ -156,8 +171,10 @@ void main() {
     test('coincide con referenciaPago.length', () {
       const state = CarritoState(
         pagosSeleccionados: {
-          1: [10001, 10002],
-          2: [20001],
+          _kCiclo: {
+            1: [10001, 10002],
+            2: [20001],
+          },
         },
       );
       expect(state.longitudReferencia, equals(state.referenciaPago.length));
@@ -182,7 +199,7 @@ void main() {
     });
 
     CarritoBloc createBloc() => CarritoBloc(
-          sharedPref: mockSharedPref,
+          seleccionStorage: SeleccionPagosStorage(mockSharedPref),
           authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
           edoCtaUseCases: createMockEdoCtaUseCases(
             getEstadosDeCuenta: mockGetEstadosDeCuenta,
@@ -199,7 +216,9 @@ void main() {
         build: () => createBloc(),
         seed: () => const CarritoState(
           pagosSeleccionados: {
-            1: [10001, 10002, 10003, 10004, 10005, 10006],
+            _kCiclo: {
+              1: [10001, 10002, 10003, 10004, 10005, 10006],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
@@ -222,7 +241,9 @@ void main() {
         },
         seed: () => const CarritoState(
           pagosSeleccionados: {
-            1: [10001, 10002, 10003, 10004, 10005],
+            _kCiclo: {
+              1: [10001, 10002, 10003, 10004, 10005],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
@@ -246,7 +267,9 @@ void main() {
         build: () => createBloc(),
         seed: () => const CarritoState(
           pagosSeleccionados: {
-            1: [10001, 10002, 10003, 10004, 10005, 10006],
+            _kCiclo: {
+              1: [10001, 10002, 10003, 10004, 10005, 10006],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),

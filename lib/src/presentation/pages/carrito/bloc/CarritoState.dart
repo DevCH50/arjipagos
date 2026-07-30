@@ -8,8 +8,11 @@ class CarritoState extends Equatable {
   /// Lista de alumnos con sus estados de cuenta.
   final List<Alumno>? alumnos;
 
-  /// Mapa de pagos seleccionados: {alumnoId: [pagoId1, pagoId2, ...]}.
-  final Map<int, List<int>> pagosSeleccionados;
+  /// Pagos seleccionados: {cicloId: {alumnoId: [pagoId1, pagoId2, ...]}}.
+  ///
+  /// El ciclo delimita las reglas de selección: quitar un pago solo se permite
+  /// si es el más alto **de su propio ciclo**, no de toda la lista del alumno.
+  final Map<int, Map<int, List<int>>> pagosSeleccionados;
 
   /// Indica si está cargando.
   final bool isLoading;
@@ -43,7 +46,7 @@ class CarritoState extends Equatable {
   /// Crea una copia del estado con los cambios especificados.
   CarritoState copyWith({
     List<Alumno>? alumnos,
-    Map<int, List<int>>? pagosSeleccionados,
+    Map<int, Map<int, List<int>>>? pagosSeleccionados,
     bool? isLoading,
     bool? isProcesandoPago,
     String? errorMessage,
@@ -65,7 +68,12 @@ class CarritoState extends Equatable {
     );
   }
 
-  /// Calcula el total a pagar de todos los pagos seleccionados.
+  /// Pagos seleccionados de un alumno dentro de un ciclo concreto.
+  List<int> pagosDe(int cicloId, int alumnoId) {
+    return pagosSeleccionados[cicloId]?[alumnoId] ?? const [];
+  }
+
+  /// Calcula el total a pagar de todos los pagos seleccionados, de todos los ciclos.
   double get totalAPagar {
     if (alumnos == null) {
       return 0.0;
@@ -73,9 +81,8 @@ class CarritoState extends Equatable {
 
     double total = 0.0;
     for (final alumno in alumnos!) {
-      final pagosIds = pagosSeleccionados[alumno.alumnoId] ?? [];
       for (final pago in alumno.estadoDeCuenta) {
-        if (pagosIds.contains(pago.id)) {
+        if (pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id)) {
           total += pago.total;
         }
       }
@@ -83,12 +90,19 @@ class CarritoState extends Equatable {
     return total;
   }
 
-  /// Obtiene la cantidad de pagos seleccionados.
+  /// Obtiene la cantidad de pagos seleccionados en todos los ciclos.
   int get cantidadPagos {
-    return pagosSeleccionados.values.fold(0, (sum, list) => sum + list.length);
+    return pagosSeleccionados.values.fold(
+      0,
+      (sum, alumnos) =>
+          sum + alumnos.values.fold(0, (s, pagos) => s + pagos.length),
+    );
   }
 
   /// Obtiene los items del carrito agrupados por alumno.
+  ///
+  /// Un alumno con pagos de varios ciclos produce un único item que los
+  /// contiene todos; el ámbito de ciclo se aplica dentro de [CarritoItem].
   List<CarritoItem> get itemsCarrito {
     if (alumnos == null) {
       return [];
@@ -96,9 +110,9 @@ class CarritoState extends Equatable {
 
     final items = <CarritoItem>[];
     for (final alumno in alumnos!) {
-      final pagosIds = pagosSeleccionados[alumno.alumnoId] ?? [];
       final pagos = alumno.estadoDeCuenta
-          .where((pago) => pagosIds.contains(pago.id))
+          .where((pago) =>
+              pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id))
           .toList();
 
       if (pagos.isNotEmpty) {
@@ -112,8 +126,10 @@ class CarritoState extends Equatable {
   /// Ejemplo: "5358D5359D5360"
   String get referenciaPago {
     final allIds = <int>[];
-    for (final pagosIds in pagosSeleccionados.values) {
-      allIds.addAll(pagosIds);
+    for (final alumnos in pagosSeleccionados.values) {
+      for (final pagosIds in alumnos.values) {
+        allIds.addAll(pagosIds);
+      }
     }
     return AppConstants.generarReferencia(allIds);
   }
@@ -157,10 +173,16 @@ class CarritoItem {
     return pagos.fold(0.0, (sum, pago) => sum + pago.total);
   }
 
-  /// ID del pago más alto SOLO de los que tienen aceptaPagosDiversos = true.
-  /// Los pagos sin pagos diversos se pueden eliminar libremente.
-  int? get maxPagoIdConPagosDiversos {
-    final pagosConDiversos = pagos.where((p) => p.aceptaPagosDiversos).toList();
+  /// ID del pago más alto SOLO de los que tienen aceptaPagosDiversos = true,
+  /// **dentro del ciclo [cicloId]**.
+  ///
+  /// El ámbito por ciclo evita que un pago de otro ciclo bloquee la eliminación:
+  /// cada ciclo tiene su propio máximo. Los pagos sin pagos diversos se pueden
+  /// eliminar libremente.
+  int? maxPagoIdConPagosDiversos(int cicloId) {
+    final pagosConDiversos = pagos
+        .where((p) => p.aceptaPagosDiversos && p.cicloId == cicloId)
+        .toList();
     if (pagosConDiversos.isEmpty) {
       return null;
     }
@@ -169,7 +191,8 @@ class CarritoItem {
 
   /// Verifica si un pago específico se puede eliminar.
   /// - Si aceptaPagosDiversos = false: Siempre se puede eliminar
-  /// - Si aceptaPagosDiversos = true: Solo si es el ID más alto de los que aceptan pagos diversos
+  /// - Si aceptaPagosDiversos = true: Solo si es el ID más alto de los que
+  ///   aceptan pagos diversos dentro de su mismo ciclo.
   bool puedeEliminarPago(int pagoId) {
     final pago = pagos.firstWhere(
       (p) => p.id == pagoId,
@@ -182,6 +205,7 @@ class CarritoItem {
     }
 
     // Si acepta pagos diversos, solo puede eliminarse si es el ID más alto
-    return pagoId == maxPagoIdConPagosDiversos;
+    // de su propio ciclo
+    return pagoId == maxPagoIdConPagosDiversos(pago.cicloId);
   }
 }

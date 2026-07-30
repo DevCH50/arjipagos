@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
@@ -52,6 +53,12 @@ abstract class AppModule {
   /// Almacenamiento seguro para tokens y datos sensibles.
   @injectable
   SecureStorage get secureStorage => SecureStorage();
+
+  /// Persistencia de la selección de pagos, con ámbito de ciclo escolar.
+  /// Compartida por Estados de Cuenta y Carrito.
+  @injectable
+  SeleccionPagosStorage get seleccionPagosStorage =>
+      SeleccionPagosStorage(sharedPref);
 
   @injectable
   AuthService get authService => AuthService();

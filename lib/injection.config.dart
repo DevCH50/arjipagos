@@ -11,6 +11,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart'
     as _i260;
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart'
+    as _i394;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart' as _i64;
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart'
     as _i424;
@@ -58,6 +60,9 @@ extension GetItInjectableX on _i174.GetIt {
     final appModule = _$AppModule();
     gh.factory<_i64.SharedPref>(() => appModule.sharedPref);
     gh.factory<_i260.SecureStorage>(() => appModule.secureStorage);
+    gh.factory<_i394.SeleccionPagosStorage>(
+      () => appModule.seleccionPagosStorage,
+    );
     gh.factory<_i424.AuthService>(() => appModule.authService);
     gh.factory<_i1009.AuthRepository>(() => appModule.authRepository);
     gh.factory<_i887.AuthUseCases>(() => appModule.authUseCases);

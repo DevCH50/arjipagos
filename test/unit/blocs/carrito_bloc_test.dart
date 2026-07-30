@@ -1,4 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_constants.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -32,7 +34,9 @@ void main() {
 
   CarritoBloc createBloc() {
     return CarritoBloc(
-      sharedPref: mockSharedPref,
+      // Storage real sobre el SharedPref mockeado: los tests del BLoC también
+      // ejercitan la (de)serialización con ámbito de ciclo.
+      seleccionStorage: SeleccionPagosStorage(mockSharedPref),
       authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
       edoCtaUseCases: createMockEdoCtaUseCases(
         getEstadosDeCuenta: mockGetEstadosDeCuenta,
@@ -95,7 +99,9 @@ void main() {
         build: () => createBloc(),
         seed: () => CarritoState(
           alumnos: [testAlumno],
-          pagosSeleccionados: const {1: [1, 2]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+          },
         ),
         act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
           alumnoId: 1,
@@ -105,7 +111,9 @@ void main() {
           isA<CarritoState>().having(
             (s) => s.pagosSeleccionados,
             'pagosSeleccionados',
-            {1: [1]},
+            {
+              TestEstadoDeCuenta.cicloActual: {1: [1]},
+            },
           ),
         ],
       );
@@ -115,7 +123,9 @@ void main() {
         build: () => createBloc(),
         seed: () => CarritoState(
           alumnos: [testAlumno],
-          pagosSeleccionados: const {1: [1]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1]},
+          },
         ),
         act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
           alumnoId: 1,
@@ -137,7 +147,9 @@ void main() {
         build: () => createBloc(),
         seed: () => CarritoState(
           alumnos: [testAlumno],
-          pagosSeleccionados: const {1: [1, 2]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+          },
         ),
         act: (bloc) => bloc.add(const CarritoLimpiarEvent()),
         expect: () => [
@@ -175,7 +187,9 @@ void main() {
         },
         seed: () => CarritoState(
           alumnos: [testAlumno],
-          pagosSeleccionados: const {1: [1]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1]},
+          },
         ),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
         expect: () => [
@@ -197,7 +211,9 @@ void main() {
         build: () => createBloc(),
         seed: () => CarritoState(
           alumnos: [testAlumno],
-          pagosSeleccionados: const {1: [1]},
+          pagosSeleccionados: const {
+            TestEstadoDeCuenta.cicloActual: {1: [1]},
+          },
         ),
         act: (bloc) => bloc.add(const CarritoPagoExitosoEvent()),
         expect: () => [
@@ -213,7 +229,9 @@ void main() {
     test('totalAPagar calcula correctamente', () {
       final state = CarritoState(
         alumnos: [testAlumno],
-        pagosSeleccionados: const {1: [1, 2]},
+        pagosSeleccionados: const {
+          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+        },
       );
       // pago id=1: 5000.0, pago id=2: 4500.0
       expect(state.totalAPagar, 9500.0);
@@ -222,7 +240,9 @@ void main() {
     test('cantidadPagos cuenta correctamente', () {
       final state = CarritoState(
         alumnos: [testAlumno],
-        pagosSeleccionados: const {1: [1, 2]},
+        pagosSeleccionados: const {
+          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+        },
       );
       expect(state.cantidadPagos, 2);
     });
@@ -230,9 +250,119 @@ void main() {
     test('referenciaPago genera formato correcto', () {
       final state = CarritoState(
         alumnos: [testAlumno],
-        pagosSeleccionados: const {1: [1, 2]},
+        pagosSeleccionados: const {
+          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+        },
       );
       expect(state.referenciaPago, AppConstants.generarReferencia([1, 2]));
     });
+  });
+
+  group('CarritoState — ámbito de ciclo', () {
+    const cicloA = TestEstadoDeCuenta.cicloActual;
+    const cicloB = TestEstadoDeCuenta.cicloAnterior;
+
+    /// Alumno con pagos de dos ciclos: ids 1 y 2 en el ciclo actual, id 10 en
+    /// el anterior.
+    Alumno alumnoDosCiclos() => Alumno(
+          alumnoId: 1,
+          alumno: 'Test',
+          apPaterno: '',
+          apMaterno: '',
+          nombre: 'Test',
+          becaSep: '',
+          becaArji: '',
+          becaBach: '',
+          becaSp: '',
+          esBaja: false,
+          grupoId: 1,
+          grupo: '',
+          urlPhoto: '',
+          estadoDeCuenta: TestEstadoDeCuenta.listaDosCiclos,
+        );
+
+    test('itemsCarrito incluye pagos de varios ciclos del mismo alumno', () {
+      final state = CarritoState(
+        alumnos: [alumnoDosCiclos()],
+        pagosSeleccionados: const {
+          cicloA: {1: [1]},
+          cicloB: {1: [10]},
+        },
+      );
+
+      expect(state.itemsCarrito, hasLength(1));
+      expect(state.itemsCarrito.first.pagos.map((p) => p.id), [1, 10]);
+      expect(state.cantidadPagos, 2);
+    });
+
+    test('puedeEliminarPago usa el máximo de cada ciclo, no el global', () {
+      final state = CarritoState(
+        alumnos: [alumnoDosCiclos()],
+        pagosSeleccionados: const {
+          cicloA: {1: [1, 2]},
+          cicloB: {1: [10]},
+        },
+      );
+      final item = state.itemsCarrito.first;
+
+      // En el ciclo actual el máximo es el 2: el 1 no se puede quitar todavía.
+      expect(item.puedeEliminarPago(2), true);
+      expect(item.puedeEliminarPago(1), false);
+
+      // El 10 es el único de su ciclo, así que es su propio máximo y se puede
+      // quitar aunque su ID sea el más alto de toda la lista.
+      expect(item.puedeEliminarPago(10), true);
+    });
+
+    blocTest<CarritoBloc, CarritoState>(
+      'quitar un pago de un ciclo no toca la selección del otro',
+      build: () => createBloc(),
+      seed: () => CarritoState(
+        alumnos: [alumnoDosCiclos()],
+        pagosSeleccionados: const {
+          cicloA: {1: [1, 2]},
+          cicloB: {1: [10]},
+        },
+      ),
+      act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
+        alumnoId: 1,
+        pagoId: 2,
+      )),
+      expect: () => [
+        isA<CarritoState>().having(
+          (s) => s.pagosSeleccionados,
+          'pagosSeleccionados',
+          {
+            cicloA: {1: [1]},
+            cicloB: {1: [10]},
+          },
+        ),
+      ],
+    );
+
+    blocTest<CarritoBloc, CarritoState>(
+      'al vaciar el ciclo se elimina su entrada y sobrevive el otro',
+      build: () => createBloc(),
+      seed: () => CarritoState(
+        alumnos: [alumnoDosCiclos()],
+        pagosSeleccionados: const {
+          cicloA: {1: [1]},
+          cicloB: {1: [10]},
+        },
+      ),
+      act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
+        alumnoId: 1,
+        pagoId: 1,
+      )),
+      expect: () => [
+        isA<CarritoState>().having(
+          (s) => s.pagosSeleccionados,
+          'pagosSeleccionados',
+          {
+            cicloB: {1: [10]},
+          },
+        ),
+      ],
+    );
   });
 }

@@ -143,6 +143,53 @@ void main() {
         expect(estado.facturaPdf, equals('https://example.com/factura.pdf'));
         expect(estado.facturaXml, equals('https://example.com/factura.xml'));
       });
+
+      // -----------------------------------------------------------------------
+      // ciclo_id / nivel_id — el backend no los manda con un tipo consistente,
+      // así que el parseo debe aguantar int, String o ausencia sin reventar.
+      // -----------------------------------------------------------------------
+      test('debe leer ciclo_id y nivel_id cuando llegan como int', () {
+        final estado = EstadoDeCuenta.fromJson({
+          'ciclo_id': 2024,
+          'nivel_id': 3,
+          'estadoPago': 'Pendiente',
+        });
+
+        expect(estado.cicloId, equals(2024));
+        expect(estado.nivelId, equals(3));
+      });
+
+      test('debe leer ciclo_id y nivel_id cuando llegan como String', () {
+        final estado = EstadoDeCuenta.fromJson({
+          'ciclo_id': '2024',
+          'nivel_id': '3',
+          'estadoPago': 'Pendiente',
+        });
+
+        expect(estado.cicloId, equals(2024));
+        expect(estado.nivelId, equals(3));
+      });
+
+      test('debe caer a 0 cuando ciclo_id falta, es null o no es numérico', () {
+        expect(
+          EstadoDeCuenta.fromJson({'estadoPago': 'Pendiente'}).cicloId,
+          equals(0),
+        );
+        expect(
+          EstadoDeCuenta.fromJson({
+            'ciclo_id': null,
+            'estadoPago': 'Pendiente',
+          }).cicloId,
+          equals(0),
+        );
+        expect(
+          EstadoDeCuenta.fromJson({
+            'ciclo_id': 'no-es-numero',
+            'estadoPago': 'Pendiente',
+          }).cicloId,
+          equals(0),
+        );
+      });
     });
 
     // -------------------------------------------------------------------------
@@ -188,6 +235,8 @@ void main() {
         // Arrange
         final originalJson = {
           'id': 1,
+          'ciclo_id': 2024,
+          'nivel_id': 1,
           'descripcion_corta': 'Colegiatura Enero 2024',
           'total': 5000.0,
           'total_formatted': '\$5,000.00',
@@ -213,6 +262,8 @@ void main() {
         // Arrange
         final originalJson = {
           'id': 2,
+          'ciclo_id': 2024,
+          'nivel_id': 1,
           'descripcion_corta': 'Colegiatura Diciembre 2023',
           'total': 4500.0,
           'total_formatted': '\$4,500.00',
@@ -243,6 +294,8 @@ void main() {
       /// el getter [descripcionAbreviada] de forma aislada.
       EstadoDeCuenta conDescripcion(String descripcion) => EstadoDeCuenta(
             id: 0,
+            cicloId: 0,
+            nivelId: 0,
             descripcionCorta: descripcion,
             total: 0,
             totalFormatted: '',

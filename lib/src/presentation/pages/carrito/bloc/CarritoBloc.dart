@@ -2,7 +2,7 @@ import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
-import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -16,17 +16,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Carga los pagos seleccionados desde el storage y permite
 /// quitar items, limpiar el carrito y procesar el pago.
 class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
-  final SharedPref _sharedPref;
+  final SeleccionPagosStorage _seleccionStorage;
   final AuthUseCases _authUseCases;
   final EdoCtaUseCases _edoCtaUseCases;
 
-  static const String _storageKey = 'edo_cta_pagos_seleccionados';
-
   CarritoBloc({
-    required SharedPref sharedPref,
+    required SeleccionPagosStorage seleccionStorage,
     required AuthUseCases authUseCases,
     required EdoCtaUseCases edoCtaUseCases,
-  })  : _sharedPref = sharedPref,
+  })  : _seleccionStorage = seleccionStorage,
         _authUseCases = authUseCases,
         _edoCtaUseCases = edoCtaUseCases,
         super(const CarritoState()) {
@@ -48,7 +46,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
 
     try {
       // Cargar pagos seleccionados del storage
-      final pagosSeleccionados = await _cargarPagosSeleccionados();
+      final pagosSeleccionados = await _seleccionStorage.cargar();
 
       if (pagosSeleccionados.isEmpty) {
         emit(state.copyWith(
@@ -98,25 +96,60 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
   }
 
   /// Maneja el evento de quitar un pago del carrito.
+  ///
+  /// Solo toca el ciclo al que pertenece el pago: la selección del resto de
+  /// ciclos queda intacta.
   Future<void> _onQuitarPago(
     CarritoQuitarPagoEvent event,
     Emitter<CarritoState> emit,
   ) async {
-    final nuevosPagos = Map<int, List<int>>.from(state.pagosSeleccionados);
+    final cicloId = _cicloDelPago(event.alumnoId, event.pagoId);
+    if (cicloId == null) {
+      return;
+    }
 
-    if (nuevosPagos.containsKey(event.alumnoId)) {
-      final pagosAlumno = List<int>.from(nuevosPagos[event.alumnoId]!);
+    final nuevosPagos = <int, Map<int, List<int>>>{};
+    state.pagosSeleccionados.forEach((ciclo, alumnos) {
+      nuevosPagos[ciclo] = Map<int, List<int>>.from(alumnos);
+    });
+
+    final alumnosDelCiclo = nuevosPagos[cicloId];
+    if (alumnosDelCiclo != null &&
+        alumnosDelCiclo.containsKey(event.alumnoId)) {
+      final pagosAlumno = List<int>.from(alumnosDelCiclo[event.alumnoId]!);
       pagosAlumno.remove(event.pagoId);
 
       if (pagosAlumno.isEmpty) {
-        nuevosPagos.remove(event.alumnoId);
+        alumnosDelCiclo.remove(event.alumnoId);
       } else {
-        nuevosPagos[event.alumnoId] = pagosAlumno;
+        alumnosDelCiclo[event.alumnoId] = pagosAlumno;
+      }
+
+      if (alumnosDelCiclo.isEmpty) {
+        nuevosPagos.remove(cicloId);
       }
     }
 
     emit(state.copyWith(pagosSeleccionados: nuevosPagos));
-    await _guardarPagosSeleccionados(nuevosPagos);
+    await _seleccionStorage.guardar(nuevosPagos);
+  }
+
+  /// Busca el ciclo al que pertenece un pago dentro de los alumnos cargados.
+  ///
+  /// Devuelve `null` si el pago no está en los datos actuales, en cuyo caso no
+  /// hay nada que quitar.
+  int? _cicloDelPago(int alumnoId, int pagoId) {
+    for (final alumno in state.alumnos ?? const []) {
+      if (alumno.alumnoId != alumnoId) {
+        continue;
+      }
+      for (final pago in alumno.estadoDeCuenta) {
+        if (pago.id == pagoId) {
+          return pago.cicloId;
+        }
+      }
+    }
+    return null;
   }
 
   /// Maneja el evento de limpiar el carrito.
@@ -125,7 +158,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     Emitter<CarritoState> emit,
   ) async {
     emit(state.copyWith(pagosSeleccionados: {}));
-    await _guardarPagosSeleccionados({});
+    await _seleccionStorage.guardar({});
   }
 
   /// Maneja el evento de iniciar el pago.
@@ -202,7 +235,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     Emitter<CarritoState> emit,
   ) async {
     // Limpiar el carrito del storage
-    await _guardarPagosSeleccionados({});
+    await _seleccionStorage.guardar({});
 
     emit(state.copyWith(
       pagosSeleccionados: {},
@@ -231,35 +264,4 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     emit(state.copyWith(clearPagoData: true, clearError: true));
   }
 
-  /// Carga los pagos seleccionados desde SharedPreferences.
-  Future<Map<int, List<int>>> _cargarPagosSeleccionados() async {
-    try {
-      final data = await _sharedPref.readMap(_storageKey);
-      if (data == null) {
-        return {};
-      }
-
-      // Convertir Map<String, dynamic> a Map<int, List<int>>
-      final Map<int, List<int>> result = {};
-      data.forEach((key, value) {
-        final alumnoId = int.tryParse(key);
-        if (alumnoId != null && value is List) {
-          result[alumnoId] = List<int>.from(value.map((e) => e as int));
-        }
-      });
-      return result;
-    } catch (e) {
-      return {};
-    }
-  }
-
-  /// Guarda los pagos seleccionados en SharedPreferences.
-  Future<void> _guardarPagosSeleccionados(Map<int, List<int>> pagos) async {
-    // Convertir Map<int, List<int>> a Map<String, dynamic> para JSON
-    final Map<String, dynamic> jsonMap = {};
-    pagos.forEach((key, value) {
-      jsonMap[key.toString()] = value;
-    });
-    await _sharedPref.save(_storageKey, jsonMap);
-  }
 }

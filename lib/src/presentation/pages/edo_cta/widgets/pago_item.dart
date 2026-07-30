@@ -29,7 +29,8 @@ class PagoItem extends StatelessWidget {
 
     return BlocBuilder<EdoCtaListBloc, EdoCtaListState>(
       builder: (context, state) {
-        final isSeleccionado = state.isPagoSeleccionado(alumno.alumnoId, pago.id);
+        final isSeleccionado =
+            state.isPagoSeleccionado(pago.cicloId, alumno.alumnoId, pago.id);
         final puedeSeleccionar = _calcularPuedeSeleccionar(state);
         final backgroundColor = _calcularColorFondo(isSeleccionado, isDark);
 
@@ -65,10 +66,21 @@ class PagoItem extends StatelessWidget {
   }
 
   /// Calcula si el pago puede ser seleccionado según las reglas.
+  ///
+  /// El orden ascendente se evalúa solo entre pagos del mismo ciclo, por eso
+  /// [pagosDisponibles] se filtra por `cicloId` antes de consultar al estado.
   bool _calcularPuedeSeleccionar(EdoCtaListState state) {
     if (pago.aceptaPagosDiversos) {
-      final idsDisponibles = pagosDisponibles.map((e) => e.id).toList();
-      return state.puedeSelecionarPago(alumno.alumnoId, pago.id, idsDisponibles);
+      final idsDisponibles = pagosDisponibles
+          .where((e) => e.cicloId == pago.cicloId)
+          .map((e) => e.id)
+          .toList();
+      return state.puedeSelecionarPago(
+        pago.cicloId,
+        alumno.alumnoId,
+        pago.id,
+        idsDisponibles,
+      );
     }
     return true; // Sin restricción de orden
   }

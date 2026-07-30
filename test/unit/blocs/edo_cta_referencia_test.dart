@@ -14,6 +14,7 @@ library;
 
 import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
@@ -29,11 +30,17 @@ import '../../helpers/mocks.dart';
 // HELPERS DE DATOS
 // =============================================================================
 
+/// Ciclo por defecto de los pagos de estos tests. La validación de longitud de
+/// referencia no depende del ciclo, pero la selección sí se agrupa por él.
+const int _kCiclo = 2024;
+
 /// Crea un [EstadoDeCuenta] mínimo con el [id] indicado, sin restricción de
 /// orden ([aceptaPagosDiversos] = false) para que los tests se enfoquen
 /// exclusivamente en la validación de longitud de referencia.
-EstadoDeCuenta _pago({required int id}) => EstadoDeCuenta(
+EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta(
       id: id,
+      cicloId: cicloId,
+      nivelId: 1,
       descripcionCorta: 'Pago $id',
       total: 1000.0,
       totalFormatted: '\$1,000.00',
@@ -100,7 +107,7 @@ void main() {
 
   EdoCtaListBloc createBloc() => EdoCtaListBloc(
         createMockEdoCtaUseCases(),
-        mockSharedPref,
+        SeleccionPagosStorage(mockSharedPref),
       );
 
   group(
@@ -129,7 +136,7 @@ void main() {
           isA<EdoCtaListState>()
               .having((s) => s.errorMessage, 'errorMessage', isNull)
               .having(
-                (s) => s.pagosSeleccionados[alumnoId],
+                (s) => s.pagosDe(_kCiclo, alumnoId),
                 'pago añadido',
                 [10001],
               ),
@@ -146,7 +153,9 @@ void main() {
         seed: () => EdoCtaListState(
           alumnos: [alumno],
           pagosSeleccionados: const {
-            alumnoId: [10001, 10002, 10003, 10004],
+            _kCiclo: {
+              alumnoId: [10001, 10002, 10003, 10004],
+            },
           },
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
@@ -157,7 +166,7 @@ void main() {
           isA<EdoCtaListState>()
               .having((s) => s.errorMessage, 'errorMessage', isNull)
               .having(
-                (s) => s.pagosSeleccionados[alumnoId]?.length,
+                (s) => s.pagosDe(_kCiclo, alumnoId).length,
                 'cantidad de pagos',
                 5,
               ),
@@ -174,7 +183,9 @@ void main() {
         seed: () => EdoCtaListState(
           alumnos: [alumno],
           pagosSeleccionados: const {
-            alumnoId: [10001, 10002, 10003, 10004, 10005],
+            _kCiclo: {
+              alumnoId: [10001, 10002, 10003, 10004, 10005],
+            },
           },
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
@@ -191,7 +202,7 @@ void main() {
               )
               // El pago NO se añadió — sigue siendo 5
               .having(
-                (s) => s.pagosSeleccionados[alumnoId]?.length,
+                (s) => s.pagosDe(_kCiclo, alumnoId).length,
                 'pagos sin cambio',
                 5,
               ),
@@ -210,7 +221,9 @@ void main() {
         seed: () => EdoCtaListState(
           alumnos: [alumno],
           pagosSeleccionados: const {
-            alumnoId: [10001, 10002, 10003, 10004, 10005],
+            _kCiclo: {
+              alumnoId: [10001, 10002, 10003, 10004, 10005],
+            },
           },
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
@@ -220,10 +233,10 @@ void main() {
         verify: (bloc) {
           final estadoFinal = bloc.state;
           expect(
-            estadoFinal.pagosSeleccionados[alumnoId],
+            estadoFinal.pagosDe(_kCiclo, alumnoId),
             equals([10001, 10002, 10003, 10004, 10005]),
           );
-          expect(estadoFinal.pagosSeleccionados[alumnoId]?.length, equals(5));
+          expect(estadoFinal.pagosDe(_kCiclo, alumnoId).length, equals(5));
         },
       );
 
@@ -243,8 +256,10 @@ void main() {
           return EdoCtaListState(
             alumnos: [alumnoA, alumnoB],
             pagosSeleccionados: const {
-              1: [10001, 10002, 10003],
-              2: [20001, 20002],
+              _kCiclo: {
+                1: [10001, 10002, 10003],
+                2: [20001, 20002],
+              },
             },
           );
         },
@@ -273,7 +288,9 @@ void main() {
         seed: () => EdoCtaListState(
           alumnos: [alumno],
           pagosSeleccionados: const {
-            alumnoId: [10001, 10002, 10003, 10004, 10005],
+            _kCiclo: {
+              alumnoId: [10001, 10002, 10003, 10004, 10005],
+            },
           },
         ),
         act: (bloc) => bloc.add(const EdoCtaTogglePagoEvent(
@@ -284,7 +301,7 @@ void main() {
           isA<EdoCtaListState>()
               .having((s) => s.errorMessage, 'errorMessage', isNull)
               .having(
-                (s) => s.pagosSeleccionados[alumnoId]?.length,
+                (s) => s.pagosDe(_kCiclo, alumnoId).length,
                 'baja a 4 pagos',
                 4,
               ),

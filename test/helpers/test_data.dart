@@ -56,8 +56,16 @@ class TestUser {
 
 /// Datos de prueba para EstadoDeCuenta.
 class TestEstadoDeCuenta {
+  /// Ciclo por defecto de los pagos de prueba.
+  static const int cicloActual = 2024;
+
+  /// Ciclo distinto, para ejercitar el ámbito de la selección.
+  static const int cicloAnterior = 2023;
+
   static EstadoDeCuenta get pendiente => EstadoDeCuenta(
         id: 1,
+        cicloId: cicloActual,
+        nivelId: 1,
         descripcionCorta: 'Colegiatura Enero 2024',
         total: 5000.0,
         totalFormatted: '\$5,000.00',
@@ -73,6 +81,8 @@ class TestEstadoDeCuenta {
 
   static EstadoDeCuenta get vencido => EstadoDeCuenta(
         id: 2,
+        cicloId: cicloActual,
+        nivelId: 1,
         descripcionCorta: 'Colegiatura Diciembre 2023',
         total: 4500.0,
         totalFormatted: '\$4,500.00',
@@ -87,6 +97,35 @@ class TestEstadoDeCuenta {
       );
 
   static List<EstadoDeCuenta> get lista => [pendiente, vencido];
+
+  /// Pago del ciclo anterior, para verificar que la selección de un ciclo no
+  /// condiciona la del otro.
+  static EstadoDeCuenta get otroCiclo => EstadoDeCuenta(
+        id: 10,
+        cicloId: cicloAnterior,
+        nivelId: 1,
+        descripcionCorta: 'Colegiatura Enero 2023',
+        total: 4000.0,
+        totalFormatted: '\$4,000.00',
+        fechaVencimiento: '2023-01-31',
+        estadoPago: EstadoPago.vencido,
+        numPago: 1,
+        numPagoActivo: true,
+        aceptaPagosDiversos: true,
+        estaDisponibleEnInternet: true,
+        facturaPdf: '',
+        facturaXml: '',
+      );
+
+  /// Pagos de dos ciclos distintos mezclados, ordenados por ID.
+  /// Ojo: el ID más bajo (1, 2) es del ciclo actual y el más alto (10) del
+  /// anterior, justo para que un orden global daría un resultado distinto al
+  /// orden por ciclo.
+  static List<EstadoDeCuenta> get listaDosCiclos => [
+        pendiente,
+        vencido,
+        otroCiclo,
+      ];
 }
 
 /// Datos de prueba para Alumno.
@@ -142,6 +181,8 @@ class TestAlumno {
         'estado_de_cuenta': [
           {
             'id': 1,
+            'ciclo_id': TestEstadoDeCuenta.cicloActual,
+            'nivel_id': 1,
             'descripcion_corta': 'Colegiatura Enero 2024',
             'total': 5000.0,
             'total_formatted': '\$5,000.00',
@@ -156,6 +197,8 @@ class TestAlumno {
           },
           {
             'id': 2,
+            'ciclo_id': TestEstadoDeCuenta.cicloActual,
+            'nivel_id': 1,
             'descripcion_corta': 'Colegiatura Diciembre 2023',
             'total': 4500.0,
             'total_formatted': '\$4,500.00',

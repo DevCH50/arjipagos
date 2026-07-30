@@ -32,6 +32,7 @@ import 'widgets/edo_cta/loading_widget_test.dart' as loading_widget_test;
 
 // Tests de widgets de Carrito
 import 'widgets/carrito/carrito_empty_widget_test.dart' as carrito_empty_widget_test;
+import 'widgets/carrito/carrito_pago_item_test.dart' as carrito_pago_item_test;
 
 void main() {
   // Modelos
@@ -61,4 +62,5 @@ void main() {
 
   // Widgets de Carrito
   carrito_empty_widget_test.main();
+  carrito_pago_item_test.main();
 }

@@ -19,6 +19,36 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Selección de pagos con ámbito de `ciclo_id` (2026-07-29):**
+
+  **Qué cambia:** las reglas de selección existentes (orden de ID ascendente al seleccionar, arrastre de los de ID mayor al deseleccionar, quitar del carrito solo el más alto) **no se modificaron**; ahora se evalúan **dentro de cada ciclo por separado**. Un pago del ciclo A ya no condiciona el orden de selección del ciclo B.
+
+  **Punto de partida:** `EstadoDeCuenta` ya traía `cicloId` y `nivelId` del backend, pero no se usaban en ninguna parte. `nivelId` queda disponible y **no** participa del ámbito.
+
+  **Estructura:** `pagosSeleccionados` pasó de `Map<int, List<int>>` a `Map<int, Map<int, List<int>>>` (`{cicloId: {alumnoId: [pagoId]}}`) en `EdoCtaListState` y `CarritoState`.
+
+  **Bug de parseo corregido:** `cicloId: json['ciclo_id'] ?? 0` asignaba a un `int` no-nulable y `??` solo atrapa `null`. Si el backend mandaba `"2024"` (String) reventaba con `TypeError` y tumbaba el parseo del estado de cuenta completo. No era hipotético: `EstadosDeCuentaResponse.fromJson` hace `.toString()` sobre el ciclo, señal de que no llega tipado de forma confiable. Se añadió `_parseIntSeguro()` (acepta `int`, `num`, `String`, cae a 0) aplicado a `id`, `ciclo_id` y `nivel_id`.
+
+  **Nuevo `SeleccionPagosStorage`** (`lib/src/data/dataSource/local/`): `EdoCtaListBloc` y `CarritoBloc` tenían **duplicada** la pareja `_cargar/_guardarPagosSeleccionados` y declaraban la clave de SharedPreferences dos veces. Se extrajo a un único datasource inyectado (registrado en `AppModule`). Incluye **migración transparente** del formato plano anterior (`{alumnoId: [pagoId]}`) agrupándolo bajo ciclo `0`, para que un carrito ya guardado no se pierda al actualizar la app.
+
+  **Decisión de alcance:** totales, contador y **referencia de pago siguen agregando todos los ciclos** (comportamiento previo intacto). El ámbito por ciclo aplica a las reglas de orden, no al cobro. Si se quiere impedir cobrar ciclos mezclados en una misma referencia, es un cambio menor sobre este diseño.
+
+  **UI:** solo cambió `pago_item.dart` (filtra `idsDisponibles` por ciclo). El resto de widgets consume getters cuya firma no se tocó, incluido `puedeEliminarPago(pagoId)`, que ahora deriva el ciclo del propio pago.
+
+  **Fix de UI en el carrito (2 iteraciones):** el tooltip del botón de quitar deshabilitado (`carrito_pago_item.dart`) se renderizaba como una **cinta vertical ilegible** en el primer pago —el único con `puedeEliminar = false`—, porque el texto largo de `carritoQuitarOrden` quedaba aplastado contra el borde derecho del `trailing`. Se reemplazó el parámetro `tooltip:` del `IconButton` por un `Tooltip` explícito con `margin` y `preferBelow: false`.
+
+  Al probar en dispositivo apareció un segundo síntoma con la misma causa raíz: el banner `RIGHT OVERFLOWED BY 0.853 PIXELS`. El `trailing` de un `ListTile` recibe un ancho **acotado**, así que importe + separador + `IconButton` (48 px) lo desbordaban por fracciones de pixel; el `softWrap: false` añadido en la primera iteración eliminó el corte carácter por carácter pero dejó al `Row` sin poder encoger, convirtiendo el problema en overflow. Se eliminó el `ListTile` y se maquetó con `Padding` + `Row` + `Expanded` (mismo patrón que `PagoItem`): el bloque derecho toma su **ancho intrínseco** y es la columna de texto la que cede espacio, por lo que el desbordamiento es imposible a cualquier ancho. La fecha de vencimiento pasó a `Flexible` + `ellipsis`. Cubierto por tests de overflow; **pendiente de reconfirmar en dispositivo.**
+
+  **Verificación:** `flutter analyze` sin issues; **569 tests pasan** (532 → 569, +37 nuevos). Cubren: orden evaluado solo dentro del mismo ciclo, deseleccionar en un ciclo sin arrastrar el otro, `puedeEliminarPago` con máximo por ciclo, `totalSeleccionado` que ignora pagos registrados bajo el ciclo equivocado, migración del formato plano, parseo de `ciclo_id` como `int`/`String`/ausente y —nuevo `test/widgets/carrito/carrito_pago_item_test.dart` (9 tests)— ausencia de overflow a 320/360/375 px, con importe y descripción largos, con texto ampliado a 1.5× por accesibilidad y en tema oscuro.
+
+  **Build de release 1.0.22+31 (2026-07-30):** `flutter analyze` limpio, 569 tests en verde, `ApiConfig.isProduction = true` y permiso INTERNET verificados. APK (93.2 MB) y AAB (91.9 MB) generados sin errores. **Versión sin cambios** por regla de versionado #2: 1.0.22+31 sigue pendiente de publicar.
+
+  **Limitación de la verificación:** el entorno de desarrollo es **Linux**, por lo que iOS no se pudo compilar ni verificar en dispositivo. El cambio es de capa Flutter (widgets) y no toca `ios/`, pero el Archive de iOS queda pendiente de hacerse desde la Mac siguiendo el checklist de `CLAUDE.md`.
+
+  **Captura de depuración:** se añadió `assets/errores/` al `.gitignore` (no está declarada en `pubspec.yaml`, así que nunca viajó en el bundle; ahora tampoco entra al repo).
+
+  **Regla añadida a CLAUDE.md** en `## Reglas del código`.
+
 - **Actualización de Flutter 3.44.8 y dependencias — paso 1, sin cambios de constraints (2026-07-29):**
 
   **Verificación previa (antes de tocar nada):** baseline capturado con **532 tests en verde**, `flutter analyze` sin issues, working tree limpio en `1ae4755` y `pubspec.lock` versionado (revertir es un `git checkout`). Se revisó el `--dry-run` y los changelogs de los cambios no-patch antes de ejecutar.
