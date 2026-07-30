@@ -179,21 +179,28 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
             onPressed: _confirmarSalir,
           ),
         ),
-        body: Stack(
-          children: [
-            if (_errorMessage != null)
-              PagoErrorWidget(
-                message: _errorMessage!,
-                onRetry: () {
-                  if (_currentArgs != null) {
-                    _loadPostRequest(_currentArgs!);
-                  }
-                },
-              )
-            else
-              WebViewWidget(controller: _controller),
-            if (_isLoading) const PagoLoadingWidget(),
-          ],
+        // Edge-to-edge (Android 15+): el WebView de la pasarela de pago no
+        // conoce los insets del sistema. Reservamos el alto de la barra de
+        // navegacion inferior para que el boton de pagar del HTML nunca quede
+        // tapado por ella. El AppBar ya cubre el inset superior.
+        body: SafeArea(
+          top: false,
+          child: Stack(
+            children: [
+              if (_errorMessage != null)
+                PagoErrorWidget(
+                  message: _errorMessage!,
+                  onRetry: () {
+                    if (_currentArgs != null) {
+                      _loadPostRequest(_currentArgs!);
+                    }
+                  },
+                )
+              else
+                WebViewWidget(controller: _controller),
+              if (_isLoading) const PagoLoadingWidget(),
+            ],
+          ),
         ),
       ),
     );

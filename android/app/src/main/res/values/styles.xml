@@ -6,7 +6,11 @@
              the Flutter engine draws its first frame -->
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- NOTA: `windowDrawsSystemBarBackgrounds` fue eliminado a proposito.
+             Esta obsoleto desde Android 15 (SDK 35) y Play Console lo marca como
+             causa de que la vista de extremo a extremo "no funcione para todos los
+             usuarios". Con targetSdk 35+ el sistema dibuja de borde a borde por
+             defecto, asi que el atributo es innecesario. NO volver a agregarlo. -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.

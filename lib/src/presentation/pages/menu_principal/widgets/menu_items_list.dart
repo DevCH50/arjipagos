@@ -17,7 +17,15 @@ class MenuItemsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      // Edge-to-edge (Android 15+): la lista se dibuja debajo de la barra de
+      // navegacion del sistema, asi que sumamos su alto al padding inferior
+      // para que el ultimo item del menu siga siendo alcanzable.
+      padding: EdgeInsets.fromLTRB(
+        0,
+        8,
+        0,
+        8 + MediaQuery.viewPaddingOf(context).bottom,
+      ),
       itemCount: items.length,
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) => MenuItemTile(item: items[index]),

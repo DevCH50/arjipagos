@@ -84,22 +84,27 @@ class _AvisoDePrivacidadPageState extends State<AvisoDePrivacidadPage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Contenido principal: error o WebView
-          if (_errorMessage != null)
-            _ErrorView(onReintentar: _recargar)
-          else
-            WebViewWidget(controller: _controller),
+      // Edge-to-edge (Android 15+): el WebView no sabe de insets del sistema,
+      // asi que reservamos el alto de la barra de navegacion inferior para que
+      // el contenido HTML no quede tapado. El AppBar ya cubre el inset superior.
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            // Contenido principal: error o WebView
+            if (_errorMessage != null)
+              _ErrorView(onReintentar: _recargar)
+            else
+              WebViewWidget(controller: _controller),
 
-          // Barra de progreso superior mientras carga
-          if (_isLoading)
-            LinearProgressIndicator(
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest,
-              color: theme.colorScheme.primary,
-            ),
-        ],
+            // Barra de progreso superior mientras carga
+            if (_isLoading)
+              LinearProgressIndicator(
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: theme.colorScheme.primary,
+              ),
+          ],
+        ),
       ),
     );
   }

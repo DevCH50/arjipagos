@@ -45,7 +45,15 @@ class HomeAlumnosList extends StatelessWidget {
           // Lista de alumnos
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              // Edge-to-edge (Android 15+): el contenido se dibuja debajo de la
+              // barra de navegacion del sistema. Sumamos su alto al padding
+              // inferior para que el ultimo alumno nunca quede tapado.
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.viewPaddingOf(context).bottom,
+              ),
               itemCount: alumnos.length,
               itemBuilder: (context, index) {
                 final alumno = alumnos[index];

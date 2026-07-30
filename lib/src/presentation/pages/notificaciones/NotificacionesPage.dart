@@ -167,6 +167,12 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
+        // Edge-to-edge (Android 15+): sumamos el alto de la barra de navegacion
+        // del sistema al padding inferior para que la ultima notificacion (o el
+        // indicador de paginacion) no quede tapada por ella.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewPaddingOf(context).bottom,
+        ),
         // +1 para el indicador de carga al final cuando se pagina.
         itemCount: state.notificaciones.length + (state.isCargandoMas ? 1 : 0),
         itemBuilder: (context, index) {

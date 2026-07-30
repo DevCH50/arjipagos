@@ -29,10 +29,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "mx.moriah.arjipagos"
@@ -67,6 +63,15 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+}
+
+// Objetivo de la JVM para Kotlin. Reemplaza al bloque `kotlinOptions` dentro de
+// `android { }`, eliminado en AGP 9.0. Es la forma que usa la plantilla oficial
+// de Flutter 3.44.8. NO volver a `kotlinOptions`: rompe la compilacion del script.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

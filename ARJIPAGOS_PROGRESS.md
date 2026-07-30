@@ -1278,6 +1278,66 @@ end
   - **Actualizado `widget_test.dart`** para importar todos los tests de widgets
   - **Total tests del proyecto:** 251 pasando
 
+### Sesión 2026-07-30 — Avisos de Play Store: edge-to-edge y optimización de R8
+
+**Aviso 1 — "Es posible que la vista de extremo a extremo no funcione para todos los usuarios"**
+
+- **Causa raíz:** el `LaunchTheme` declaraba `android:windowDrawsSystemBarBackgrounds`,
+  atributo obsoleto desde Android 15 (SDK 35) que Play Console marca como incompatible
+  con edge-to-edge. Además varios cuerpos scrollables no reservaban el inset inferior.
+- **Nativo:** eliminado `windowDrawsSystemBarBackgrounds` de
+  `android/app/src/main/res/values/styles.xml` y `values-night/styles.xml`.
+  Se conservó `windowLayoutInDisplayCutoutMode=shortEdges` (no está obsoleto).
+  **NO volver a agregar el atributo eliminado.**
+- **NO se agregó `enableEdgeToEdge()` nativo:** `FlutterActivity` extiende
+  `android.app.Activity`, no `ComponentActivity`, así que la extensión de
+  `androidx.activity` no aplica. El equivalente ya existe en Dart:
+  `SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)` en `main.dart`.
+- **Dart — insets inferiores añadidos** con `MediaQuery.viewPaddingOf(context).bottom`:
+  - `home/widget/HomeAlumnosList.dart` (ListView de alumnos)
+  - `menu_principal/widgets/menu_items_list.dart` (ListView del menú)
+  - `facturas/FacturasPage.dart` (ListView de facturas)
+  - `notificaciones/NotificacionesPage.dart` (ListView de notificaciones)
+- **Dart — WebViews envueltos en `SafeArea(top: false)`** (el WebView no conoce los
+  insets del sistema; el AppBar ya cubre el inset superior):
+  - `aviso_de_privacidad/AvisoDePrivacidadPage.dart`
+  - `pago_webview/PagoWebViewPage.dart`
+- **Sin cambios** en `edo_cta` y `carrito`: sus barras inferiores
+  (`TotalSeleccionadoBar`, `CarritoTotalBar`) ya usan `SafeArea`.
+
+**Aviso 2 — "Mejora la memoria y el rendimiento con la optimización de R8"**
+
+- `android/gradle.properties`: añadido `android.r8.optimizedResourceShrinking=true`
+  (requiere `isShrinkResources = true` en el buildType release, ya presente).
+- **Toolchain de Android actualizado** (Play pedía AGP 9.0+):
+  | Componente | Antes    | Ahora   |
+  | ---------- | -------- | ------- |
+  | AGP        | 8.11.1   | 9.0.1   |
+  | Gradle     | 8.14     | 9.3.1   |
+  | Kotlin KGP | 2.2.20   | 2.3.20  |
+- **Ruptura resuelta:** AGP 9 elimina el bloque `kotlinOptions { }` dentro de
+  `android { }` (error de compilación del script Kotlin). Se reemplazó por el bloque
+  de nivel superior `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }`,
+  igual que la plantilla oficial de Flutter 3.44.8. **NO revertir a `kotlinOptions`.**
+- Se conservan `android.newDsl=false` y `android.builtInKotlin=false` en
+  `gradle.properties`: la plantilla oficial de Flutter 3.44.8 los mantiene así con
+  AGP 9. Gradle emite un warning de deprecación por ellos — es esperado, no un error.
+
+**Verificación realizada**
+
+- `flutter analyze` → sin issues
+- `flutter test` → 569 tests pasando
+- `flutter build apk --release` → OK (93.0 MB)
+- `flutter build appbundle --release` → OK (91.5 MB)
+- APK instalado en dispositivo Android físico; `targetSdkVersion=36` confirmado en el
+  manifiesto del APK y el atributo obsoleto ya no aparece en los recursos compilados.
+- **Pendiente:** verificar el Archive de iOS en la Mac (no verificable desde Linux) y
+  validar visualmente edge-to-edge en un dispositivo con Android 15+.
+
+**Nota:** `./gradlew` invocado directamente falla con
+"Toolchain ... does not provide the required capabilities: [JAVA_COMPILER]" porque el
+JDK del sistema es un JRE; Flutter pasa su propio JDK. Usar siempre `flutter build`.
+
 ---
 
 ## Próximas tareas

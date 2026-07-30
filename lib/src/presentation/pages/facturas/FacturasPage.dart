@@ -74,7 +74,13 @@ class FacturasPage extends StatelessWidget {
                   .firstWhere((s) => !s.isLoading);
             },
             child: ListView(
-              padding: const EdgeInsets.only(top: 8, bottom: 24),
+              // Edge-to-edge (Android 15+): sumamos el alto de la barra de
+              // navegacion del sistema al padding inferior para que la ultima
+              // factura no quede tapada por ella.
+              padding: EdgeInsets.only(
+                top: 8,
+                bottom: 24 + MediaQuery.viewPaddingOf(context).bottom,
+              ),
               children: [
                 // Header con nombre de familia
                 if (state.response != null)
