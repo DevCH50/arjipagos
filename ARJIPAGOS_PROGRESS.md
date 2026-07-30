@@ -19,6 +19,25 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Actualización de Flutter 3.44.8 y dependencias — paso 1, sin cambios de constraints (2026-07-29):**
+
+  **Verificación previa (antes de tocar nada):** baseline capturado con **532 tests en verde**, `flutter analyze` sin issues, working tree limpio en `1ae4755` y `pubspec.lock` versionado (revertir es un `git checkout`). Se revisó el `--dry-run` y los changelogs de los cambios no-patch antes de ejecutar.
+
+  **Riesgos evaluados y descartados:**
+  - `firebase_core_platform_interface` 7.1.0 → **8.0.0** (major transitivo): bump de fachada por regeneración de pigeon, igual que el 7.0.0. El código no importa el platform interface en ningún archivo; solo usa `Firebase.initializeApp()` y `FirebaseMessaging.instance`. Sin impacto.
+  - `flutter_local_notifications` 22.0.1 → **22.2.0**: 22.1.0 y 22.2.0 son puramente aditivas (`showBigPictureWhenCollapsed`, `dismissIsolate` opt-in, fix del manifest SPM iOS 11→13). Los breaking changes fueron en 20.0.0. `FcmService.dart` no se ve afectado.
+  - `objective_c` 9.4.1 → **9.5.0**: el fix de dSYM del `Podfile` matchea por nombre de target y por rutas de build, no por versión. Sigue válido.
+  - `jni_util` 1.0.0 (nuevo transitivo): no se invoca desde el código.
+  - `webview_flutter` (único `platform_interface` que sí se importa, en un test) no cambió.
+
+  **Flutter SDK:** 3.44.5 → **3.44.8** (stable, Dart 3.12.2). El `flutter upgrade` falló primero por cambios locales en el checkout del SDK (`/home/carlos/snap/flutter/common/flutter`): era una sola línea autogenerada del `pubspec.lock` **del propio SDK** (`objective_c` 9.2.3 → 9.3.0), no una edición manual. Se respaldó y descartó antes de reintentar. `flutter doctor` sin issues.
+
+  **Dependencias:** `flutter pub upgrade` (sin `--major-versions`) → **26 paquetes actualizados**, `pubspec.yaml` intacto. Directas: `firebase_core` 4.12.1, `firebase_messaging` 16.4.3, `flutter_local_notifications` 22.2.0, `google_fonts` 8.2.0, `package_info_plus` 10.2.1, `share_plus` 13.3.0.
+
+  **Resultado:** `flutter analyze` sin issues; **532 tests pasan** (idéntico al baseline, cero regresiones); `flutter build apk --release` OK (93.2 MB, mismo tamaño que el release anterior). Único archivo modificado en el repo: `pubspec.lock`.
+
+  **Pendiente de este trabajo:** verificación iOS (`pod install` + Archive) no se pudo hacer desde Linux — requiere la Mac. Y el **paso 2** (major de `injectable_generator` 3.0.2 → 3.1.1, que arrastra `build_runner`, `analyzer` 12→14 y `record_use` 0.6→1.0) queda sin hacer: implica regenerar el DI y validarlo, va en commit aparte.
+
 - **Verificación integral + build de release Android 1.0.22+31 (2026-07-10):**
 
   **Verificación:** `flutter analyze` sin issues; **532 tests pasan** (`flutter test`, todo verde). `flutter pub get` sincronizado. Precondiciones de producción confirmadas: `ApiConfig.isProduction = true` y permiso `INTERNET` en `AndroidManifest.xml`.
