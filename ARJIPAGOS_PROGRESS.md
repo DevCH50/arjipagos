@@ -36,7 +36,21 @@ _(ninguno)_
 
   **Resultado:** `flutter analyze` sin issues; **532 tests pasan** (idéntico al baseline, cero regresiones); `flutter build apk --release` OK (93.2 MB, mismo tamaño que el release anterior). Único archivo modificado en el repo: `pubspec.lock`.
 
-  **Pendiente de este trabajo:** verificación iOS (`pod install` + Archive) no se pudo hacer desde Linux — requiere la Mac. Y el **paso 2** (major de `injectable_generator` 3.0.2 → 3.1.1, que arrastra `build_runner`, `analyzer` 12→14 y `record_use` 0.6→1.0) queda sin hacer: implica regenerar el DI y validarlo, va en commit aparte.
+  **Pendiente de este trabajo:** verificación iOS (`pod install` + Archive) no se pudo hacer desde Linux — requiere la Mac.
+
+- **`injectable_generator` 3.1.x: BLOQUEADO por el SDK — no reintentar (2026-07-29):**
+
+  Se investigó subir `injectable_generator` de 3.0.2 a 3.1.1 y **no es posible**. No es un problema de constraints del proyecto: `injectable_generator: ^3.0.2` ya permite la 3.1.1, pero el solver la rechaza. La 3.1.0 falla igual, así que **toda la línea 3.1.x es inalcanzable**; el techo real es 3.0.2.
+
+  **Cadena del conflicto:**
+  - `injectable_generator >=3.1.0` → `lean_builder ^1.2.0` → `analyzer ^13.0.0`
+  - El único `test` que admite `analyzer 13` es `test >=1.31.2`, que exige `test_api 0.7.13`
+  - Pero `flutter_test` del SDK **fija** `test_api` en **0.7.11** (y `matcher` en 0.12.19) — pin duro, no negociable desde el pubspec
+  - `bloc_test ^10.0.0` es quien arrastra `test` (lo usan **14 archivos** de `test/`)
+
+  **Descartado deliberadamente:** quitar `bloc_test` (rompe 14 archivos de test) y meter `dependency_overrides` sobre `test_api`/`matcher` para saltarse el pin del SDK (rompe la suite en runtime). No vale la pena por un generador de código.
+
+  **Cuándo reintentar:** cuando salga una versión de Flutter cuyo `flutter_test` fije `test_api` en 0.7.13 o superior. Verificarlo con `dart pub add 'dev:injectable_generator:^3.1.1' --dry-run` — si resuelve, ya se puede. Mientras tanto, `build_runner` 2.15.3 y `analyzer` 14 quedan bloqueados por la misma cadena.
 
 - **Verificación integral + build de release Android 1.0.22+31 (2026-07-10):**
 
