@@ -19,6 +19,30 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Verificación iOS del edge-to-edge + Flutter 3.44.8 en la Mac (2026-07-30):**
+
+  Cierra la verificación que quedó pendiente en `f38540e`, cuyo mensaje solo acreditaba Android (`analyze`, 569 tests, APK/AAB en dispositivo físico). Los cambios de padding de ese commit **sí afectan a iOS**, porque `MediaQuery.viewPaddingOf` y `SafeArea` son multiplataforma.
+
+  **Flutter SDK en la Mac:** `3.44.6` → **`3.44.8`** (Dart 3.12.2, sin cambio). Existía una divergencia real: las dependencias y Android se validaron bajo 3.44.8 en la máquina Linux (`/home/carlos/snap/flutter/common/flutter`), pero el `Runner.app` de producción se compilaba aquí con 3.44.6. El `flutter upgrade` falló primero por el mismo motivo documentado en Linux — el `pubspec.lock` **del propio SDK** con una línea autogenerada (`objective_c`). Se respaldó y se resolvió con `--force`. `pubspec.yaml` y `pubspec.lock` del proyecto **intactos**: el árbol quedó limpio.
+
+  **Verificación:** `flutter clean` → `pub get` → `pod install` → `build_ios.sh` con **exit 0**, `Runner.app` de 55.4 MB. Validado visualmente en **iPhone 17 Pro Max** (iOS 26.5.2): Home, Menú principal, Facturas, Notificaciones y los dos WebViews (Aviso de privacidad y pasarela de pago) se ven correctos.
+
+  **Cobertura en otros tamaños de iPhone — analizada, no requiere más pruebas:** el inset no es un valor fijo sino el que reporta el sistema, así que solo hay dos clases de dispositivo. (1) Con *home indicator* (X → 17, cualquier tamaño): el inset inferior en vertical es **34pt constante**, no depende del tamaño de pantalla; validar el 17 Pro Max cubre a todos. (2) Con botón home (SE 2ª/3ª, 8, 7, 6s — dentro del target `IPHONEOS_DEPLOYMENT_TARGET = 15.0`): el inset es **0** y cada expresión degrada exactamente al valor anterior (`16+0`=`all(16)`, `8+0`=`symmetric(vertical:8)`, `24+0`=`bottom:24`, y el de Notificaciones queda en no-op), por lo que los cambios son **inertes** ahí y no pueden causar regresión. El caso donde el inset variaría (landscape, 21pt) está descartado: la app es solo vertical, forzado en `Info.plist` (`UISupportedInterfaceOrientations`) y en `lib/main.dart:28` (`SystemChrome.setPreferredOrientations`).
+
+- **`/Volumes/T7` es exFAT — crash intermitente de `flutter build ios` (2026-07-30):**
+
+  **Síntoma:** `flutter build ios` aborta con `PathNotFoundException: Deletion failed, path = 'build/ios/Release-iphoneos'` en `flutter_tools/src/ios/mac.dart:327` (`buildXcodeProject`). El tool intenta borrar un directorio que no existe. De 3 builds ejecutados, 1 crasheó.
+
+  **Causa:** el volumen de trabajo es **exFAT** (`diskutil info` → `File System Personality: ExFAT`; el *link count* de los directorios es 1, cuando APFS/HFS+ dan ≥2). exFAT no maneja igual ciertas operaciones de borrado POSIX. El mismo síntoma benigno aparece en `flutter clean` (`Failed to remove build`).
+
+  **Mitigación comprobada:** pre-crear el directorio antes del build, para que el `deleteSync` encuentre algo que borrar. Con esto el crash no reapareció:
+
+  ```bash
+  mkdir -p build/ios/Release-iphoneos && ./scripts/build_ios.sh
+  ```
+
+  **REGLA IMPORTANTE — `pod install` antes de abrir Xcode si un build por CLI falla a medias:** el crash ocurre **después** de que Flutter regenere `Package.swift` en `.iOS("13.0")` y **antes** de que `build_ios.sh` restaure los valores críticos. Tras el crash el proyecto quedó con `Package.swift` en **13.0** y `LastUpgradeCheck`/`LastUpgradeVersion` en **1510**. En ese estado, un **Archive habría fallado** con el error de Firebase *"requires minimum platform version 15.0"*. Se reparó con `git checkout` de los dos archivos de Xcode y un `pod install` (cuyo `post_install` devolvió `Package.swift` a 15.0). El Archive desde Xcode **no** pasa por ese código de `mac.dart`, así que el bug solo se manifiesta usando el CLI.
+
 - **`flutter pub upgrade` — paso 2, sin cambiar constraints (2026-07-30):**
 
   **Alcance real:** el `--dry-run` previo mostró que solo **1 dependencia** podía moverse dentro de los constraints actuales: `jni` **1.0.2 → 1.0.3** (patch, transitiva de `path_provider_android`). Único cambio en el repo: 2 líneas de `pubspec.lock` (versión + sha256). Era lo esperado tras el upgrade de 26 dependencias del 2026-07-29.
