@@ -1624,6 +1624,50 @@ limpio.
 
 ---
 
+### Sesión 2026-08-13 (e) — Edge-to-edge: el arreglo de julio estaba incompleto
+
+Play Console volvió a marcar *"Es posible que la vista de extremo a extremo no funcione
+para todos los usuarios"* en el build **31 (1.0.22)**.
+
+**Causa: hay CUATRO `styles.xml`, no dos.** El arreglo del 2026-07-30 solo limpió las
+dos primeras variantes:
+
+| Archivo | `windowDrawsSystemBarBackgrounds` |
+| ------- | --------------------------------- |
+| `values/styles.xml` | eliminado 2026-07-30 |
+| `values-night/styles.xml` | eliminado 2026-07-30 |
+| `values-v31/styles.xml` | **seguía presente** → eliminado hoy |
+| `values-night-v31/styles.xml` | **seguía presente** → eliminado hoy |
+
+Las variantes `-v31` **tienen prioridad en Android 12+**, así que en cualquier
+dispositivo moderno mandaban ellas: limpiar solo `values/` no servía de nada. Las
+genera `flutter_native_splash:create` (splash de Android 12), que es la razón por la
+que se pasaron por alto. Se añadió un comentario en ambas advirtiendo que ese comando
+las regenera y vuelve a insertar el atributo.
+
+`android:windowFullscreen` se mantiene: es intencional, viene de `fullscreen: true` en
+la config de `flutter_native_splash` del `pubspec.yaml`.
+
+**Verificación en el binario** (leer el fuente no basta, y grepear `resources.pb` da
+falsos positivos porque lista atributos de librerías):
+
+```bash
+aapt2 dump resources build/app/outputs/flutter-apk/app-release.apk \
+  | sed -n '/style\/LaunchTheme/,/style\/NormalTheme/p'
+```
+
+Las variantes v31 pasaron de **6 a 5 atributos**: desapareció `0x01010450`
+(`windowDrawsSystemBarBackgrounds`) y se conservó `0x0101020d` (`windowFullscreen`).
+El AAB comprobado por separado: **0 ocurrencias** en sus styles v31.
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **580 pasando** ·
+APK y AAB recompilados con la corrección.
+
+⚠️ **El aviso solo se confirmará como resuelto al subir el build 32.** El que Play
+señala es el 31, que se generó antes de cualquiera de los dos arreglos.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas

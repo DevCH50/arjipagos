@@ -4,7 +4,14 @@
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:forceDarkAllowed">false</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- NOTA: `windowDrawsSystemBarBackgrounds` fue eliminado a proposito.
+             Esta obsoleto desde Android 15 (SDK 35) y Play Console lo marca como
+             causa de que la vista de extremo a extremo "no funcione para todos los
+             usuarios". Con targetSdk 35+ el sistema dibuja de borde a borde por
+             defecto, asi que el atributo es innecesario. NO volver a agregarlo.
+             OJO: este archivo lo regenera `flutter_native_splash:create`, que
+             vuelve a insertar el atributo. Si se ejecuta ese comando, hay que
+             quitarlo de nuevo aqui y en values-night-v31/styles.xml. -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowSplashScreenBackground">#795548</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>

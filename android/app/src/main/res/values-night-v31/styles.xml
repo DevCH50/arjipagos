@@ -4,7 +4,9 @@
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:forceDarkAllowed">false</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- NOTA: `windowDrawsSystemBarBackgrounds` fue eliminado a proposito.
+             Ver la explicacion completa en values-v31/styles.xml. NO volver a
+             agregarlo. Este archivo lo regenera `flutter_native_splash:create`. -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowSplashScreenBackground">#5D4037</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>
