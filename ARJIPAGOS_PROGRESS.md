@@ -1666,6 +1666,64 @@ APK y AAB recompilados con la corrección.
 ⚠️ **El aviso solo se confirmará como resuelto al subir el build 32.** El que Play
 señala es el 31, que se generó antes de cualquiera de los dos arreglos.
 
+✅ **Actualización 2026-08-13:** el AAB del build 32 ya se subió a Play Console sin
+errores. Falta confirmar en la consola que el aviso de edge-to-edge desaparece: Play
+lo reevalúa cuando termina de procesar el bundle, no en el momento de la subida.
+
+---
+
+### Sesión 2026-08-13 (f) — Archive iOS 1.0.23+32 subido sin incidencias
+
+Primer Archive/Distribute a App Store Connect que sale **limpio a la primera**, sin
+ninguno de los tres errores que históricamente costaban horas. Se deja registrado
+porque confirma que los blindajes del `Podfile` están APROBADOS y FUNCIONANDO.
+
+**Limpieza previa ejecutada** (la secuencia obligatoria de `CLAUDE.md`):
+
+```bash
+flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh
+```
+
+**Los tres blindajes se aplicaron solos**, sin un solo paso manual. Salida literal
+del `pod install`:
+
+```
+✔ Run Script 'Generate dSYM for objective_c native asset' configurado en Runner
+✔ LastUpgradeCheck fijado en 2630 (project.pbxproj)
+```
+
+| Config verificada tras el build | Valor | Error que evita |
+| ------------------------------- | ----- | --------------- |
+| `LastUpgradeCheck` (project.pbxproj) | `2630` | Flutter lo degrada a 1510 en cada build |
+| `LastUpgradeVersion` (Runner.xcscheme) | `"2630"` | Mismo motivo |
+| `Package.swift` (SPM efímero) | `.iOS("15.0")` | Firebase exige 15.0; Flutter regenera con 13.0 |
+| Run Script dSYM `objective_c` | presente | "Missing dSYM" al subir a App Store Connect |
+| `LaunchAction` / `ArchiveAction` | `Release` | El Archive usa la ArchiveAction, no la Launch |
+| `ApiConfig.isProduction` | `true` | Apuntar a backend local en producción |
+
+**Versiones nuevas que entraron con la limpieza:**
+
+- **Firebase iOS SDK 12.15.0 → 12.17.0** (`firebase-ios-sdk` y `GoogleAppMeasurement`,
+  vía SPM). Quedó reflejado en los dos `Package.resolved` versionados.
+- Checksum del pod `Flutter` actualizado a Flutter 3.47.0 en `ios/Podfile.lock`.
+
+**Datos del Archive:** bundle `com.example.arjipagos` (el publicado en App Store — NO
+cambiar, ver regla en memoria), versión `1.0.23+32`, firma automática con el team
+`CF6C8Z3W44`, `Runner.app` de 55.7 MB compilado en 186 s.
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **580 pasando** ·
+Archive subido a App Store Connect sin errores ni warnings de validación.
+
+**El build 32 quedó subido a las DOS tiendas el mismo día**, ambas sin incidencias:
+App Store Connect (Archive desde Xcode) y Google Play Console (AAB desde
+`build/app/outputs/bundle/release/app-release.aab`). Es el primer release del
+proyecto que sale limpio a la primera en ambas plataformas.
+
+**Nota sobre dependencias Dart:** 11 paquetes tienen versiones nuevas bloqueadas por
+constraints (`analyzer` 13.3.0→14.1.0, `flutter_secure_storage` 10.3.1→11.0.0,
+`package_config` 2.2.0→3.0.0, entre otros). NO se subieron: es un bump de
+dependencias, no parte de una limpieza. Queda pendiente evaluarlo aparte.
+
 ---
 
 ## Próximas tareas
@@ -1676,3 +1734,6 @@ señala es el 31, que se generó antes de cualquiera de los dos arreglos.
 - **Antes del 29-oct-2026:** verificar que la renovación del certificado instale
   `fullchain.pem` (ver sesión 2026-08-13)
 - Decidir si se elimina `SplashNavigationState.error` (valor de enum sin usar)
+- Evaluar el bump de los 11 paquetes Dart bloqueados por constraints (ver sesión
+  2026-08-13 (f)); revisar en especial `flutter_secure_storage` 10.3.1 → 11.0.0 y
+  `package_config` 2.2.0 → 3.0.0, que son cambios de major
