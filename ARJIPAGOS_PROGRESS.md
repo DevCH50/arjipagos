@@ -1403,8 +1403,87 @@ cubierto por el `analyze` y los 569 tests.
 
 ---
 
+### Sesión 2026-08-13 — Incidente: `HandshakeException` en login (cadena TLS incompleta)
+
+Fallo reportado con la captura `assets/errores/error_de_ingreso.jpeg`. **Causa en el
+servidor, no en la app.** No se modificó código del proyecto.
+
+**Error mostrado al usuario**
+
+```
+HandshakeException: Handshake error in client (OS Error:
+CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate(handshake.cc:298))
+```
+
+**Diagnóstico**
+
+`arjipagos.moriah.mx:443` servía **solo el certificado hoja**, sin el intermedio
+`ZeroSSL RSA DV SSL CA 2`. El vhost apuntaba a `cert.pem` en vez de `fullchain.pem`.
+Se originó en la renovación del **31 de julio de 2026** (fecha `notBefore` del
+certificado), así que estuvo roto ~2 semanas.
+
+| Comprobación                          | Antes                          | Después          |
+| ------------------------------------- | ------------------------------ | ---------------- |
+| Certificados en la cadena             | 1 (solo hoja)                  | 2 (hoja + inter) |
+| `Verify return code`                  | 20 / 21                        | **0 (ok)**       |
+| Consistencia (8 handshakes)           | 8/8 fallando                   | 8/8 ok           |
+| TLS 1.2 y TLS 1.3                     | Ambos fallando                 | Ambos ok         |
+| `GET https://` validación estricta    | Fallaba                        | HTTP 200         |
+
+**Por qué "no le salía a todos" — no era intermitente**
+
+El fallo era determinista; lo que variaba era **quién veía el diálogo**:
+
+- **Sin sesión guardada** (instalación nueva, cerró sesión) → cae en Login → primera
+  llamada de red → diálogo rojo. Bloqueados.
+- **Con sesión guardada** → el splash lee la sesión de `secureStorage`
+  (`AuthRepositoryImpl.dart:47`, **sin red**) → entra directo a Home y ninguna
+  pantalla carga datos. Reportaban "a mí sí me abre", pero también estaban rotos.
+
+**Por qué falla en iOS igual que en Android**
+
+Flutter **no** usa el stack TLS de Apple: `package:http` → `dart:io` → **BoringSSL** en
+ambas plataformas. BoringSSL no hace *AIA fetching* (no descarga el intermedio
+faltante), a diferencia de Chrome/Safari. Por eso **el navegador mostraba el sitio
+bien mientras la app fallaba** — probar desde el navegador NO sirve para validar esto.
+
+**Solución aplicada (servidor)**
+
+```nginx
+ssl_certificate  /etc/letsencrypt/live/arjipagos.moriah.mx/fullchain.pem;  # NO cert.pem
+```
+
+Sin release ni actualización de la app: ambos grupos de usuarios se recuperaron solos.
+
+**Comando de verificación — única prueba válida**
+
+```bash
+echo | openssl s_client -connect arjipagos.moriah.mx:443 \
+  -servername arjipagos.moriah.mx 2>/dev/null | grep "Verify return code"
+# 0 (ok) = correcto   |   20 o 21 = la app está caída
+```
+
+**⚠️ Riesgo de reaparición: el certificado expira el 29 de octubre de 2026.** Si la
+renovación vuelve a copiar `cert.pem`, la app se rompe igual. Revisar el
+`--deploy-hook` (certbot) o `--reloadcmd` (acme.sh) antes de esa fecha.
+
+**Debilidades de la app que dejó a la vista** (no corregidas, ver Próximas tareas)
+
+1. `AuthService.dart:76` — `Error(e.toString())` vuelca la excepción cruda al
+   `AlertDialog`. Aplica también a los demás Services.
+2. El splash no valida contra el servidor, así que con el backend caído deja entrar a
+   pantallas huecas en lugar de avisar.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
 - Manejo automático de token expirado (refresh token o logout automático)
 - Completar información en App Store Connect y enviar a revisión
+- **Antes del 29-oct-2026:** verificar que la renovación del certificado instale
+  `fullchain.pem` (ver sesión 2026-08-13)
+- Traducir `HandshakeException` y demás excepciones técnicas a mensajes de `AppStrings`
+  en los Services (hoy se muestra `e.toString()` al usuario)
+- Que el splash/Home muestren estado de error real cuando el backend no responde, en
+  lugar de entrar a pantallas vacías
