@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
@@ -45,7 +47,9 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
       // Verificar sesión
       await _checkSession();
     } catch (e) {
-      add(SplashError(e.toString()));
+      // El detalle técnico va al log; al usuario solo un mensaje legible.
+      AppLogger.error('Error inicializando el splash: $e', tag: 'Splash');
+      add(SplashError(mensajeErrorRed(e)));
     }
   }
 

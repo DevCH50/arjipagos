@@ -7,6 +7,7 @@
 /// - Getter resumenAlumnos del estado
 library;
 
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
@@ -298,10 +299,11 @@ void main() {
           // Estado de error
           isA<MenuPrincipalState>()
               .having((s) => s.isLoading, 'isLoading', isFalse)
+              // Mensaje legible, sin filtrar el detalle de la excepción.
               .having(
                 (s) => s.errorMessage,
                 'errorMessage',
-                startsWith('Error al cargar datos:'),
+                AppStrings.errorUnexpected,
               )
               .having(
                 (s) => s.menuItems,

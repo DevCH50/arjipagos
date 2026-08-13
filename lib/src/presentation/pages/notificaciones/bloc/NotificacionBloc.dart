@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
@@ -196,9 +197,11 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       if (emit.isDone) {
         return;
       }
+      AppLogger.error('Error inesperado al cargar notificaciones: $e',
+          tag: 'Notificacion');
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Error inesperado al cargar notificaciones: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }
@@ -250,9 +253,11 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       if (emit.isDone) {
         return;
       }
+      AppLogger.error('Error inesperado al cargar más notificaciones: $e',
+          tag: 'Notificacion');
       emit(state.copyWith(
         isCargandoMas: false,
-        errorMessage: 'Error inesperado al cargar más notificaciones: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }
@@ -300,8 +305,10 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       if (emit.isDone) {
         return;
       }
+      AppLogger.error('Error inesperado al marcar notificación como leída: $e',
+          tag: 'Notificacion');
       emit(state.copyWith(
-        errorMessage: 'Error inesperado al marcar notificación como leída: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }
@@ -339,8 +346,11 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       if (emit.isDone) {
         return;
       }
+      AppLogger.error(
+          'Error inesperado al marcar todas las notificaciones como leídas: $e',
+          tag: 'Notificacion');
       emit(state.copyWith(
-        errorMessage: 'Error inesperado al marcar todas las notificaciones como leídas: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }
@@ -369,8 +379,11 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
       if (emit.isDone) {
         return;
       }
+      AppLogger.error(
+          'Error inesperado al actualizar el contador de notificaciones: $e',
+          tag: 'Notificacion');
       emit(state.copyWith(
-        errorMessage: 'Error inesperado al actualizar el contador de notificaciones: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }

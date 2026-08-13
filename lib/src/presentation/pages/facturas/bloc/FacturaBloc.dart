@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/domain/models/FacturaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
@@ -57,9 +59,11 @@ class FacturaBloc extends Bloc<FacturaEvent, FacturaState> {
         ));
       }
     } catch (e) {
+      // El detalle técnico va al log; al usuario solo un mensaje legible.
+      AppLogger.error('Error inesperado cargando facturas: $e', tag: 'Factura');
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Error inesperado: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }

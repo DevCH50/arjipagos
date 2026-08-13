@@ -1534,6 +1534,50 @@ patrón del resto y los textos por defecto pasaron a `AppStrings`
 
 ---
 
+### Sesión 2026-08-13 (c) — Errores legibles en repositorios y BLoCs
+
+Continuación de la sesión (b), que solo había cubierto los Services.
+
+**Corrección de un diagnóstico previo (quedó anotado mal en la sesión del incidente)**
+
+Se había dicho que splash y Home mostraban "pantallas huecas". **No era exacto:**
+
+- `HomePage` **ya** maneja el error correctamente: pinta `HomeErrorWidget` con botón de
+  reintentar, y lo evalúa *antes* del estado vacío.
+- `SplashBloc._onError` navega a **login** (no deja la app colgada). El valor
+  `SplashNavigationState.error` del enum **no lo emite nadie** — es código muerto.
+
+**El problema real era otro:** el error que Home sí mostraba era el texto crudo de la
+excepción, porque el mensaje se construía interpolándola.
+
+**Alcance corregido — 18 sitios en 11 archivos**
+
+| Capa | Archivos | Sitios |
+| ---- | -------- | ------ |
+| Repositorios | `Home`, `Notificacion`, `Factura`, `EdoCta` | 7 |
+| BLoCs | `Home`, `Splash`, `Notificacion`, `Factura`, `EdoCtaList`, `MenuPrincipal` | 11 |
+
+Todos pasaron de `'texto: $e'` / `e.toString()` a `mensajeErrorRed(e)`, añadiendo
+`AppLogger.error(...)` donde no había log, para no perder el detalle técnico.
+
+**Guardián ampliado**
+
+El test ahora escanea también `lib/src/data/repository` y `lib/src/presentation/pages`,
+y detecta un segundo patrón: la **interpolación** `'…: $e'`, que fue justo la que se le
+escapó en su primera versión. Sabe seguir llamadas `AppLogger` multilínea para no marcar
+como fuga la continuación de un log.
+
+**Test actualizado:** `menu_principal_bloc_test` asertaba
+`startsWith('Error al cargar datos:')`; ahora asierta `AppStrings.errorUnexpected`, que
+además documenta que no se filtra detalle técnico.
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **580 tests pasando**.
+
+**Pendiente de decisión:** `SplashNavigationState.error` sigue sin usarse. No se borró
+(regla de no eliminar sin preguntar).
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
@@ -1541,5 +1585,4 @@ patrón del resto y los textos por defecto pasaron a `AppStrings`
 - Completar información en App Store Connect y enviar a revisión
 - **Antes del 29-oct-2026:** verificar que la renovación del certificado instale
   `fullchain.pem` (ver sesión 2026-08-13)
-- Que el splash/Home muestren estado de error real cuando el backend no responde, en
-  lugar de entrar a pantallas vacías
+- Decidir si se elimina `SplashNavigationState.error` (valor de enum sin usar)

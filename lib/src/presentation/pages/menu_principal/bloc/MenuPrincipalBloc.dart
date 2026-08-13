@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -93,7 +94,7 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
       emit(state.copyWith(
         isLoading: false,
         menuItems: MenuPrincipalState.defaultMenuItems,
-        errorMessage: 'Error al cargar datos: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }

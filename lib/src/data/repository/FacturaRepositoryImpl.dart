@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
 import 'package:arjipagos/src/domain/models/FacturaResponse.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
@@ -16,7 +18,8 @@ class FacturaRepositoryImpl implements FacturaRepository {
     try {
       return await facturaService.getFacturas();
     } catch (e) {
-      return Error<FacturaResponse>('Error al obtener facturas: $e');
+      AppLogger.error('Error al obtener facturas: $e', tag: 'Factura');
+      return Error<FacturaResponse>(mensajeErrorRed(e));
     }
   }
 }

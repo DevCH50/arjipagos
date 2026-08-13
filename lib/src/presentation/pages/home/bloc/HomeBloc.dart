@@ -1,4 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -68,10 +70,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         ));
       }
     } catch (e) {
+      // El detalle técnico va al log; al usuario solo un mensaje legible.
+      AppLogger.error('Error inesperado cargando alumnos: $e', tag: 'Home');
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Error inesperado: $e',
+          errorMessage: mensajeErrorRed(e),
         ),
       );
     }

@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -79,9 +80,12 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
         ));
       }
     } catch (e) {
+      // El detalle técnico va al log; al usuario solo un mensaje legible.
+      AppLogger.error('Error inesperado cargando estados de cuenta: $e',
+          tag: 'EdoCta');
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Error inesperado: $e',
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }

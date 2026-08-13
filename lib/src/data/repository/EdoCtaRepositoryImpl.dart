@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
@@ -17,7 +19,8 @@ class EdoCtaRepositoryImpl implements EdoCtaRepository {
       final result = await edoCtaService.getEstadosDeCuenta();
       return result;
     } catch (e) {
-      return Error<EstadosDeCuentaResponse>('Error al obtener estados de cuenta: $e');
+      AppLogger.error('Error al obtener estados de cuenta: $e', tag: 'EdoCta');
+      return Error<EstadosDeCuentaResponse>(mensajeErrorRed(e));
     }
   }
 }

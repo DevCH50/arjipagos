@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
@@ -21,7 +23,8 @@ class NotificacionRepositoryImpl implements NotificacionRepository {
     try {
       return await notificacionService.getNotificaciones(page: page);
     } catch (e) {
-      return Error<List<Notificacion>>('Error al obtener notificaciones: $e');
+      AppLogger.error('Error al obtener notificaciones: $e', tag: 'Notificacion');
+      return Error<List<Notificacion>>(mensajeErrorRed(e));
     }
   }
 
@@ -31,7 +34,8 @@ class NotificacionRepositoryImpl implements NotificacionRepository {
     try {
       return await notificacionService.getCountNoLeidas();
     } catch (e) {
-      return Error<int>('Error al obtener conteo de no leídas: $e');
+      AppLogger.error('Error al obtener conteo de no leídas: $e', tag: 'Notificacion');
+      return Error<int>(mensajeErrorRed(e));
     }
   }
 
@@ -43,7 +47,8 @@ class NotificacionRepositoryImpl implements NotificacionRepository {
     try {
       return await notificacionService.marcarLeida(id);
     } catch (e) {
-      return Error<bool>('Error al marcar notificación como leída: $e');
+      AppLogger.error('Error al marcar notificación como leída: $e', tag: 'Notificacion');
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 
@@ -53,7 +58,10 @@ class NotificacionRepositoryImpl implements NotificacionRepository {
     try {
       return await notificacionService.marcarTodasLeidas();
     } catch (e) {
-      return Error<bool>('Error al marcar todas las notificaciones como leídas: $e');
+      AppLogger.error(
+          'Error al marcar todas las notificaciones como leídas: $e',
+          tag: 'Notificacion');
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 }
