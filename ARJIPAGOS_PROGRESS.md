@@ -1578,6 +1578,52 @@ además documenta que no se filtra detalle técnico.
 
 ---
 
+### Sesión 2026-08-13 (d) — Upgrade a Flutter 3.47.0 y release 1.0.23+32
+
+**Upgrade del SDK: 3.44.8 → 3.47.0** (salto de 3 versiones menores, no un parche)
+
+`flutter upgrade` abortó por cambios locales en el checkout del SDK. Se inspeccionó
+antes de forzar: era **solo `pubspec.lock` del propio SDK** (generado por el tooling,
+no un parche deliberado), así que `--force` fue seguro.
+
+**Cambio automático aceptado:** Flutter 3.47 añadió a `analysis_options.yaml` la
+exclusión de `android/ios/web/windows/macos/linux` del análisis. Es el comportamiento
+estándar de esta versión.
+
+**Dependencias:** `flutter pub upgrade` movió 25 paquetes dentro de sus constraints.
+Destacan `webview_flutter_android` 4.13.0 → 4.14.0, `win32` 6.3.0 → 6.4.0 y
+**`build_daemon` 4.1.3 → 4.1.5**, que resuelve el aviso de *versión retractada*.
+`injectable_generator` sigue bloqueado en 3.0.2 (ver sección propia — no forzar).
+
+**Verificación tras cada paso (analyze + 580 tests, dos veces: post-SDK y post-deps)**
+
+| Comprobación | Resultado |
+| ------------ | --------- |
+| `flutter analyze` | Sin issues |
+| `flutter test` | **580 pasando** |
+| `flutter build apk --release` | OK — 90 MB |
+| `flutter build appbundle --release` | OK — 88 MB |
+| APK: `versionCode` / `versionName` | **32 / 1.0.23** ✅ |
+| APK es AOT real | 3 × `libapp.so`, 0 × `kernel_blob.bin` ✅ |
+| `ApiConfig.isProduction` | `true` ✅ |
+
+**iOS — anclas verificadas intactas tras el upgrade** (comprobación estática):
+`LastUpgradeCheck = 2630`, `LastUpgradeVersion = "2630"`, `LaunchAction` y
+`ArchiveAction` ambas en `Release`, `IPHONEOS_DEPLOYMENT_TARGET = 15.0` en las 3
+configuraciones, y los bloques del `Podfile` presentes.
+
+⚠️ **iOS no se compiló** — no es posible desde este entorno Linux. Tras un salto de SDK
+de esta magnitud, en la Mac hay que correr obligatoriamente
+`flutter clean && flutter pub get && cd ios && pod install` **antes** del Archive, para
+regenerar el `Package.swift` efímero y reaplicar el forzado de plataforma 15.0.
+
+**Nota sobre `dart format`:** el proyecto no sigue su estilo (152 de 235 archivos
+diferirían). Es preexistente y transversal, no se reformateó: sería un diff enorme sin
+relación con este trabajo. El gate real del proyecto es `flutter analyze`, que pasa
+limpio.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
