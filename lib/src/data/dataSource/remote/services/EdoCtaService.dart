@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
@@ -108,7 +109,7 @@ class EdoCtaService {
       return Error<EstadosDeCuentaResponse>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error obteniendo estados de cuenta: $e', tag: 'EdoCta');
-      return Error<EstadosDeCuentaResponse>(e.toString());
+      return Error<EstadosDeCuentaResponse>(mensajeErrorRed(e));
     }
   }
 }

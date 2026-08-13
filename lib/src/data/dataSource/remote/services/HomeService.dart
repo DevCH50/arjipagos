@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
@@ -93,7 +94,7 @@ class HomeService {
       return Error<AlumnoResponse>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error obteniendo alumnos: $e', tag: 'Home');
-      return Error<AlumnoResponse>(e.toString());
+      return Error<AlumnoResponse>(mensajeErrorRed(e));
     }
   }
 }

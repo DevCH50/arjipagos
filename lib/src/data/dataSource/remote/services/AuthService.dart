@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
@@ -73,7 +74,7 @@ class AuthService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error en login: $e', tag: 'Auth');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 
@@ -120,7 +121,7 @@ class AuthService {
           'Respuesta no-JSON (HTTP ${response.statusCode}): servidor devolvió HTML',
           tag: 'Auth',
         );
-        return Error('Error del servidor (${response.statusCode}). Intenta más tarde.');
+        return Error(AppStrings.errorServidorHttp(response.statusCode));
       }
 
       final data = json.decode(response.body);
@@ -157,7 +158,7 @@ class AuthService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error al cambiar contraseña: $e', tag: 'Auth');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 
@@ -197,7 +198,7 @@ class AuthService {
           'Respuesta no-JSON (HTTP ${response.statusCode}): servidor devolvió HTML',
           tag: 'Auth',
         );
-        return Error('Error del servidor (${response.statusCode}). Intenta más tarde.');
+        return Error(AppStrings.errorServidorHttp(response.statusCode));
       }
 
       final data = json.decode(response.body);
@@ -229,7 +230,7 @@ class AuthService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error al recuperar contraseña: $e', tag: 'Auth');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 
@@ -285,7 +286,7 @@ class AuthService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error en registro: $e', tag: 'Auth');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 }

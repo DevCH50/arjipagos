@@ -1476,6 +1476,64 @@ renovación vuelve a copiar `cert.pem`, la app se rompe igual. Revisar el
 
 ---
 
+### Sesión 2026-08-13 (b) — Mensajes de error legibles en los Services
+
+Corrección derivada del incidente TLS de la sesión anterior: los Services volcaban la
+excepción cruda al usuario vía `Error(e.toString())`.
+
+**Problema**
+
+15 `return Error(e.toString())` repartidos en los 7 Services. Cualquier excepción no
+prevista llegaba literal al `AlertDialog` (`HandshakeException: ... handshake.cc:298`).
+
+**Solución — mapeador centralizado**
+
+Nuevo `lib/src/core/utils/network_error_mapper.dart` con `mensajeErrorRed(Object)`,
+que traduce la excepción a un mensaje de `AppStrings`:
+
+| Excepción                          | Mensaje al usuario           |
+| ---------------------------------- | ---------------------------- |
+| `TlsException` (y sus subclases `HandshakeException`, `CertificateException`) | `errorConexionSegura` |
+| `SocketException`                  | `errorConnection`            |
+| `TimeoutException`                 | `errorTimeout`               |
+| `http.ClientException`             | `errorConnection`            |
+| `FormatException`                  | `errorRespuestaInvalida`     |
+| Cualquier otra                     | `errorUnexpected`            |
+
+El detalle técnico sigue registrándose con `AppLogger`, que es donde corresponde.
+
+**Nuevos strings en `AppStrings`:** `errorConexionSegura`, `errorRespuestaInvalida`,
+`errorServidorHttp(int)`, `errorTokenFcmInvalido`, `errorDatosEliminarToken`
+(estos dos últimos estaban hardcodeados en `FcmService`).
+
+**Archivos tocados:** los 7 Services (`Auth`, `Pago`, `Home`, `EdoCta`, `Factura`,
+`Notificacion`, `Fcm`), `app_strings.dart`, más el util y su test nuevos.
+
+**Decisión de alcance:** los bloques `on TimeoutException` / `on SocketException` ya
+existentes NO se tocaron — eran correctos y están cubiertos por tests. El cambio se
+limitó al `catch (e)` genérico, que era el único que filtraba.
+
+**Test guardián contra regresiones**
+
+`test/unit/services/services_no_filtran_excepciones_test.dart` escanea el fuente de los
+Services y falla si reaparece `Error(<algo>.toString())`. Incluye una autocomprobación
+del propio regex, para que no se degrade en silencio y deje de detectar. La regla quedó
+también escrita en `CLAUDE.md`.
+
+**Lo que encontró el guardián al primer intento**
+
+`PagoService` construía el mensaje con `errorMsg.toString()` sobre el cuerpo de la
+respuesta (líneas 58 y 106). No era una fuga de excepción, pero sí una inconsistencia
+real: los demás Services envuelven eso en `ListToString` porque el backend puede
+devolver una lista, y `.toString()` la pintaría con corchetes al usuario. Se alineó al
+patrón del resto y los textos por defecto pasaron a `AppStrings`
+(`errorProcesarPago`, `errorVerificarPago`).
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **580 tests pasando**
+(569 previos + 9 del mapeador + 2 del guardián, ninguno roto).
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
@@ -1483,7 +1541,5 @@ renovación vuelve a copiar `cert.pem`, la app se rompe igual. Revisar el
 - Completar información en App Store Connect y enviar a revisión
 - **Antes del 29-oct-2026:** verificar que la renovación del certificado instale
   `fullchain.pem` (ver sesión 2026-08-13)
-- Traducir `HandshakeException` y demás excepciones técnicas a mensajes de `AppStrings`
-  en los Services (hoy se muestra `e.toString()` al usuario)
 - Que el splash/Home muestren estado de error real cuando el backend no responde, en
   lugar de entrar a pantallas vacías

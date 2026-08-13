@@ -253,6 +253,24 @@ class AppStrings {
   static const String errorTimeout = 'La solicitud tardó demasiado. Intenta de nuevo.';
   static const String errorUnauthorized = 'No autorizado. Inicia sesión de nuevo.';
 
+  /// Fallo de TLS: certificado inválido o cadena incompleta en el servidor.
+  /// El usuario no puede hacer nada al respecto; es un problema de servidor.
+  static const String errorConexionSegura =
+      'No se pudo establecer una conexión segura con el servidor. Intenta más tarde.';
+
+  /// El servidor respondió algo que no se pudo interpretar (JSON malformado).
+  static const String errorRespuestaInvalida =
+      'El servidor devolvió una respuesta inválida. Intenta más tarde.';
+
+  /// Error HTTP con código de estado (5xx, o respuesta no-JSON).
+  static String errorServidorHttp(int codigo) =>
+      'Error del servidor ($codigo). Intenta más tarde.';
+
+  static const String errorProcesarPago = 'Error al procesar el pago';
+  static const String errorVerificarPago = 'Error al verificar el pago';
+  static const String errorTokenFcmInvalido = 'Token FCM inválido';
+  static const String errorDatosEliminarToken = 'Datos inválidos para eliminar token';
+
   // ============================================================================
   // ALUMNO
   // ============================================================================

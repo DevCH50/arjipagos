@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
@@ -123,7 +124,7 @@ class NotificacionService {
       return Error<List<Notificacion>>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al obtener notificaciones: $e', tag: 'Notificacion');
-      return Error<List<Notificacion>>(e.toString());
+      return Error<List<Notificacion>>(mensajeErrorRed(e));
     }
   }
 
@@ -180,7 +181,7 @@ class NotificacionService {
       return Error<int>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al obtener conteo de no leídas: $e', tag: 'Notificacion');
-      return Error<int>(e.toString());
+      return Error<int>(mensajeErrorRed(e));
     }
   }
 
@@ -225,7 +226,7 @@ class NotificacionService {
       return Error<bool>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al marcar notificación $id: $e', tag: 'Notificacion');
-      return Error<bool>(e.toString());
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 
@@ -269,7 +270,7 @@ class NotificacionService {
       return Error<bool>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al marcar todas como leídas: $e', tag: 'Notificacion');
-      return Error<bool>(e.toString());
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 }

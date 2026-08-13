@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/core/utils/html_utils.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
@@ -247,7 +248,7 @@ class FcmService {
 
       if (fcmToken.isEmpty) {
         AppLogger.warning('Token FCM vacío, no se puede registrar', tag: 'FCM');
-        return Error<bool>('Token FCM inválido');
+        return Error<bool>(AppStrings.errorTokenFcmInvalido);
       }
 
       final Uri url = ApiConfig.buildUri(Endpoints.dispositivoRegistrar);
@@ -292,7 +293,7 @@ class FcmService {
       return Error<bool>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al registrar token FCM: $e', tag: 'FCM');
-      return Error<bool>(e.toString());
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 
@@ -313,7 +314,7 @@ class FcmService {
     try {
       if (authToken.isEmpty || fcmToken.isEmpty) {
         AppLogger.warning('Token de auth o FCM vacío, no se puede eliminar', tag: 'FCM');
-        return Error<bool>('Datos inválidos para eliminar token');
+        return Error<bool>(AppStrings.errorDatosEliminarToken);
       }
 
       final Uri url = ApiConfig.buildUri(Endpoints.dispositivoEliminar);
@@ -355,7 +356,7 @@ class FcmService {
       return Error<bool>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error inesperado al eliminar token FCM: $e', tag: 'FCM');
-      return Error<bool>(e.toString());
+      return Error<bool>(mensajeErrorRed(e));
     }
   }
 

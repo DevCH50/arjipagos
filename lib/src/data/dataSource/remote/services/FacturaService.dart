@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
@@ -106,7 +107,7 @@ class FacturaService {
       return Error<FacturaResponse>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error obteniendo facturas: $e', tag: 'Factura');
-      return Error<FacturaResponse>(e.toString());
+      return Error<FacturaResponse>(mensajeErrorRed(e));
     }
   }
 }

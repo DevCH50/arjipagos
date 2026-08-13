@@ -5,9 +5,11 @@ import 'dart:io';
 import 'package:arjipagos/src/core/constants/app_durations.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
 import 'package:arjipagos/src/domain/models/PagoResponse.dart';
+import 'package:arjipagos/src/domain/utils/ListToString.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:http/http.dart' as http;
 
@@ -52,9 +54,9 @@ class PagoService {
         }
       } else {
         final data = json.decode(response.body);
-        final errorMsg = data['msg'] ?? data['message'] ?? 'Error al procesar el pago';
+        final errorMsg = ListToString(data['msg'] ?? data['message']);
         AppLogger.warning('Error en pago: $errorMsg', tag: 'Pago');
-        return Error(errorMsg.toString());
+        return Error(errorMsg.isNotEmpty ? errorMsg : AppStrings.errorProcesarPago);
       }
     } on TimeoutException {
       AppLogger.error('Timeout en pago', tag: 'Pago');
@@ -64,7 +66,7 @@ class PagoService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error en pago: $e', tag: 'Pago');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 
@@ -100,9 +102,9 @@ class PagoService {
         AppLogger.info('Verificación de pago: ${pagoResponse.message}', tag: 'Pago');
         return Success(pagoResponse);
       } else {
-        final errorMsg = data['message'] ?? 'Error al verificar el pago';
+        final errorMsg = ListToString(data['message']);
         AppLogger.warning('Error verificando pago: $errorMsg', tag: 'Pago');
-        return Error(errorMsg.toString());
+        return Error(errorMsg.isNotEmpty ? errorMsg : AppStrings.errorVerificarPago);
       }
     } on TimeoutException {
       AppLogger.error('Timeout verificando pago', tag: 'Pago');
@@ -112,7 +114,7 @@ class PagoService {
       return Error(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error verificando pago: $e', tag: 'Pago');
-      return Error(e.toString());
+      return Error(mensajeErrorRed(e));
     }
   }
 
