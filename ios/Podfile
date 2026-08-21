@@ -99,6 +99,16 @@ post_install do |installer|
         config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
         config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
       end
+
+      # open_filex 4.7.0 (última publicada, sin fix upstream) arrastra dos warnings
+      # en OpenFilePlugin.m: keyWindow deprecado (iOS 13) y una función sin prototipo.
+      # El keyWindow vive en la rama else de un @available(iOS 13, *), así que nunca
+      # se ejecuta en los dispositivos que soportamos (mínimo iOS 15); el compilador
+      # avisa igual porque compila ambas ramas. Revisar si el paquete publica 4.8.x.
+      if target.name == 'open_filex'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
     end
   end
 

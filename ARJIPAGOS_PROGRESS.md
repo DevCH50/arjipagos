@@ -2398,6 +2398,94 @@ Oppo sin errores en logcat.
 
 ---
 
+## Sesión 2026-08-21 (d) — Puesta al día de la Mac y Archive de 1.0.24+33
+
+Sesión hecha ya en la Mac, que venía tres commits atrás. Es la continuación directa
+del cierre de la sesión (c): allí se anotó que el Archive exigía pasar por la Mac y
+correr `pod install`, porque `objective_c` había subido de versión y es justo el pod
+con la guarda de dSYM. Eso es lo que se hizo aquí, y terminó en Archive.
+
+### Sincronización y subida del SDK
+
+`git pull` en fast-forward, tres commits, sin conflictos: llegaron el rediseño del
+renglón de pago, el refresco de Avisos por push y el formateo de importes, junto con
+la versión **1.0.24+33** en `pubspec.yaml`. Como esa versión aún no está publicada,
+la regla de versionado del CLAUDE.md manda usarla tal cual, sin crear una nueva.
+
+La Mac tenía Flutter 3.47.0 mientras el proyecto ya iba en 3.47.1, así que se subió
+el SDK también aquí. Volvió a aparecer el tropiezo de la sesión (c): `flutter upgrade`
+se niega si el checkout del SDK tiene su propio `pubspec.lock` modificado. **Esta vez
+no se usó `--force`**, que borra cualquier cambio local a ciegas; se comprobó que el
+diff eran solo transitivas del propio SDK (`jni`, `objective_c`, `google_cloud`) —un
+archivo que pub regenera solo— y se descartó con `git checkout -- pubspec.lock`
+dentro del SDK. Es la vía a repetir si reaparece.
+
+### Limpieza obligatoria y build iOS
+
+Se corrió la secuencia completa del CLAUDE.md: `flutter clean`, `flutter pub get`,
+`pod install` y `./scripts/build_ios.sh`. Build en **exit 0**, `Runner.app` de 56.7 MB.
+
+Las cuatro guardas se verificaron **después** del build, no solo tras el `pod install`:
+`flutter build ios` corre su propio `pod install` y degrada los valores antes de que
+el script los restaure, así que comprobar en medio no dice nada. Quedaron
+`LastUpgradeCheck = 2630`, `LastUpgradeVersion = "2630"`, `Package.swift` en
+`.iOS("15.0")` y el Run Script del dSYM de `objective_c` en su sitio.
+
+**`open_filex` no soporta Swift Package Manager**, así que se instaló como pod. De ahí
+salieron los dos cambios regenerados de esta sesión: su registro en `Podfile.lock` y
+la fase `[CP] Embed Pods Frameworks` en `project.pbxproj`. Son necesarios para que el
+plugin funcione en la app firmada.
+
+### Warnings de open_filex silenciados
+
+En el iPhone 17 salieron dos warnings de `OpenFilePlugin.m`: `keyWindow` deprecado
+(iOS 13) y una función sin prototipo. Se revisó el código del plugin y el `keyWindow`
+vive en la rama `else` de un `@available(iOS 13, *)`, o sea que **nunca se ejecuta**
+con el mínimo de iOS 15 del proyecto; el compilador avisa igual porque compila ambas
+ramas. `open_filex` 4.7.0 es la última publicada en pub.dev, sin fix upstream.
+
+Se añadió un bloque en el `post_install` siguiendo el patrón que ya usaban otros seis
+pods —el de `share_plus` es literalmente por el mismo `keyWindow`—: supresión **por
+target**, nunca `inhibit_all_warnings!` global, para no tapar warnings del código
+propio ni de pods futuros. Se comprobó que las settings cayeran en las **tres**
+configuraciones (Debug, Profile y Release) y en ningún otro target: si solo hubieran
+caído en Debug, los warnings habrían reaparecido justo en el Archive.
+
+Queda pendiente revisar si el paquete publica un 4.8.x. Silenciar no arregla: si
+Apple llega a retirar `keyWindow`, el aviso ya no estaría para advertirlo.
+
+### Ruido de consola descartado
+
+En el iPhone 17 apareció un volcado largo en la consola de Xcode. Nada venía del
+código Dart: LaunchServices (`process may not map database`, -54), WKWebView
+(entitlements `web-browser-engine.*`, `RBSServiceErrorDomain`), `sandbox extension`,
+`personaAttributesForPersonaType`, y varios `NSLayoutConstraint` de
+`_UIButtonBarButton` / `_UIModernBarButton`. Estos últimos son clases **privadas de
+UIKit** para botones de barra: una app Flutter no tiene ninguna, pinta todo en una
+sola `FlutterView`. Salen del toolbar de la hoja de compartir nativa y del preview de
+PDF, un bug viejo de Apple que UIKit resuelve solo rompiendo una constraint. Ninguna
+de estas líneas pasa por la validación de App Store Connect, que revisa firma,
+entitlements, dSYMs e Info.plist.
+
+**Sin resolver:** el `-10814` (`kLSApplicationNotFoundErr`) sobre
+`Library/Caches/ticket_T7729.pdf`. Normalmente es ruido del prefetch de metadatos de
+la hoja de compartir, y `ticket_body.dart` ya cae a `_compartir` si `OpenFilex` no
+devuelve `done`. Pero el log no distingue "el visor abrió bien" de "se fue por el
+respaldo": las dos rutas lo emiten. Falta confirmarlo en pantalla; si aparece el
+warning "El visor externo no abrió el ticket" en `AppLogger`, se fue por el respaldo.
+
+### Verificación
+
+`flutter test` **749 pasando**, cero fallos y cero saltados, incluido el test guardián
+`services_no_filtran_excepciones_test.dart`. Checklist previo al Archive comprobado
+uno por uno: `isProduction = true`, `aps-environment = production`, bundle
+`com.example.arjipagos` en las tres configs y coincidiendo con `GoogleService-Info.plist`,
+y 1.0.24+33 por encima de la 1.0.23+32 publicada.
+
+**Archive generado sin errores** en Xcode 26.3. Falta el Distribute a App Store Connect.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
@@ -2409,3 +2497,7 @@ Oppo sin errores en logcat.
 - Evaluar el bump de los 11 paquetes Dart bloqueados por constraints (ver sesión
   2026-08-13 (f)); revisar en especial `flutter_secure_storage` 10.3.1 → 11.0.0 y
   `package_config` 2.2.0 → 3.0.0, que son cambios de major
+- Confirmar en pantalla si el ticket abre en el visor de PDF o cae a la hoja de
+  compartir (ver sesión 2026-08-21 (d))
+- Revisar si `open_filex` publica 4.8.x, para quitar la supresión de warnings del
+  Podfile en vez de arrastrarla
