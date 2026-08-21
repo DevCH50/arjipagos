@@ -18,6 +18,8 @@ void main() {
 
         // Assert
         expect(alumno.alumnoId, equals(1));
+        expect(alumno.familiaId, equals(1));
+        expect(alumno.familia, equals('Familia López García'));
         expect(alumno.alumno, equals('LOPEZ GARCIA MARIA'));
         expect(alumno.nombre, equals('María'));
         expect(alumno.apPaterno, equals('López'));
@@ -71,6 +73,22 @@ void main() {
         expect(alumno.becaBach, equals('Media'));
         expect(alumno.becaSp, equals('No'));
       });
+
+      test('debe usar valores por defecto si falta la familia', () {
+        // Arrange
+        final json = {
+          'alumno_id': 4,
+          'alumno': 'Sin familia',
+          'estado_de_cuenta': [],
+        };
+
+        // Act
+        final alumno = Alumno.fromJson(json);
+
+        // Assert
+        expect(alumno.familiaId, equals(0));
+        expect(alumno.familia, isEmpty);
+      });
     });
 
     group('toJson', () {
@@ -83,6 +101,8 @@ void main() {
 
         // Assert
         expect(json['alumno_id'], equals(1));
+        expect(json['familia_id'], equals(1));
+        expect(json['familia'], equals('Familia López García'));
         expect(json['alumno'], equals('LOPEZ GARCIA MARIA'));
         expect(json['nombre'], equals('María'));
         expect(json['beca_sep'], equals('Sí'));

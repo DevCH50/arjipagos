@@ -58,11 +58,20 @@ class CarritoTotalBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          _formatearMonto(state.totalAPagar),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+        // Igual que en Pagos Pendientes: el total se encoge antes que partirse.
+        // Con la fuente del sistema en grande se rompía a media cifra.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _formatearMonto(state.totalAPagar),
+            maxLines: 1,
+            softWrap: false,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ),
       ],

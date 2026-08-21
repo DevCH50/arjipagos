@@ -124,8 +124,25 @@ void main() {
       final items = MenuPrincipalState.defaultMenuItems;
 
       // Assert
-      expect(items, hasLength(2));
-      expect(items.map((i) => i.id), containsAll(['pagos', 'facturas']));
+      expect(items, hasLength(3));
+      expect(
+        items.map((i) => i.id),
+        containsAll(['pagos_pendientes', 'pagos_realizados', 'facturas']),
+      );
+    });
+
+    test('cada item del menú apunta a su ruta', () {
+      // Act
+      final rutasPorId = {
+        for (final item in MenuPrincipalState.defaultMenuItems)
+          item.id: item.ruta,
+      };
+
+      // Assert: los pagos pendientes conservan la ruta original y los
+      // realizados estrenan la suya, sin pisarse entre sí.
+      expect(rutasPorId['pagos_pendientes'], equals('edo_cta'));
+      expect(rutasPorId['pagos_realizados'], equals('edo_cta_pagados'));
+      expect(rutasPorId['facturas'], equals('facturas'));
     });
   });
 

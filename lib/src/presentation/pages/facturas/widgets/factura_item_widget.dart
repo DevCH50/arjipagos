@@ -156,6 +156,14 @@ class _FacturaItemWidgetState extends State<FacturaItemWidget> {
       return;
     }
 
+    // En iPad la hoja de compartir es un popover y iOS exige el rectángulo
+    // desde el que sale; sin esto la app truena al abrirla. Se calcula aquí,
+    // antes de cualquier await, para no usar el context tras la descarga.
+    final caja = context.findRenderObject() as RenderBox?;
+    final Rect? origenCompartir = caja == null || !caja.hasSize
+        ? null
+        : caja.localToGlobal(Offset.zero) & caja.size;
+
     setState(() {
       _compartiendo = true;
     });
@@ -181,6 +189,7 @@ class _FacturaItemWidgetState extends State<FacturaItemWidget> {
       final shareParams = ShareParams(
         files: [XFile(file.path, mimeType: 'application/zip')],
         subject: 'Factura ${widget.factura.folio}',
+        sharePositionOrigin: origenCompartir,
       );
       await SharePlus.instance.share(shareParams);
     } catch (e) {

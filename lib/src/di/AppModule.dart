@@ -1,21 +1,31 @@
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/local/TicketArchivoStorage.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/BannerService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart';
 import 'package:arjipagos/src/data/repository/AuthRepositoryImpl.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart';
+import 'package:arjipagos/src/data/repository/BannerRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/EdoCtaPagadosRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/FacturaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/HomeRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/NotificacionRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/TicketRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
+import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
+import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
+import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
@@ -27,9 +37,15 @@ import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/banners/GetBannersUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaPagadosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/ticket/DescargarTicketUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/GetFacturasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
@@ -101,6 +117,57 @@ abstract class AppModule {
   @injectable
   EdoCtaUseCases get edoCtaUseCases =>
       EdoCtaUseCases(getEstadosDeCuenta: GetEstadosDeCuentaUseCase(edoCtaRepository));
+
+  // ============================================================================
+  // PAGOS REALIZADOS (EDO CTA PAGADOS)
+  // ============================================================================
+
+  @injectable
+  EdoCtaPagadosService get edoCtaPagadosService =>
+      EdoCtaPagadosService(authUseCases);
+
+  @injectable
+  EdoCtaPagadosRepository get edoCtaPagadosRepository =>
+      EdoCtaPagadosRepositoryImpl(edoCtaPagadosService);
+
+  @injectable
+  EdoCtaPagadosUseCases get edoCtaPagadosUseCases => EdoCtaPagadosUseCases(
+        getEstadosDeCuentaPagados:
+            GetEstadosDeCuentaPagadosUseCase(edoCtaPagadosRepository),
+      );
+
+  // ============================================================================
+  // BANNERS INFORMATIVOS
+  // ============================================================================
+
+  @injectable
+  BannerService get bannerService => BannerService(authUseCases);
+
+  @injectable
+  BannerRepository get bannerRepository => BannerRepositoryImpl(bannerService);
+
+  @injectable
+  BannerUseCases get bannerUseCases =>
+      BannerUseCases(getBanners: GetBannersUseCase(bannerRepository));
+
+  // ============================================================================
+  // TICKET DE PAGO
+  // ============================================================================
+
+  @injectable
+  TicketService get ticketService => TicketService(authUseCases);
+
+  @injectable
+  TicketArchivoStorage get ticketArchivoStorage => TicketArchivoStorage();
+
+  @injectable
+  TicketRepository get ticketRepository =>
+      TicketRepositoryImpl(ticketService, ticketArchivoStorage);
+
+  @injectable
+  TicketUseCases get ticketUseCases => TicketUseCases(
+        descargarTicket: DescargarTicketUseCase(ticketRepository),
+      );
 
   // ============================================================================
   // NOTIFICACIONES

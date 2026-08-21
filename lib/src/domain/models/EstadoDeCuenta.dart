@@ -41,6 +41,18 @@ class EstadoDeCuenta {
     String facturaPdf;
     String facturaXml;
 
+    /// Fecha y hora en que se liquidó el pago (`dd-MM-yyyy HH:mm:ss`).
+    ///
+    /// Solo llega en la respuesta de pagos realizados
+    /// (`estado-de-cuenta-pagados`); en los pendientes queda vacía.
+    String fechaDePago;
+
+    /// Folio del ticket de pago (p. ej. `T7672`). Solo en pagos realizados.
+    String ticketFolio;
+
+    /// URL absoluta del ticket imprimible. Solo en pagos realizados.
+    String ticketUrl;
+
     EstadoDeCuenta({
         required this.id,
         required this.cicloId,
@@ -56,7 +68,15 @@ class EstadoDeCuenta {
         required this.estaDisponibleEnInternet,
         required this.facturaPdf,
         required this.facturaXml,
+        // Opcionales: solo existen en la respuesta de pagos realizados, así que
+        // el flujo de pagos pendientes construye el modelo sin ellos.
+        this.fechaDePago = '',
+        this.ticketFolio = '',
+        this.ticketUrl = '',
     });
+
+    /// Indica si el pago tiene un ticket consultable.
+    bool get tieneTicket => ticketUrl.isNotEmpty;
 
     /// Descripción con abreviaciones específicas por nivel/materia.
     String get descripcionAbreviada {
@@ -82,8 +102,27 @@ class EstadoDeCuenta {
         desc = desc.replaceAll(entry.key, entry.value);
       }
 
-      // Reemplazar palabras individuales
-      return desc.split(' ').map((w) => palabras[w] ?? w).join(' ');
+      // Reemplazar palabras individuales. El `where` no es cosmético: el
+      // backend manda descripciones con espacios dobles y sobrantes al final
+      // ('REINSCRIPCION SECUNDARIA  26 / 27  '), que en pantalla se comen ancho
+      // y empujan el texto a una segunda línea sin necesidad.
+      return desc
+          .split(' ')
+          .where((w) => w.isNotEmpty)
+          .map((w) => palabras[w] ?? w)
+          .join(' ');
+    }
+
+    /// Fecha de pago sin la hora, para las listas.
+    ///
+    /// El backend manda `fecha_de_pago` como '17-08-2026 10:01:01'. La hora no
+    /// aporta nada en el listado y alarga la línea hasta recortarla con '...';
+    /// el dato completo sigue disponible en [fechaDePago] y en el ticket.
+    String get fechaDePagoCorta {
+      if (fechaDePago.isEmpty) {
+        return '';
+      }
+      return fechaDePago.split(' ').first;
     }
 
     factory EstadoDeCuenta.fromJson(Map<String, dynamic> json) => EstadoDeCuenta(
@@ -101,6 +140,9 @@ class EstadoDeCuenta {
         estaDisponibleEnInternet: json['esta_disponible_en_internet'] ?? true,
         facturaPdf: json['factura_pdf']?.toString() ?? '',
         facturaXml: json['factura_xml']?.toString() ?? '',
+        fechaDePago: json['fecha_de_pago']?.toString() ?? '',
+        ticketFolio: json['ticket_folio']?.toString() ?? '',
+        ticketUrl: json['ticket_url']?.toString() ?? '',
     );
 
     Map<String, dynamic> toJson() => {
@@ -118,17 +160,26 @@ class EstadoDeCuenta {
         'esta_disponible_en_internet': estaDisponibleEnInternet,
         'factura_pdf': facturaPdf,
         'factura_xml': facturaXml,
+        // Campos exclusivos de los pagos realizados. El endpoint de pagos
+        // pendientes no los envía, así que solo se serializan cuando traen
+        // valor: de lo contrario `fromJson`/`toJson` dejarían de ser inversas
+        // para los pagos pendientes.
+        if (fechaDePago.isNotEmpty) 'fecha_de_pago': fechaDePago,
+        if (ticketFolio.isNotEmpty) 'ticket_folio': ticketFolio,
+        if (ticketUrl.isNotEmpty) 'ticket_url': ticketUrl,
     };
 }
 
 enum EstadoPago {
     pendiente,
-    vencido
+    vencido,
+    pagado
 }
 
 final estadoPagoValues = EnumValues({
     'Pendiente': EstadoPago.pendiente,
-    'Vencido': EstadoPago.vencido
+    'Vencido': EstadoPago.vencido,
+    'Pagado': EstadoPago.pagado
 });
 
 class EnumValues<T> {

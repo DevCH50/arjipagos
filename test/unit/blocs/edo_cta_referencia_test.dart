@@ -58,6 +58,8 @@ EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta
 /// a partir de 10001 (10001, 10002, …).
 Alumno _alumno({required int alumnoId, required int cantidadPagos}) => Alumno(
       alumnoId: alumnoId,
+      familiaId: 1,
+      familia: 'Familia Test',
       alumno: 'Alumno $alumnoId',
       apPaterno: 'Test',
       apMaterno: 'Test',
@@ -77,6 +79,8 @@ Alumno _alumno({required int alumnoId, required int cantidadPagos}) => Alumno(
 /// un segundo alumno en tests multi-alumno).
 Alumno _alumnoB({required int alumnoId, required int cantidadPagos}) => Alumno(
       alumnoId: alumnoId,
+      familiaId: 1,
+      familia: 'Familia Test',
       alumno: 'Alumno B $alumnoId',
       apPaterno: 'Test',
       apMaterno: 'Test',

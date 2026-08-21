@@ -44,6 +44,10 @@ class CarritoBody extends StatelessWidget {
 
     // Navegar al WebView de pago
     if (state.pagoData != null) {
+      // Ruta NO restaurable a propósito: reabrir sola una sesión de pago con
+      // la URL, los parámetros y el token de antes del reciclado es peligroso.
+      // Si Android recicla el proceso durante el pago, el usuario vuelve al
+      // carrito y decide él si reintenta.
       Navigator.pushNamed(
         context,
         'pago_webview',

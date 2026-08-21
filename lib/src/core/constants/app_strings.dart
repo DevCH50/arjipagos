@@ -100,7 +100,8 @@ class AppStrings {
   static const String menuFacturasProximamente = 'La sección de Facturas estará disponible pronto.';
   static const String menuMiCuenta = 'Mi cuenta';
   static const String menuSinAlumnos = 'Sin alumnos';
-  static const String menuPagos = 'Pagos';
+  static const String menuPagosPendientes = 'Pagos Pendientes';
+  static const String menuPagosRealizados = 'Pagos Realizados';
   static const String menuFacturas = 'Facturas';
   static const String menuCerrando = 'Cerrando sesión...';
   static const String menuNoPudoCargar = 'No se pudo cargar la información del usuario';
@@ -251,6 +252,8 @@ class AppStrings {
   static const String errorUnexpected = 'Error inesperado';
   static const String errorInvalidCredentials = 'Credenciales incorrectas';
   static const String errorTimeout = 'La solicitud tardó demasiado. Intenta de nuevo.';
+  static const String errorServidorNoDisponible =
+      'El servidor no está disponible en este momento. Por favor intenta más tarde.';
   static const String errorUnauthorized = 'No autorizado. Inicia sesión de nuevo.';
 
   /// Fallo de TLS: certificado inválido o cadena incompleta en el servidor.
@@ -366,6 +369,62 @@ class AppStrings {
   // ============================================================================
 
   static const String edoCtaSinEstadosCuenta = 'No tienes estados de cuenta por pagar';
+
+  // ============================================================================
+  // PAGOS REALIZADOS
+  // ============================================================================
+
+  static const String edoCtaPagadosTitle = 'Pagos Realizados';
+  static const String edoCtaPagadosLoading = 'Cargando pagos realizados...';
+  static const String edoCtaPagadosSinPagos = 'Sin pagos realizados';
+  static const String edoCtaPagadosSinPagosDetalle =
+      'Todavía no hay pagos registrados para tus alumnos';
+  static const String edoCtaPagadosSinPagosAlumno =
+      'Este alumno no tiene pagos realizados';
+  static const String edoCtaPagado = 'Pagado';
+  static const String edoCtaPagadosFechaPago = 'Pagado el:';
+  static const String edoCtaPagadosFolio = 'Folio:';
+  static const String edoCtaPagadosVerTicket = 'Ver ticket';
+  static const String edoCtaPagadosActualizar = 'Actualizar';
+
+  // ============================================================================
+  // BANNERS INFORMATIVOS
+  // ============================================================================
+
+  static const String bannersSeccion = 'Avisos';
+  static const String bannersVerAviso = 'Ver aviso';
+  static const String bannersImagenNoDisponible = 'Imagen no disponible';
+  static const String bannersNuevo = 'Nuevo';
+
+  // ============================================================================
+  // TICKET DE PAGO
+  // ============================================================================
+
+  static const String ticketTitle = 'Ticket de pago';
+  static const String ticketActualizar = 'Actualizar';
+  static const String ticketErrorCarga = 'No se pudo cargar el ticket';
+  static const String ticketReintentar = 'Reintentar';
+  static const String ticketNoDisponible =
+      'Este pago no tiene un ticket disponible';
+  static const String ticketSesionExpirada =
+      'Tu sesión expiró. Vuelve a iniciar sesión para ver el ticket';
+  static const String ticketDescargando = 'Descargando el ticket...';
+  static const String ticketListo = 'Ticket listo';
+  static const String ticketAbrir = 'Abrir ticket';
+  static const String ticketCompartir = 'Compartir';
+  static const String ticketErrorAbrir =
+      'No se pudo abrir el ticket en este dispositivo';
+  static const String ticketAbrirEnOtraApp = 'Abrir en otra app';
+  static const String ticketPreparando = 'Preparando el ticket...';
+  static const String ticketErrorVisor =
+      'No se pudo mostrar el ticket aquí. Puedes compartirlo o abrirlo con otra app';
+
+  /// Etiqueta del indicador de página del visor: "Página 2 de 3".
+  ///
+  /// Es función y no constante porque el texto lleva los dos números; así el
+  /// literal sigue viviendo solo en esta clase.
+  static String ticketPaginaDe(int actual, int total) =>
+      'Página $actual de $total';
 
   // ============================================================================
   // AVISO DE PRIVACIDAD / VERSIÓN

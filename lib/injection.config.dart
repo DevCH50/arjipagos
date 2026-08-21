@@ -14,8 +14,14 @@ import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart'
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart'
     as _i394;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart' as _i64;
+import 'package:arjipagos/src/data/dataSource/local/TicketArchivoStorage.dart'
+    as _i543;
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart'
     as _i424;
+import 'package:arjipagos/src/data/dataSource/remote/services/BannerService.dart'
+    as _i299;
+import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosService.dart'
+    as _i831;
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart'
     as _i276;
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart'
@@ -27,9 +33,14 @@ import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart'
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart'
     as _i955;
 import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart'
-    as _i424;
+    as _i425;
+import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart'
+    as _i965;
 import 'package:arjipagos/src/di/AppModule.dart' as _i21;
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart' as _i1009;
+import 'package:arjipagos/src/domain/repository/BannerRepository.dart' as _i374;
+import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart'
+    as _i645;
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart' as _i57;
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart'
     as _i1073;
@@ -37,9 +48,14 @@ import 'package:arjipagos/src/domain/repository/HomeRepository.dart' as _i123;
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
 import 'package:arjipagos/src/domain/repository/PagoRepository.dart' as _i946;
+import 'package:arjipagos/src/domain/repository/TicketRepository.dart' as _i522;
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart'
     as _i18;
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart' as _i887;
+import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart'
+    as _i557;
+import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart'
+    as _i1053;
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart'
     as _i869;
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart'
@@ -47,6 +63,8 @@ import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart'
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart'
     as _i274;
 import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart' as _i604;
+import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart'
+    as _i60;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
@@ -72,6 +90,24 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i276.EdoCtaService>(() => appModule.edoCtaService);
     gh.factory<_i57.EdoCtaRepository>(() => appModule.edoCtaRepository);
     gh.factory<_i869.EdoCtaUseCases>(() => appModule.edoCtaUseCases);
+    gh.factory<_i831.EdoCtaPagadosService>(
+      () => appModule.edoCtaPagadosService,
+    );
+    gh.factory<_i645.EdoCtaPagadosRepository>(
+      () => appModule.edoCtaPagadosRepository,
+    );
+    gh.factory<_i1053.EdoCtaPagadosUseCases>(
+      () => appModule.edoCtaPagadosUseCases,
+    );
+    gh.factory<_i299.BannerService>(() => appModule.bannerService);
+    gh.factory<_i374.BannerRepository>(() => appModule.bannerRepository);
+    gh.factory<_i557.BannerUseCases>(() => appModule.bannerUseCases);
+    gh.factory<_i965.TicketService>(() => appModule.ticketService);
+    gh.factory<_i543.TicketArchivoStorage>(
+      () => appModule.ticketArchivoStorage,
+    );
+    gh.factory<_i522.TicketRepository>(() => appModule.ticketRepository);
+    gh.factory<_i60.TicketUseCases>(() => appModule.ticketUseCases);
     gh.factory<_i303.FcmService>(() => appModule.fcmService);
     gh.factory<_i955.NotificacionService>(() => appModule.notificacionService);
     gh.factory<_i775.NotificacionRepository>(
@@ -83,7 +119,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i908.FacturaService>(() => appModule.facturaService);
     gh.factory<_i1073.FacturaRepository>(() => appModule.facturaRepository);
     gh.factory<_i504.FacturaUseCases>(() => appModule.facturaUseCases);
-    gh.factory<_i424.PagoService>(() => appModule.pagoService);
+    gh.factory<_i425.PagoService>(() => appModule.pagoService);
     gh.factory<_i946.PagoRepository>(() => appModule.pagoRepository);
     gh.factory<_i604.PagoUseCases>(() => appModule.pagoUseCases);
     return this;

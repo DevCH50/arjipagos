@@ -3,6 +3,8 @@ import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
@@ -12,8 +14,11 @@ import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
+import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
@@ -51,6 +56,17 @@ List<BlocProvider> blocProviders = [
     create: (context) =>
         EdoCtaListBloc(locator<EdoCtaUseCases>(), locator<SeleccionPagosStorage>())
           ..add(const EdoCtaListInitialEvent()),
+  ),
+  // El evento de carga NO se dispara aquí: lo manda la propia tirilla al
+  // montarse, ya dentro del Menú Principal, para que los banners se pidan
+  // siempre con la sesión iniciada y con el usuario correcto.
+  BlocProvider<BannerBloc>(
+    create: (context) => BannerBloc(locator<BannerUseCases>()),
+  ),
+  BlocProvider<EdoCtaPagadosBloc>(
+    create: (context) =>
+        EdoCtaPagadosBloc(locator<EdoCtaPagadosUseCases>())
+          ..add(const EdoCtaPagadosInitialEvent()),
   ),
   BlocProvider<CarritoBloc>(
     create: (context) => CarritoBloc(

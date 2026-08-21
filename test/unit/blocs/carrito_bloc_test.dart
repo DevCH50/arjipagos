@@ -266,6 +266,8 @@ void main() {
     /// el anterior.
     Alumno alumnoDosCiclos() => Alumno(
           alumnoId: 1,
+          familiaId: 1,
+          familia: 'Familia Test',
           alumno: 'Test',
           apPaterno: '',
           apMaterno: '',

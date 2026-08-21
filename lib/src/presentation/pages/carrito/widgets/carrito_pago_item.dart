@@ -3,6 +3,8 @@ import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
+import 'package:arjipagos/src/presentation/widgets/ConceptoEscalonado.dart';
+import 'package:arjipagos/src/presentation/widgets/FilaAdaptable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,12 +13,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - Si aceptaPagosDiversos = false: Se puede eliminar libremente.
 /// - Si aceptaPagosDiversos = true: Solo el pago con ID más alto se puede eliminar.
 ///
-/// Se maqueta con `Row` + `Expanded` (mismo patrón que `PagoItem`) en lugar de
-/// `ListTile`: el `trailing` de un `ListTile` recibe un ancho acotado y el
-/// importe junto al botón de quitar lo desbordaban por fracciones de pixel en
-/// pantallas angostas. Aquí el bloque derecho toma su ancho intrínseco y es la
-/// columna de texto la que cede espacio, por lo que el desbordamiento es
-/// imposible en cualquier tamaño de pantalla.
+/// Se maqueta igual que `PagoItem` de Pagos Pendientes, en tres renglones: el
+/// concepto se queda con la línea entera —así cabe en una sola y no se
+/// recorta—, debajo van la fecha y el importe, y al final el chip de estado con
+/// el botón de quitar. El importe usa el tamaño del concepto en negrita, para
+/// que las dos pantallas se lean igual y el renglón se vea congruente.
+///
+/// Nada de `ListTile`: su `trailing` recibe un ancho acotado y el importe junto
+/// al botón de quitar desbordaban por fracciones de pixel en pantallas
+/// angostas.
 class CarritoPagoItem extends StatelessWidget {
   final int alumnoId;
   final EstadoDeCuenta pago;
@@ -34,29 +39,39 @@ class CarritoPagoItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(child: _buildContenido(theme)),
-          const SizedBox(width: 8),
-          _buildTrailing(context, theme),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      child: _buildContenido(context, theme),
     );
   }
 
-  /// Construye la columna con título, fecha de vencimiento y estado.
-  Widget _buildContenido(ThemeData theme) {
+  /// Contenido del pago: tres renglones iguales para todos los items.
+  Widget _buildContenido(BuildContext context, ThemeData theme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(pago.descripcionAbreviada, style: theme.textTheme.bodyLarge),
-        const SizedBox(height: 4),
-        _buildVencimiento(theme),
-        const SizedBox(height: 4),
-        EstadoPagoChip(estadoPago: pago.estadoPago),
+        ConceptoEscalonado(texto: pago.descripcionAbreviada),
+        const SizedBox(height: 6),
+        FilaAdaptable(
+          izquierda: _buildVencimiento(theme),
+          derecha: _buildMonto(theme),
+          textoDerecha: pago.totalFormatted,
+          estiloDerecha: _estiloMonto(theme),
+        ),
+        const SizedBox(height: 6),
+        FilaAdaptable(
+          // El chip es una píldora: en un `Expanded` se estiraría a todo el
+          // ancho, así que se ancla a la izquierda con su tamaño natural.
+          izquierda: Align(
+            alignment: Alignment.centerLeft,
+            child: EstadoPagoChip(estadoPago: pago.estadoPago),
+          ),
+          derecha: _buildBotonQuitar(context, theme),
+          // El botón no es texto: se mide como una cadena vacía para que la
+          // fila nunca lo mande solo a otra línea; su ancho es fijo y pequeño.
+          textoDerecha: '',
+          estiloDerecha: theme.textTheme.bodySmall!,
+        ),
       ],
     );
   }
@@ -65,6 +80,7 @@ class CarritoPagoItem extends StatelessWidget {
   Widget _buildVencimiento(ThemeData theme) {
     final estilo = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
 
     return Row(
@@ -75,39 +91,48 @@ class CarritoPagoItem extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: 4),
-        // Flexible + ellipsis: en fechas largas o con fuente ampliada por
-        // accesibilidad el texto se recorta en vez de desbordar la fila.
-        Flexible(
-          child: Text(
-            '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: estilo,
+        // La fecha se lee completa: si no cabe se encoge, nunca se recorta.
+        // El ajuste es uniforme entre renglones porque todas las fechas del
+        // backend tienen el mismo formato y miden lo mismo.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${AppStrings.edoCtaVence} ${pago.fechaVencimiento}',
+              maxLines: 1,
+              softWrap: false,
+              style: estilo,
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// Construye el importe y el botón de quitar del carrito.
-  Widget _buildTrailing(BuildContext context, ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          pago.totalFormatted,
-          // maxLines + softWrap: false evita que el importe se parta carácter
-          // por carácter; al no estar dentro de un ListTile ya dispone de su
-          // ancho intrínseco completo.
-          maxLines: 1,
-          softWrap: false,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(width: 8),
-        _buildBotonQuitar(context, theme),
-      ],
+  /// Importe del pago.
+  Widget _buildMonto(ThemeData theme) {
+    return Text(
+      pago.totalFormatted,
+      // maxLines + softWrap: false evita que el importe se parta carácter por
+      // carácter; la fila adaptable ya le garantiza su ancho.
+      maxLines: 1,
+      softWrap: false,
+      style: _estiloMonto(theme),
+    );
+  }
+
+  /// Estilo del importe; se comparte con la medición de la fila adaptable.
+  ///
+  /// Mismo tamaño que el concepto y en negrita: destaca por peso, no por ser
+  /// más grande, igual que en Pagos Pendientes.
+  TextStyle _estiloMonto(ThemeData theme) {
+    return theme.textTheme.bodyLarge!.copyWith(
+      fontWeight: FontWeight.bold,
+      color: theme.colorScheme.primary,
+      // Cifras de ancho fijo: los importes alinean en columna en vez de bailar
+      // según los dígitos que le toquen a cada renglón.
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
 
@@ -126,11 +151,14 @@ class CarritoPagoItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       preferBelow: false,
       child: IconButton(
+        // Candado en vez de un botón de quitar apagado: un control que no
+        // responde parece un fallo, un candado explica que ese pago sostiene
+        // a los anteriores del ciclo.
         icon: Icon(
-          Icons.remove_circle_outline,
+          puedeEliminar ? Icons.remove_circle_outline : Icons.lock_outline,
           color: puedeEliminar
               ? theme.colorScheme.error
-              : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.32),
         ),
         onPressed: puedeEliminar ? () => _quitarPago(context) : null,
       ),

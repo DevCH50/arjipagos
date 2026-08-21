@@ -132,6 +132,8 @@ class TestEstadoDeCuenta {
 class TestAlumno {
   static Alumno get activo => Alumno(
         alumnoId: 1,
+        familiaId: 1,
+        familia: 'Familia López García',
         alumno: 'LOPEZ GARCIA MARIA',
         apPaterno: 'López',
         apMaterno: 'García',
@@ -149,6 +151,8 @@ class TestAlumno {
 
   static Alumno get baja => Alumno(
         alumnoId: 2,
+        familiaId: 1,
+        familia: 'Familia López García',
         alumno: 'SANCHEZ MARTINEZ PEDRO',
         apPaterno: 'Sánchez',
         apMaterno: 'Martínez',
@@ -166,6 +170,8 @@ class TestAlumno {
 
   static Map<String, dynamic> get activoJson => {
         'alumno_id': 1,
+        'familia_id': 1,
+        'familia': 'Familia López García',
         'alumno': 'LOPEZ GARCIA MARIA',
         'ap_paterno': 'López',
         'ap_materno': 'García',
@@ -216,6 +222,8 @@ class TestAlumno {
 
   static Map<String, dynamic> get bajaJson => {
         'alumno_id': 2,
+        'familia_id': 1,
+        'familia': 'Familia López García',
         'alumno': 'SANCHEZ MARTINEZ PEDRO',
         'ap_paterno': 'Sánchez',
         'ap_materno': 'Martínez',
@@ -234,6 +242,90 @@ class TestAlumno {
   static List<Alumno> get lista => [activo, baja];
 
   static List<Map<String, dynamic>> get listaJson => [activoJson, bajaJson];
+}
+
+/// Datos de prueba para los pagos ya realizados.
+///
+/// Reproducen la respuesta real de `estado-de-cuenta-pagados`, que difiere de la
+/// de pagos pendientes en cuatro cosas: `estadoPago` llega como `"Pagado"`, se
+/// añaden los datos del ticket, NO vienen `factura_pdf` / `factura_xml`, y
+/// `fecha_vencimiento` puede llegar en `null`.
+class TestPagoRealizado {
+  /// Pago liquidado con ticket disponible.
+  static Map<String, dynamic> get conTicketJson => {
+        'id': 3403,
+        'ciclo_id': 12,
+        'nivel_id': 2,
+        'descripcion_corta': 'COLEGIATURA PRIMARIA Mar 26',
+        'total': 9770,
+        'total_formatted': '9,770.00',
+        'fecha_vencimiento': '10-03-2026',
+        'acepta_pagos_diversos': true,
+        'esta_disponible_en_internet': true,
+        'estadoPago': 'Pagado',
+        'num_pago': 7,
+        'num_pago_activo': true,
+        'fecha_de_pago': '17-08-2026 10:01:01',
+        'ticket_uuid': 'a7064b3b-a517-4636-95da-c5b2cdcd19ff',
+        'ticket_folio': 'T7672',
+        'ticket_url':
+            'https://arjipagos.moriah.mx/api/v1/tickets/a7064b3b-a517-4636-95da-c5b2cdcd19ff/print',
+        'deuda_anterior': true,
+      };
+
+  /// Caso real observado en producción: reinscripción sin fecha de vencimiento.
+  static Map<String, dynamic> get sinVencimientoJson => {
+        'id': 15173,
+        'ciclo_id': 14,
+        'nivel_id': 4,
+        'descripcion_corta': 'REINSCRIPCION SECUNDARIA  26 / 27  ',
+        'total': 14250,
+        'total_formatted': '14,250.00',
+        'fecha_vencimiento': null,
+        'acepta_pagos_diversos': false,
+        'esta_disponible_en_internet': true,
+        'estadoPago': 'Pagado',
+        'num_pago': 1,
+        'num_pago_activo': true,
+        'fecha_de_pago': '20-08-2026 14:24:32',
+        'ticket_uuid': '261f8b68-78d5-4185-b065-38a898487c44',
+        'ticket_folio': 'T7719',
+        'ticket_url':
+            'https://arjipagos.moriah.mx/api/v1/tickets/261f8b68-78d5-4185-b065-38a898487c44/print',
+        'deuda_anterior': false,
+      };
+
+  /// Alumno tal como llega en esta respuesta: con familia y con `grupo` vacío.
+  static Map<String, dynamic> get alumnoJson => {
+        'alumno_id': 97,
+        'alumno': 'DAMASCO CANELLA NOAH',
+        'ap_paterno': 'DAMASCO',
+        'ap_materno': 'CANELLA',
+        'nombre': 'NOAH',
+        'beca_sep': '0',
+        'beca_arji': '0',
+        'beca_bach': '0',
+        'beca_sp': '0',
+        'es_baja': false,
+        'grupo_id': 38,
+        'familia_id': 1384,
+        'familia': 'DAMASCO CANELLA',
+        'grupo': '',
+        'url_photo': '/storage/profile/97.jpg',
+        'estado_de_cuenta': [conTicketJson, sinVencimientoJson],
+      };
+
+  /// Respuesta completa del endpoint de pagos realizados.
+  static Map<String, dynamic> get respuestaJson => {
+        'success': true,
+        'message': 'OK',
+        'ciclo_predeterminado_id': 14,
+        'pagados_desde': '01-07-2026',
+        'pagados_hasta': '30-06-2027',
+        'familia_id': 1384,
+        'familia': 'DAMASCO CANELLA',
+        'alumnos': [alumnoJson],
+      };
 }
 
 /// Datos de prueba para AuthResponse.
@@ -348,4 +440,50 @@ class TestNotificacion {
         fecha: DateTime(2024, 1, 16, 11, 0),
         isRead: false,
       );
+}
+
+/// Fixtures de los banners informativos.
+///
+/// El JSON es el que devuelve `/api/v1/banners` en producción, con el cuerpo
+/// en Markdown y los saltos de línea `\r\n` tal cual los manda el backend.
+class TestBanner {
+  /// Banner con cuerpo Markdown: negritas, subtítulo y lista.
+  static Map<String, dynamic> get anualidadJson => {
+        'id': 1,
+        'titulo': 'Se acaba el tiempo para el descuento especial por anualidad',
+        'imagen_url':
+            'https://arjipagos.moriah.mx/storage/banners/anualidad-l4xwyp.jpg',
+        'fecha': '20-08-2026',
+        'cuerpo': 'El **25 de septiembre** es la fecha límite para pagar la '
+            'anualidad completa y\r\naprovechar el descuento especial del ciclo.'
+            '\r\n\r\n### Qué necesita saber\r\n\r\n- El descuento se aplica '
+            '**solo** sobre el pago de la anualidad.\r\n- Después de esa fecha, '
+            'la colegiatura vuelve a cobrarse mes por mes.',
+        'cuerpo_formato': 'markdown',
+      };
+
+  /// Segundo banner, para ejercitar listas de más de un elemento.
+  static Map<String, dynamic> get reinscripcionesJson => {
+        'id': 2,
+        'titulo': 'Reinscripciones del próximo ciclo: ya están disponibles',
+        'imagen_url':
+            'https://arjipagos.moriah.mx/storage/banners/reinscripciones-4cmpno.jpg',
+        'fecha': '17-08-2026',
+        'cuerpo': 'Ya puede realizar la **reinscripción** de sus hijos.',
+        'cuerpo_formato': 'markdown',
+      };
+
+  /// Respuesta completa del endpoint.
+  static Map<String, dynamic> get respuestaJson => {
+        'success': true,
+        'message': 'OK',
+        'banners': [anualidadJson, reinscripcionesJson],
+      };
+
+  /// Respuesta sin banners: la tirilla no debe pintarse.
+  static Map<String, dynamic> get respuestaVaciaJson => {
+        'success': true,
+        'message': 'OK',
+        'banners': <Map<String, dynamic>>[],
+      };
 }

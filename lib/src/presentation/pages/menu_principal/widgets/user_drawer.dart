@@ -163,7 +163,7 @@ class UserDrawer extends StatelessWidget {
                         onTap: () {
                           // Cerrar el drawer antes de navegar
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, 'cambiar_contrasena');
+                          Navigator.restorablePushNamed(context, 'cambiar_contrasena');
                         },
                       ),
                       ListTile(
@@ -179,7 +179,7 @@ class UserDrawer extends StatelessWidget {
                         onTap: () {
                           // Cerrar el drawer antes de navegar
                           Navigator.pop(context);
-                          Navigator.pushNamed(context, 'aviso_de_privacidad');
+                          Navigator.restorablePushNamed(context, 'aviso_de_privacidad');
                         },
                       ),
                       ListTile(

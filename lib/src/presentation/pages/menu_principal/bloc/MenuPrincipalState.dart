@@ -71,10 +71,16 @@ class MenuPrincipalState extends Equatable {
   /// Items predeterminados del menú.
   static List<MenuItem> get defaultMenuItems => [
     const MenuItem(
-      id: 'pagos',
-      titulo: AppStrings.menuPagos,
+      id: 'pagos_pendientes',
+      titulo: AppStrings.menuPagosPendientes,
       icono: Icons.payment,
       ruta: 'edo_cta',
+    ),
+    const MenuItem(
+      id: 'pagos_realizados',
+      titulo: AppStrings.menuPagosRealizados,
+      icono: Icons.check_circle_outline,
+      ruta: 'edo_cta_pagados',
     ),
     const MenuItem(
       id: 'facturas',

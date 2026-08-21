@@ -241,6 +241,8 @@ void main() {
     test('totalSeleccionado solo suma pagos seleccionados en su propio ciclo', () {
       final alumno = Alumno(
         alumnoId: 1,
+        familiaId: 1,
+        familia: 'Familia Test',
         alumno: 'Test',
         apPaterno: '',
         apMaterno: '',

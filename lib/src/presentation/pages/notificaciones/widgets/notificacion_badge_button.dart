@@ -129,6 +129,10 @@ class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
   /// Al volver, refresca únicamente el contador del badge.
   void _navegarANotificaciones(BuildContext context) {
     context.read<NotificacionBloc>().add(const ResetNuevaNotificacionEvent());
+    // Ruta NO restaurable a propósito: aquí se espera el regreso para
+    // refrescar el contador, y `restorablePushNamed` no devuelve un Future.
+    // Solo se pierde esta pantalla si el sistema recicla el proceso estando
+    // en ella; el resto de la pila sí se restaura.
     Navigator.pushNamed(context, 'notificaciones').then((_) {
       if (context.mounted) {
         context.read<NotificacionBloc>().add(const ActualizarContadorEvent());

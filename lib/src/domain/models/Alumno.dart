@@ -2,6 +2,8 @@ import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 
 class Alumno {
   int alumnoId;
+  int familiaId;
+  String familia;
   String alumno;
   String apPaterno;
   String apMaterno;
@@ -18,6 +20,8 @@ class Alumno {
 
   Alumno({
     required this.alumnoId,
+    required this.familiaId,
+    required this.familia,
     required this.alumno,
     required this.apPaterno,
     required this.apMaterno,
@@ -35,6 +39,8 @@ class Alumno {
 
   factory Alumno.fromJson(Map<String, dynamic> json) => Alumno(
     alumnoId: json['alumno_id'] ?? 0,
+    familiaId: json['familia_id'] ?? 0,
+    familia: json['familia']?.toString() ?? '',
     alumno: json['alumno']?.toString() ?? '',
     apPaterno: json['ap_paterno']?.toString() ?? '',
     apMaterno: json['ap_materno']?.toString() ?? '',
@@ -56,6 +62,8 @@ class Alumno {
 
   Map<String, dynamic> toJson() => {
     'alumno_id': alumnoId,
+    'familia_id': familiaId,
+    'familia': familia,
     'alumno': alumno,
     'ap_paterno': apPaterno,
     'ap_materno': apMaterno,

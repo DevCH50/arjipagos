@@ -309,6 +309,17 @@ void main() {
             facturaXml: '',
           );
 
+      test(
+          'caso real — colapsa los espacios dobles y sobrantes del backend',
+          () {
+        // Tal cual llega en la respuesta de pagos realizados: dos espacios
+        // antes del ciclo y dos al final. Sin limpiarlos, el texto se come
+        // ancho de más y se parte en dos líneas en la lista.
+        final estado = conDescripcion('REINSCRIPCION SECUNDARIA  26 / 27  ');
+
+        expect(estado.descripcionAbreviada, equals('REINS SEC 26 / 27'));
+      });
+
       test('Colegiatura se abrevia a COL', () {
         // Arrange
         final estado = conDescripcion('Colegiatura Enero 2024');

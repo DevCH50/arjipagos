@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.23+32
+version: 1.0.24+33
 
 environment:
   sdk: ^3.11.0
@@ -73,6 +73,15 @@ dependencies:
 
   # Leer versión y build number de la app en tiempo de ejecución
   package_info_plus: ^10.1.0
+  # Abrir el PDF del ticket con el visor nativo del dispositivo.
+  # En Android lanza un ACTION_VIEW (la hoja de share_plus es ACTION_SEND y no
+  # garantiza que haya un lector); en iOS usa el preview de UIDocumentInteraction.
+  open_filex: ^4.7.0
+  # Convierte a HTML el cuerpo Markdown de los banners, para que lo pinte el
+  # mismo flutter_widget_from_html_core que ya usa Notificaciones. Es Dart puro,
+  # sin código nativo: no toca los builds de Android ni de iOS.
+  markdown: ^7.3.1
+  pdfx: ^2.11.0
 
 dev_dependencies:
   flutter_test:

@@ -81,13 +81,25 @@ class TotalSeleccionadoBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          totalFormateado,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: totalSeleccionado > 0
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurfaceVariant,
+        // El total se encoge antes que partirse. Sin esto, con la fuente del
+        // sistema en grande el importe se rompía a media cifra —"$23,136.0" y
+        // en el renglón de abajo un "0" suelto—, que es la peor forma posible
+        // de enseñar una cantidad de dinero.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            totalFormateado,
+            maxLines: 1,
+            softWrap: false,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: totalSeleccionado > 0
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+              // Mismas cifras de ancho fijo que los importes de la lista.
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ),
       ],
@@ -112,6 +124,12 @@ class TotalSeleccionadoBar extends StatelessWidget {
   }
 
   /// Navega al carrito y recarga selección al regresar.
+  ///
+  /// Ruta NO restaurable a propósito: aquí se espera el regreso para recargar
+  /// la selección, y `restorablePushNamed` no devuelve un Future. Encaja con
+  /// que el WebView de pago tampoco se restaure: si el sistema recicla el
+  /// proceso durante el pago, el usuario vuelve a Pagos Pendientes con su
+  /// selección intacta —vive en `SeleccionPagosStorage`, no en la pila—.
   Future<void> _navegarAlCarrito(BuildContext context) async {
     await Navigator.pushNamed(context, 'carrito');
     if (context.mounted) {

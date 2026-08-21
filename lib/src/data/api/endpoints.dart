@@ -30,6 +30,17 @@ abstract class Endpoints {
   static const String estadoCuentaSinPagar =
       '/api/v1/alumno/estado-de-cuenta-sin-pagar/';
 
+  /// POST - Obtener estados de cuenta ya pagados
+  static const String estadoCuentaPagados =
+      '/api/v1/alumno/estado-de-cuenta-pagados/';
+
+  // ============================================================================
+  // BANNERS
+  // ============================================================================
+
+  /// POST - Obtener los banners informativos del usuario
+  static const String banners = '/api/v1/banners';
+
   // ============================================================================
   // USUARIOS
   // ============================================================================

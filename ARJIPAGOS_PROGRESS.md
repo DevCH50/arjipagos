@@ -15,9 +15,394 @@ _(ninguno)_
 
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
+- **En la Mac:** `pod install` para que entren los pods de `pdfx` y `open_filex` (visor de
+  ticket dentro de la app). Sin eso el ticket caerá al panel de respaldo en iOS.
+- **Vigilar `pdfx`:** aplica el Kotlin Gradle Plugin y Flutter avisa que versiones futuras
+  fallarán al compilar con plugins que lo hagan. Hoy compila bien; seguir su changelog.
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **El ticket se ve DENTRO de la app + restauración de estado (2026-08-21):**
+
+  Cierra de verdad el reporte "tras abrir un ticket, el atrás cierra o minimiza la app", que
+  la sesión anterior daba por corregido sin estarlo.
+
+  **Primero: la corrección del 2026-08-20 nunca se escribió.** `MainActivity.kt` seguía
+  pelada (`class MainActivity : FlutterActivity()`), sin la guarda `isTaskRoot` que el propio
+  ARJIPAGOS_PROGRESS.md describía como aplicada y verificada con 678 tests y APK instalado.
+  Lección: verificar el archivo, no el registro. Hoy la guarda **sí** está escrita y comentada.
+
+  **Qué se reprodujo en el dispositivo** (OPPO CPH2639, Android 16, navegación por gestos,
+  conducido por `adb` con `dumpsys activity activities` en cada paso):
+
+  | Camino probado | Resultado |
+  | --- | --- |
+  | Abrir ticket → *Abrir con* → cancelar → volver por icono / recientes → atrás | correcto |
+  | Abrir con 3 visores distintos (All Reader, Internet Visor de PDF, Lector de PDF) | los tres abren **tarea propia**, no se apilan en la nuestra |
+  | Diálogo *Abrir con* dejado vivo + relanzar con `MAIN/LAUNCHER + RESET_TASK_IF_NEEDED` | Android trae la tarea al frente, no crea segunda instancia |
+  | Proceso reciclado en segundo plano (`am kill`) + volver | **FALLO**: la app arrancaba en Menú Principal y el siguiente atrás salía de la app |
+
+  El precondicionante del *launcher relaunch bug* **sí es real y quedó probado**: el diálogo
+  *Abrir con* (`ResolverActivity`) se apila DENTRO de nuestra tarea (`sz=1` → `sz=2`), porque
+  `open_filex` y `share_plus` lanzan el intent sin `FLAG_ACTIVITY_NEW_TASK`. Por eso la guarda
+  se deja puesta, aunque en Android 16 no se logró que llegara a crear la segunda instancia.
+
+  **La causa del síntoma es el reciclado de proceso**, y la raíz de fondo era el diseño del
+  flujo: el ticket se entregaba a una app ajena —visores con anuncios, que además presionan la
+  memoria— así que cada regreso quedaba a merced de cómo Android tratara nuestra tarea.
+
+  **Solución 1 — visor de PDF propio (`pdfx` 2.11.0, autorizado por el usuario).** El ticket
+  se pinta dentro de la app en las dos plataformas (Android usa el renderizador nativo, iOS
+  CoreGraphics/PDFKit). Pantalla nueva: AppBar con el folio, zoom con pinza, indicador
+  "Página N de M" cuando hay varias, y las acciones apiladas abajo —*Compartir* como principal
+  y *Abrir en otra app* como salida secundaria—. Salir de la app pasó a ser una elección del
+  usuario, no el camino por defecto.
+
+  - **La hoja del PDF se deja en blanco también en tema oscuro**: es un documento fiscal y
+    alterarle los colores lo desfigura. Lo que se adapta al tema es el fondo sobre el que
+    descansa, así se lee como una hoja de papel sobre un escritorio en ambos modos.
+  - **Respaldo probado en vivo:** si el motor nativo no puede abrir el documento,
+    `onDocumentError` muestra `TicketListoWidget` con las dos acciones. Se vio funcionar sin
+    querer —con el APK viejo, el hot reload no puede añadir plugins nativos y el canal
+    respondía `PlatformException(channel-error)`—, que es exactamente para lo que existe.
+  - **Verificado con aapt2:** `pdfx` **no añade ni un permiso**. El APK release conserva los
+    mismos siete de siempre. Tamaño: 93.6 → 95.4 MB.
+  - Se retiró el traspaso automático al terminar la descarga y con él `yaCompartido` /
+    `TicketCompartidoEvent`, que quedaban sin uso.
+
+  **Solución 2 — restauración de estado.** `MaterialApp(restorationScopeId: 'arjipagos')` y
+  rutas restaurables en splash, login, menú, drawer, notificaciones y ticket. Si Android
+  recicla el proceso, la app vuelve **a la pantalla donde estaba** y el atrás funciona.
+  Comprobado en dispositivo: con el ticket abierto, `am kill` + volver por el icono → reaparece
+  el ticket (el PDF se vuelve a descargar) y el gesto atrás lleva a Pagos Realizados.
+
+  Los argumentos de la ruta del ticket viajan como **mapa de strings** (`TicketArgs.aMapa()` /
+  `desdeRuta`): el sistema operativo solo sabe guardar tipos primitivos, una instancia de clase
+  no sobreviviría al reciclado. Hay test que blinda la ida y vuelta.
+
+  **Tres rutas se dejaron NO restaurables a propósito**, cada una comentada en el código:
+
+  | Ruta | Motivo |
+  | --- | --- |
+  | `pago_webview` | reabrir sola una sesión de pago con URL, parámetros y token viejos es peligroso; el usuario vuelve al carrito y decide |
+  | `carrito` | espera el regreso para recargar la selección, y `restorablePushNamed` no devuelve `Future`. La selección vive en `SeleccionPagosStorage`, no en la pila |
+  | `notificaciones` (desde el badge) | igual: espera el regreso para refrescar el contador |
+
+  ⚠️ **Efecto secundario a tener presente:** al restaurar, el splash no vuelve a correr, así que
+  la verificación de sesión se salta. Con un token vencido las pantallas restauradas mostrarán
+  error de red en vez de mandar al login. Refuerza la tarea pendiente de "manejo automático de
+  token expirado".
+
+  ⚠️ **`pdfx` aplica el Kotlin Gradle Plugin** y Flutter ya avisa que versiones futuras fallarán
+  al compilar con plugins que lo hagan. Hoy compila sin problema; hay que seguir el changelog
+  del paquete.
+
+  **Pendiente en la Mac:** `pod install` para que entren los pods de `pdfx` y `open_filex`.
+
+- **Pagos Pendientes y Carrito: renglón legible y tipografía congruente (2026-08-21):**
+
+  Reporte del usuario: en Pagos Pendientes el concepto se cortaba y la fecha no se veía
+  completa. Se rediseñó el renglón de pago **con el usuario mirando el dispositivo**, y cada
+  intento intermedio dejó una lección que quedó fijada en tests:
+
+  1. **Encoger el texto por item no sirve.** El primer intento usaba `FittedBox` en el
+     concepto: cada renglón se encogía por separado, así que el pago con el texto más largo
+     salía con letra más chica y la lista se veía despareja —el usuario lo detectó de
+     inmediato—. Ahora el concepto **conserva siempre el tamaño del tema** y, si no cabe, pasa
+     a dos líneas.
+  2. **El importe usaba `titleMedium`**, un escalón más grande que el concepto, y hacía que
+     este pareciera secundario. A propuesta del usuario ahora usa el mismo `bodyLarge` **en
+     negrita**: destaca por peso y color, no por tamaño.
+  3. **El concepto necesita el renglón entero.** Con el importe al lado se partía en dos
+     líneas. La estructura final es de tres renglones iguales para todos los items:
+     concepto completo · fecha + importe · chip de estado + número de pago.
+  4. **El chip se estiraba a todo el ancho** dentro del `Expanded` (el usuario: "se ve
+     horrible"). Va anclado con `Align` y conserva su tamaño natural.
+
+  **`FilaAdaptable`** (`lib/src/presentation/widgets/FilaAdaptable.dart`) es la pieza nueva que
+  comparten las dos pantallas: mide el texto de la derecha con su estilo **y con la escala de
+  fuente del sistema**; si necesita más de la mitad del ancho, lo baja a su propia línea. Sin
+  ninguna medida escrita a mano —el ancho lo da `LayoutBuilder`, el tamaño el tema y la escala
+  el `MediaQuery`—. Surgió de un desborde real que encontró el test nuevo: 25 px a fuente x2.
+
+  **La fecha ya no se recorta**: se encoge solo si hace falta, y ahí el ajuste sí es uniforme
+  porque todas las fechas del backend miden lo mismo.
+
+  El mismo tratamiento se aplicó al **carrito** (`CarritoPagoItem`), donde el botón de quitar
+  ocupa el lugar del número de pago. Las dos pantallas se leen igual.
+
+  **Verificación:** `flutter analyze` sin issues · `flutter test` **713 en verde** (antes 678)
+  · APK debug instalado y revisado en el dispositivo en tema claro y oscuro. Tests nuevos:
+  `pago_item_test.dart` (11), `ticket_acciones_bar_test.dart` (5), `ticket_listo_widget_test.dart`
+  (5), `ticket_loading_widget_test.dart` (3), `ticket_args_test.dart` (6) y 3 casos añadidos a
+  `carrito_pago_item_test.dart`. Cubren anchos de 320/360/375 px, fuente del sistema al doble y
+  los dos temas.
+
+  **Nota sobre la barra de overflow que vio el usuario:** era real, de la primera versión de
+  `TicketAccionesBar` con los dos botones en fila (2 px en 360 dp). Corregida apilándolos, con
+  test que fija el caso.
+
+- **El botón atrás cerraba la app tras abrir un ticket (2026-08-20):**
+
+  ⚠️ **Esta entrada quedó desmentida el 2026-08-21:** la guarda que describe **nunca se
+  escribió** en `MainActivity.kt`, así que ni el arreglo ni su verificación ocurrieron como
+  aquí se cuenta. La causa real del síntoma y la corrección de verdad están en la entrada del
+  2026-08-21. Se conserva el diagnóstico porque el mecanismo que describe sí es correcto.
+
+  Reporte del usuario: en Pagos Realizados, tras abrir un ticket y volver a la app, la flecha
+  atrás **cerraba o minimizaba** la aplicación en vez de regresar a la lista.
+
+  **Diagnóstico en el dispositivo real** (OPPO CPH2639, Android 16), con `dumpsys activity
+  activities`: al abrir el ticket, la tarea de la app pasa de **`sz=1` a `sz=2`**. Es decir,
+  la actividad ajena —el diálogo *Abrir con*, o el visor de PDF, según la app que elija el
+  usuario— **se apila DENTRO de nuestra tarea**, porque `open_filex` lanza el intent solo con
+  `FLAG_ACTIVITY_SINGLE_TOP`, sin `FLAG_ACTIVITY_NEW_TASK`.
+
+  A partir de ahí, el mecanismo es el *launcher relaunch bug* clásico de Android:
+
+  1. La actividad ajena queda encima de `MainActivity` en la misma tarea.
+  2. El usuario vuelve por el icono del launcher → Android entrega `MAIN/LAUNCHER` con
+     `FLAG_ACTIVITY_RESET_TASK_IF_NEEDED`.
+  3. Como `MainActivity` ya **no está arriba**, el `launchMode="singleTop"` del manifest **no
+     aplica** y el sistema crea una **segunda instancia** de la actividad.
+  4. Instancia nueva = **motor de Flutter nuevo** = pila de navegación con una sola ruta. El
+     atrás no tiene a dónde volver y termina la actividad.
+
+  **Corrección** en `MainActivity.kt`, que estaba pelada (solo `class MainActivity :
+  FlutterActivity()`): la guarda estándar de Android — si no somos la raíz de la tarea y nos
+  lanzan desde el launcher, la instancia nueva se aparta con `finish()` y deja viva la que ya
+  tiene el estado del usuario. `super.onCreate` se llama siempre primero, porque omitirlo
+  lanza `SuperNotCalledException`.
+
+  **Protege toda la app, no solo el ticket:** cualquier salida a otra aplicación queda cubierta
+  —el compartir de Facturas y el WebView de pago tienen la misma exposición—.
+
+  **NO se tocó `android:taskAffinity=""`** del manifest: es el valor por defecto de la
+  plantilla de Flutter y mitiga el ataque de secuestro de tareas *StrandHogg*.
+
+  **Verificación:** `flutter analyze` sin issues, **678 tests en verde**, APK compilado e
+  instalado en el dispositivo, navegación normal comprobada (Menú → Pagos Realizados → ticket
+  → atrás → atrás → Menú).
+
+  ⚠️ **El fallo exacto NO se logró reproducir.** En las dos pruebas el visor elegido
+  (*Internet Visor de PDF*, WPS) abrió **tarea propia (#41)**, escenario en el que el atrás
+  siempre funcionó bien. La condición que dispara el bug —actividad ajena apilada en nuestra
+  tarea— sí quedó **probada** con el diálogo *Abrir con*. Falta confirmar con la app de visor
+  concreta que usó el usuario.
+
+- **Carrusel de Avisos en el Menú Principal (2026-08-20):**
+
+  Contenido informativo tipo nota periodística bajo la lista de pagos y facturas. Cada tarjeta
+  abre una hoja inferior con la nota completa.
+
+  **Arquitectura.** Vertical slice aislado: `BannerService` → `BannerRepository`(+`Impl`) →
+  `GetBannersUseCase` → `BannerUseCases` → `BannerBloc`. Consume `POST /api/v1/banners` con
+  `user_id` en el body y Bearer token, la misma convención que los estados de cuenta. El
+  `BannerBloc` se registra en `blocProviders` **sin evento inicial**: lo dispara la propia
+  tirilla al montarse, ya dentro del menú, para que los avisos se pidan siempre con la sesión
+  iniciada y con el usuario correcto tras un cambio de cuenta.
+
+  **Markdown sin un segundo renderizador.** El cuerpo llega en Markdown y `cuerpo_formato`
+  anticipa que puede cambiar. En vez de instalar un renderizador de Markdown aparte, se
+  instaló **`markdown` 7.3.1** (Dart puro, sin código nativo, no toca los builds) para
+  convertir a HTML y pintar con el `flutter_widget_from_html_core` que la app **ya usaba** en
+  Notificaciones: un solo renderizador, un solo estilo, y `cuerpo_formato: "html"` funciona
+  sin tocar nada. La conversión vive en `lib/src/core/utils/contenido_a_html.dart`.
+
+  **Trampa cubierta — los `\r\n`.** El backend manda los saltos como `\r\n` y el parser de
+  Markdown espera `\n`; con el `\r` de sobra **deja de reconocer listas y encabezados** y la
+  nota se vería como un párrafo con guiones y almohadillas sueltas. Se normaliza antes de
+  convertir y hay test que lo blinda con el cuerpo real del endpoint.
+
+  **Rediseño con la skill `mobile-design`.** La primera versión (tarjetas en `ListView` libre
+  + `Dialog` centrado) se rehízo siguiendo HIG y Material 3:
+
+  | Punto | Antes | Ahora | Motivo |
+  | --- | --- | --- | --- |
+  | Modal | `Dialog` centrado | **Hoja inferior** con asa de arrastre | Convención en ambas plataformas para contenido largo; ya es lo que hace Notificaciones |
+  | Carrusel | scroll libre | **`PageView` con enganche y asomo** | Nunca queda a medio camino; el asomo señala que hay más |
+  | Encuadre | alto fijo en píxeles | **relación de aspecto 2:1** (16:9 en la hoja) | El recorte es idéntico en todo dispositivo, no depende del alto de pantalla |
+  | Memoria | imagen completa en RAM | **`memCacheWidth`** al ancho real × DPR | Un JPEG de 1200 px pintado a 322 se decodificaba entero |
+  | Carga | nada | **esqueleto** que reserva el espacio | Evita el salto de layout y el "se rompió" |
+  | Contexto | tirilla suelta | **encabezado "Avisos" + puntos** | Un carrusel sin título en un menú de pagos desconcierta |
+  | A11y | ninguna | `Semantics` con etiqueta + `HapticFeedback` | TalkBack/VoiceOver solo anunciaban "imagen" |
+
+  **Dos riesgos de plataforma que motivaron el rediseño** (los levantó el usuario al verlo en
+  el dispositivo):
+
+  1. **`SafeArea` no bastaba.** Devuelve **cero** si un widget padre ya consumió el padding, y
+     el carrusel habría quedado bajo el *home indicator* de iOS o la barra de gestos de
+     Android. Se usa `MediaQuery.viewPaddingOf`, el inset físico real — la misma lección que
+     ya estaba aprendida en el sheet de Notificaciones.
+  2. **Choque con el gesto *atrás* de Android.** Un carrusel horizontal a sangre, pegado a los
+     bordes, se arrastra hacia atrás en vez de pasar de tarjeta en navegación por gestos. Las
+     tarjetas llevan 16 dp de margen lateral para librar esa banda.
+
+  **La X del modal se quitó por decisión del usuario:** con el asa de arrastre presente, un
+  botón de cerrar encima compite con un gesto que la gente ya conoce. La hoja se cierra
+  arrastrando, con el botón atrás o tocando fuera.
+
+  **Verificación:** `flutter analyze` sin issues, **678 tests en verde** (antes 639) y APK
+  compilado. Se añadieron `banner_test.dart` (12), `banner_service_test.dart` (9),
+  `banner_bloc_test.dart` (8) y `contenido_a_html_test.dart` (10). El auditor de la skill
+  `mobile-design` no reporta **ni un hallazgo** sobre los archivos del carrusel.
+
+  **Pendiente de validar en dispositivo:** render en Android e iOS, temas claro y oscuro, y
+  que el endpoint responda con la forma acordada (POST con `user_id` en el body).
+
+- **Pagos Realizados: el concepto se partía en dos líneas y la fecha se recortaba (2026-08-20):**
+
+  Reporte del usuario al ver la pantalla en el dispositivo. Eran **tres causas sumadas**, no
+  una:
+
+  1. **El layout partía el item en dos columnas.** El botón *Ver ticket* competía por el
+     ancho horizontal y dejaba a la columna izquierda tan poco espacio que el concepto se
+     iba a dos líneas y la fecha se cortaba con puntos suspensivos. Ahora el contenido se
+     apila en **filas de ancho completo**: concepto + monto arriba, fecha + `Pago #N`,
+     folio, y por último el chip con el botón del ticket. El concepto se lleva todo el ancho
+     sobrante, que es lo que le permite caber en una línea.
+  2. **La fecha traía la hora.** El backend manda `fecha_de_pago` como `'17-08-2026
+     10:01:01'`; ese texto no cabía nunca. Nuevo getter `fechaDePagoCorta` que se queda con
+     la fecha. El dato completo sigue en `fechaDePago` y en el ticket.
+  3. **La descripción llegaba con espacios dobles y sobrantes:**
+     `'REINSCRIPCION SECUNDARIA  26 / 27  '`. Esos espacios se comían ancho real.
+     `descripcionAbreviada` ahora los colapsa. Como el getter lo comparten **las tres
+     pantallas** (pendientes, carrito y realizados), la limpieza las mejora a todas; ningún
+     test existente cambió de expectativa porque todos usaban entradas de un solo espacio.
+
+  Se dejó `maxLines: 2` en el concepto como red de seguridad para pantallas muy angostas o
+  con el tamaño de fuente del sistema aumentado.
+
+  **Verificación:** `flutter analyze` sin issues y **639 tests en verde** (antes 635). Se
+  añadieron 3 casos de `fechaDePagoCorta` y uno de `descripcionAbreviada` con la cadena real
+  del backend. **Falta confirmarlo a ojo en el dispositivo.**
+
+- **`open_filex`: el ticket ahora sí se abre en Android (2026-08-20):**
+
+  Con solo `share_plus` el ticket quedaba a medias en Android. Su hoja es un `ACTION_SEND`:
+  lista apps que **reciben** el archivo (Drive, Gmail, WhatsApp), no necesariamente una que
+  lo **abra**. Un usuario sin lector de PDF registrado para recibir tocaba *Ver ticket* y no
+  podía verlo. En iOS no se notaba porque la hoja trae previsualización, *Marcar* y *Copiar
+  a Libros*.
+
+  Se instaló **`open_filex` 4.7.0** (autorizado por el usuario): lanza un `ACTION_VIEW` en
+  Android y el preview de `UIDocumentInteractionController` en iOS. El botón principal pasó
+  a ser *Abrir ticket* y *Compartir* quedó como acción secundaria; **si no hay ninguna app
+  capaz de abrir el PDF, se cae solo a la hoja de compartir**, así que nunca se llega a un
+  callejón sin salida.
+
+  **Trampa evitada — permisos de galería en una app de pagos.** El manifest de `open_filex`
+  declara `READ_EXTERNAL_STORAGE`, `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO` y
+  `READ_MEDIA_AUDIO`, y el merger de Android **los suma a los de la app**: Arjipagos habría
+  aparecido en Play Store pidiendo acceso a fotos y video. No hacen ninguna falta: el ticket
+  se abre desde la caché interna (`getTemporaryDirectory()`), ruta para la que el plugin ni
+  siquiera evalúa permisos (`pathRequiresPermission()` devuelve false dentro de `dataDir`).
+  Se neutralizaron con `tools:node="remove"` en `AndroidManifest.xml`.
+
+  **Verificado con aapt2** sobre el APK compilado: los permisos son exactamente los mismos
+  que antes de instalar el plugin —INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS,
+  RECEIVE_BOOT_COMPLETED, WAKE_LOCK, VIBRATE, C2DM— sin una sola entrada de media. Los dos
+  `FileProvider` (el de `open_filex` y el de `share_plus`) conviven con authorities
+  distintas, sin colisión.
+
+  **Pendiente en la Mac:** correr `pod install` para que el pod de `open_filex` entre al
+  proyecto iOS. Los blindajes del Podfile se reaplican solos, no hay que tocar nada.
+
+- **Dos fallos de plataforma corregidos: `localhost` y el crash de iPad (2026-08-20):**
+
+  **1. `ticket_url` con `localhost` era inalcanzable en casi todo el parque.** El backend de
+  desarrollo firma sus URLs absolutas con `http://localhost:8000`, un host que solo resuelve
+  dentro de la PC que corre el servidor. Desde el emulador de Android hay que pegarle a
+  `10.0.2.2` y desde un teléfono físico —Android o iPhone— a la IP de la red local. **Solo
+  el simulador de iOS comparte la red del host**, así que el fallo pasaba inadvertido justo
+  en la plataforma donde se probaba en la Mac.
+
+  Se añadió `ApiConfig.repararUrlDelBackend(url)`: conserva ruta y query, y cambia el host
+  por el que corresponde a la plataforma. **Una URL con host real se devuelve intacta**, de
+  modo que en producción es un no-op y nunca puede redirigir una petición a otro servidor
+  (hay test que lo blinda con la URL de Adquira). `TicketService` la aplica antes de pedir
+  el PDF.
+
+  **2. `share_plus` tronaba la app en iPad.** La hoja de compartir es un popover y iOS exige
+  `sharePositionOrigin`, el rectángulo del que sale; sin él la app crashea al abrirla. La
+  app es de iPhone, pero un iPad puede correrla. Se corrigió en la pantalla del ticket y
+  también en `factura_item_widget.dart`, que arrastraba el mismo bug. En facturas el
+  rectángulo se calcula **antes de la descarga**, no después: hacerlo tras el `await` usaba
+  el `BuildContext` cruzando un async gap y el analyzer lo marcaba.
+
+  **Verificación:** `flutter analyze` sin issues y **635 tests en verde** (antes 625). Se
+  añadió `api_config_test.dart` (8) y dos casos a `ticket_service_test.dart`.
+
+- **Ticket de pago: se descarga con token en vez de abrirse en WebView (2026-08-20):**
+
+  Cierra el flujo que quedó a medias en la sesión anterior. `TicketWebViewPage` **se
+  retiró**: el WebView de Android **no renderiza PDFs**, así que el ticket habría salido
+  en blanco en la mitad del parque de dispositivos (en iOS, WKWebView sí lo muestra). El
+  archivo se respaldó, no se borró.
+
+  **Flujo nuevo.** `TicketPage` (ruta `ticket`, antes `ticket_webview`) descarga el PDF con
+  el Bearer token, lo escribe en la carpeta temporal y lo entrega al sistema con
+  `share_plus`, que ofrece el visor de PDF del dispositivo además de guardar y compartir.
+  Se entrega solo una vez y `yaCompartido` impide que la hoja se reabra sola al volver de
+  ella; el botón *Compartir o abrir* la vuelve a lanzar **sin descargar de nuevo**.
+
+  **Arquitectura.** Vertical slice completo: `TicketService` → `TicketRepository`(+`Impl`,
+  que encadena servicio y `TicketArchivoStorage`) → `DescargarTicketUseCase` →
+  `TicketUseCases` → `TicketBloc`. Registrado en `AppModule` y regenerado con
+  `build_runner`. El `TicketBloc` se provee **local a la pantalla**, no en `blocProviders`:
+  depende de los argumentos de ruta y debe morir con ella, para que el siguiente ticket no
+  herede el archivo del anterior.
+
+  **Trampa cubierta — el 200 que no es un ticket.** `http` sigue los redirects por su
+  cuenta, así que un `302` hacia el login de Laravel llega como un `200` lleno de HTML. Sin
+  verificar el `content-type` se habría guardado esa página como si fuera el comprobante.
+  El servicio lo rechaza con `ticketSesionExpirada` y hay un test que lo blinda.
+
+  **iPad:** la hoja de compartir es un popover y iOS exige `sharePositionOrigin`; sin eso
+  la app truena al abrirla. Se calcula del `RenderBox` del cuerpo de la pantalla.
+
+  **Verificación:** `flutter analyze` sin issues y **625 tests en verde** (antes 604). Se
+  añadieron `ticket_service_test.dart` (14) y `ticket_bloc_test.dart` (7), más los mocks
+  `MockTicketRepository`, `MockDescargarTicketUseCase` y `createMockTicketUseCases`.
+
+  **Pendiente de validar en dispositivo:** que `ticket_url` efectivamente devuelva un PDF
+  (la ruta es `/api/v1/tickets/{uuid}/print`, no verificada contra el backend real). Si
+  devolviera HTML, el servicio responderá "sesión expirada" y habría que ajustar el
+  content-type esperado. Falta también probar el render en Android e iOS, temas claro y
+  oscuro.
+
+  **Nota (sin cambios aplicados):** `factura_item_widget.dart:185` comparte sin
+  `sharePositionOrigin` y hace el HTTP dentro del widget. Es el mismo riesgo de iPad, pero
+  queda fuera de este alcance.
+
+- **Pagos divididos en Pendientes y Realizados (2026-08-20):**
+
+  El menú principal pasa de un item `Pagos` a dos: **Pagos Pendientes** (ruta `edo_cta`, sin un solo cambio en su flujo hasta el carrito y Adquira) y **Pagos Realizados** (ruta nueva `edo_cta_pagados`). Se eligió dividir en el menú en lugar de meter pestañas en la pantalla actual precisamente para no tocar `EdoCtaPage`, su `TotalSeleccionadoBar` ni el paso al carrito.
+
+  **Pantalla nueva (solo lectura).** Consume `POST /api/v1/alumno/estado-de-cuenta-pagados/` con `user_id` en el body y Bearer token, igual que el de pendientes. Agrupa los pagos por alumno y muestra descripción, **fecha de pago**, **folio del ticket**, monto y número de pago, con el chip en verde. No hay checkbox, ni barra de total, ni carrito: los pagos ya están liquidados. Cada pago con ticket abre `TicketWebViewPage` (ruta `ticket_webview`), un WebView interno que manda el Bearer token en los headers — la URL vive bajo `/api/v1`, que en esta app siempre va autenticada; si el endpoint fuese público, el header sobrante es inofensivo.
+
+  **Arquitectura.** Vertical slice completo y aislado: `EdoCtaPagadosService` → `EdoCtaPagadosRepository`(+`Impl`) → `GetEstadosDeCuentaPagadosUseCase` → `EdoCtaPagadosUseCases` → `EdoCtaPagadosBloc`. El agrupador de casos de uso se dejó **separado** de `EdoCtaUseCases` a propósito, para que el contrato del flujo de pago no cambiara y no hubiera que tocar `CarritoBloc`, `EdoCtaListBloc` ni sus tests. Registrado en `AppModule` con `@injectable` y regenerado con `build_runner`.
+
+  **Trampa evitada — el enum de estado.** La respuesta trae `estadoPago: "Pagado"`, valor que `estadoPagoValues` no conocía. Como `EstadoDeCuenta.fromJson` resuelve con `?? EstadoPago.pendiente`, **todos los pagos realizados se habrían pintado como "Pendiente" sin lanzar ningún error**. Se añadió `EstadoPago.pagado` y `EstadoPagoChip` se reescribió con `switch` para cubrir los tres estados (pendiente/vencido sin cambios de comportamiento).
+
+  **Campos nuevos en `EstadoDeCuenta`:** `fechaDePago`, `ticketFolio`, `ticketUrl` y el getter `tieneTicket`, todos **opcionales con default `''`** porque el endpoint de pendientes no los envía. Clave: `toJson()` solo emite esas tres claves cuando tienen valor, de lo contrario los tests de ida y vuelta (`fromJson`/`toJson` inversas) del flujo de pendientes habrían roto. Por decisión del usuario NO se parsean `ticket_uuid`, `deuda_anterior`, `pagados_desde` ni `pagados_hasta`: nada de campos muertos.
+
+  **Detalles reales de la respuesta que se contemplaron:** `fecha_vencimiento` puede llegar en `null`; `factura_pdf` / `factura_xml` no vienen; `grupo` llega vacío (por eso `AlumnoPagadoCard` cae a mostrar la cantidad de pagos como subtítulo). En dev el backend devuelve `ticket_url` con `http://localhost:8000`, inservible desde el teléfono; en producción llega bien formada con `https://arjipagos.moriah.mx`, que es la que se usa tal cual.
+
+  **Verificación:** `flutter analyze` sin issues y **604 tests en verde** (antes 582). Se añadieron `estado_de_cuenta_pagado_test.dart`, `edo_cta_pagados_service_test.dart` y `edo_cta_pagados_bloc_test.dart`, más los helpers `TestPagoRealizado` y `createMockEdoCtaPagadosUseCases`. Se actualizó el test del menú, que ahora exige tres items y valida que cada uno apunte a su ruta. El test guardián de fugas de excepciones cubre los archivos nuevos automáticamente (escanea las carpetas de forma recursiva).
+
+  **Pendiente de validar en dispositivo:** el render de la pantalla y del ticket en Android e iOS, temas claro y oscuro.
+
+- **`Alumno`: campos `familia_id` y `familia` (2026-08-20):**
+
+  Se agregaron al modelo `lib/src/domain/models/Alumno.dart` los campos `familiaId` (`int`, JSON `familia_id`) y `familia` (`String`, JSON `familia`), siguiendo el estilo del resto de la clase: parámetros `required` en el constructor y valores por defecto tolerantes en `fromJson` (`?? 0` y `?.toString() ?? ''`), de modo que un JSON sin esas claves no rompe el parseo. Ambos se serializan en `toJson()`.
+
+  **Tests actualizados** (los constructores usan parámetros `required`, así que todos los sitios de construcción se ajustaron): `test/helpers/test_data.dart` (objetos `activo`/`baja` y sus fixtures `activoJson`/`bajaJson` — estos últimos son obligatorios porque `alumno_test.dart` valida que `fromJson`/`toJson` sean inversas), `carrito_referencia_test.dart`, `carrito_bloc_test.dart`, `edo_cta_list_bloc_test.dart` y `edo_cta_referencia_test.dart`. En `alumno_test.dart` se añadieron aserciones para los dos campos nuevos en `fromJson` y `toJson`, más un test de valores por defecto cuando el JSON no trae la familia.
+
+  **Verificación:** `flutter analyze` sin issues y **582 tests en verde** (antes 579).
+
+  **Nota de diagnóstico (sin cambios aplicados, por decisión del usuario):** en la misma revisión se detectó que `apPaterno`, `apMaterno` y `grupoId` no se leen en ningún punto de `lib/` fuera del propio modelo, y que `AlumnoResponseToJson()` (`lib/src/domain/models/AlumnoResponse.dart:8`) no se invoca en ninguna parte. Se decidió **no eliminarlos**.
 
 - **Verificación iOS del edge-to-edge + Flutter 3.44.8 en la Mac (2026-07-30):**
 
@@ -1723,6 +2108,165 @@ proyecto que sale limpio a la primera en ambas plataformas.
 constraints (`analyzer` 13.3.0→14.1.0, `flutter_secure_storage` 10.3.1→11.0.0,
 `package_config` 2.2.0→3.0.0, entre otros). NO se subieron: es un bump de
 dependencias, no parte de una limpieza. Queda pendiente evaluarlo aparte.
+
+---
+
+## Sesión 2026-08-21 — Rediseño del renglón de pago + Avisos en el lienzo
+
+**Artefacto de diseño:** el lienzo `Renglón de pago Arjipagos` ganó dos artboards
+del módulo de Avisos (`Banners.dc.html` — la tirilla dentro del Menú Principal — y
+`BannersEstados.dc.html` — con portada, título de dos líneas, cargando, imagen no
+disponible, un solo aviso y sin avisos). Misma URL de siempre.
+
+**Código.** Se aplicó el rediseño a Estados de Cuenta y Carrito:
+
+- **`ConceptoEscalonado`** (nuevo, `lib/src/presentation/widgets/`): el concepto se
+  queda con la línea entera y baja por la rampa del tema (`bodyLarge` 16 →
+  `bodyMedium` 14 → `bodySmall` 12) hasta caber en UNA línea. Se mide con
+  `TextPainter` —el mismo motor que luego lo pinta— respetando la escala de fuente
+  del sistema. Si ni el escalón chico alcanza, pasa a dos líneas: nunca se recorta.
+- **`pago_item.dart`** reescrito: barra de color en el canto izquierdo + tinte de
+  fondo + píldora, para que el estado se lea sin buscar la casilla. El pago
+  bloqueado por orden muestra **candado** en vez de casilla apagada, y se atenúa al
+  55 %. Importe con cifras tabulares. El tinte va en el `Material` y no en un
+  `Container` encima, así la onda del toque se pinta sobre el color.
+- **`estado_pago_chip.dart`**: píldora con **punto de color** además del texto
+  (refuerzo, no sustituto: el estado se sigue leyendo escrito). Radio 8, padding
+  `fromLTRB(8,3,10,3)`. Nuevo parámetro `sobreTinte`: sobre un renglón teñido usa
+  `surface` para despegarse; sobre uno normal, `surfaceContainerHighest`.
+- **`carrito_pago_item.dart`**: mismo concepto escalonado, cifras tabulares y
+  candado cuando el pago no se puede quitar.
+
+**Todo sale del `ColorScheme`**, sin un solo hex escrito a mano: `secondaryContainer`
+para el tinte de selección, `errorContainer` para el vencido y los tokens
+`on…Container` para el importe encima de cada uno. Claro y oscuro se resuelven solos.
+
+**Cambio de criterio que conviene tener presente:** el rediseño **revierte** la regla
+anterior de "nunca encoger el concepto por item". Antes todos los conceptos se
+pintaban al mismo tamaño y podían ocupar dos líneas; ahora cada renglón elige su
+escalón. Los dos tests que fijaban la regla vieja se reescribieron para fijar la
+nueva —incluyendo que ningún tamaño se invente fuera de la rampa 16/14/12—.
+
+### Regresión introducida y corregida el mismo día — la lista no se pintaba
+
+El primer intento puso la barra de estado como hermano dentro de un
+`Row(crossAxisAlignment: stretch)`. En el Oppo **Pagos Pendientes salía vacío**:
+`PagosList` mete los renglones en un `Column` dentro de un scroll, así que el alto
+les llega sin acotar, y `stretch` lo convierte en `BoxConstraints(h=Infinity)` — el
+renglón no se pinta.
+
+**Corrección:** la barra pasó a ser un **borde izquierdo** (`Border(left: …)`) del
+propio renglón. No hay nada que estirar ni que medir, y funciona con cualquier alto.
+
+**Por qué no lo atrapó la suite:** el test montaba `PagoItem` suelto bajo el
+`Scaffold`, que le da el alto de la pantalla —acotado— y esconde justo esta clase de
+fallo. Se agregó el test `dentro de un Column con alto sin acotar, como en la lista
+real`, que reproduce el contexto de verdad y comprueba además que el renglón tenga
+alto mayor que cero. **Lección: si el widget vive dentro de un scroll, el test tiene
+que montarlo dentro de un scroll.**
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **726 pasando**
+(baseline antes de tocar nada: 713) · **comprobado en pantalla** en el Oppo CPH2639:
+capturas de Menú Principal y de Pagos Pendientes con los cinco renglones pintados,
+barra y tinte en los seleccionados, candado en los bloqueados y cifras alineadas.
+
+### Rediseño de Avisos (Banners) — el texto sale de encima de la foto
+
+El defecto no era de gusto: en el dispositivo el título se cortaba a media frase
+("…descuento especial por anual…") y la fecha, en blanco sobre una foto clara, no se
+leía. Un degradado más fuerte no lo arregla sin ensuciar media portada.
+
+**La tarjeta se partió en dos:** portada arriba, texto abajo sobre
+`surfaceContainerLow`. El contraste deja de depender de la foto y se resuelve solo en
+claro y oscuro porque sale del `ColorScheme`. De paso el título se lee aunque la
+imagen no cargue, que era justo cuando peor se veía.
+
+- `BannerInfo.fechaPublicacion` y `.esReciente` (nuevos): parsean el `dd-MM-yyyy` del
+  backend a mano —`DateTime.parse` reventaría, espera `yyyy-MM-dd`— y marcan el aviso
+  como reciente durante 7 días. Sin campo nuevo en el backend. Fecha ilegible o
+  futura ⇒ no reciente: mejor no señalar que señalar de más.
+- `banner_card.dart`: píldora **"Nuevo"** con punto de color —el mismo lenguaje que el
+  chip de estado de los pagos, no un componente inventado— y fecha con cifras
+  tabulares.
+- `banners_strip.dart`: el alto de la tarjeta ahora es portada **más** bloque de
+  texto, y ese bloque se mide con los tamaños del tema y la escala de fuente del
+  sistema, no con un número fijo: con la letra grande el título necesita más alto.
+- `banners_skeleton.dart`: la silueta repite la anatomía partida, para que el hueco
+  prometa lo que después aparece.
+
+**Costo:** la tarjeta pasa de 161 px a ~240 px de alto. Está anotado en el lienzo por
+si conviene recortar la portada a 16:9.
+
+### Revisión completa en el Oppo CPH2639
+
+Recorrido pantalla por pantalla, con captura de cada una: Menú Principal, Pagos
+Pendientes (claro y oscuro), Carrito, Pagos Realizados, scroll hasta el final de la
+lista, diálogo del renglón bloqueado, selección en cascada y fuente del sistema
+al 1.6×.
+
+**Dos hallazgos de esa revisión, ajenos al rediseño pero corregidos:**
+
+1. **El total se partía a media cifra.** Con la fuente en grande, la barra inferior
+   mostraba `$23,136.0` y en el renglón siguiente un `0` suelto — la peor forma
+   posible de enseñar dinero. Pasa a `FittedBox(scaleDown)` con `maxLines: 1`, igual
+   que las fechas. Estaba en **las dos** barras: `total_seleccionado_bar.dart` y
+   `carrito_total_bar.dart`.
+2. **La píldora de Pagos Realizados caía sobre el tinte verde** de su renglón sin
+   despegarse. Se le pasó `sobreTinte: true`. Esa pantalla usa el mismo chip y no
+   estaba en el alcance inicial: la encontró el rastreo de usos, no la vista.
+
+**Contraste medido** (no a ojo): el importe del renglón seleccionado da **4.6:1** en
+oscuro (`#cbb37b` sobre `#564517`) y **4.65:1** en claro (`#756232` sobre `#fae0a4`).
+Los dos pasan AA; el oscuro va justo y es el punto más débil del rediseño.
+
+**Verificación final:** `flutter analyze` sin issues · `flutter test` **733 pasando**
+(baseline antes de tocar nada: 713).
+
+### Cabecera de usuario compacta — el verdadero comilón de espacio
+
+La cabecera iba en vertical —avatar de radio 36, nombre y email uno bajo otro, con
+24 de padding— y se llevaba **~440 px de 1604**, casi un tercio de la pantalla. Con
+la tarjeta de aviso ya más alta, al menú no le quedaba sitio y "Facturas" salía
+cortado por abajo.
+
+Ahora es horizontal: **avatar a la izquierda, nombre y debajo el email**. Baja a
+~165 px, y los tres renglones del menú caben con holgura.
+
+**El nombre nunca pasa de una línea.** Va en `FittedBox(scaleDown)` y no con
+`ellipsis`: un nombre largo se encoge hasta caber, pero se lee **entero**. Además la
+cabecera conserva siempre el mismo alto, así que el menú no baila según de quién sea
+la sesión. El email sí se recorta con puntos suspensivos: es dato de apoyo y
+encogerlo más lo dejaría ilegible.
+
+**Nota de recorrido:** antes de esto se probó una tarjeta de aviso compacta y
+horizontal para recuperar el alto. Se descartó —el título volvía a cortarse— al
+verse que el espacio sobraba en la cabecera, no en los avisos. La tarjeta de aviso se
+quedó en la vertical: portada arriba, texto debajo, título completo.
+
+### Release 1.0.24+33
+
+`1.0.23+32` ya estaba publicada en ambas tiendas, así que sube a **1.0.24+33** (regla
+1 de versionado). Verificado antes de compilar: `ApiConfig.isProduction = true`,
+permisos `INTERNET` y `POST_NOTIFICATIONS` en el manifiesto.
+
+**iOS — no verificable desde aquí.** Este equipo es Linux; el build y el Archive
+exigen la Mac. Lo que sí se revisó, que es donde suelen estar los fallos de iOS:
+`IPHONEOS_DEPLOYMENT_TARGET = 15.0` en las tres configuraciones y `platform :ios,
+'15.0'` en el Podfile · `LastUpgradeCheck = 2630` y `LastUpgradeVersion = "2630"` ·
+`LaunchAction` y `ArchiveAction` en `Release` · las guardas de `objective_c`/dSYM
+intactas en el Podfile · los plugins nuevos (`pdfx`, `share_plus`, `open_filex`,
+`path_provider`) no necesitan `UsageDescription` · `share_plus` ya pasa
+`sharePositionOrigin`, sin el cual la hoja de compartir revienta en iPad.
+
+**Dependencias: NO se actualizaron.** El único salto de dependencia directa es
+`flutter_secure_storage` 10.3.1 → 11.0.0, un **major**, y ahí viven los tokens de
+sesión: romperlo dejaría a los usuarios sin login. La regla del proyecto exige
+autorización explícita antes de instalar o actualizar nada. Queda pendiente evaluarlo
+fuera de un release.
+
+**`dart format` NO se pasó**: reformatearía 186 de 302 archivos y taparía el trabajo
+real bajo un diff ilegible. El proyecto no usa el formateador por defecto como
+criterio; `flutter analyze` es el que manda y está limpio.
 
 ---
 

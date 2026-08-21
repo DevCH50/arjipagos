@@ -40,6 +40,8 @@ const int _kCiclo = 2024;
 /// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos (10001, …).
 Alumno _alumnoConPagos(int cantidadPagos) => Alumno(
       alumnoId: 1,
+      familiaId: 1,
+      familia: 'Familia Test',
       alumno: 'Test Alumno',
       apPaterno: 'Test',
       apMaterno: 'Test',

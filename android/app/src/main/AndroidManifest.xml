@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Permisos de red requeridos para la app de pagos -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -7,6 +8,23 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Permite recibir notificaciones al reiniciar el dispositivo -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- open_filex declara permisos de almacenamiento y de fotos/video/audio en
+         SU manifest, y el merger los sumaría a los de esta app: en Play Store
+         una app de pagos aparecería pidiendo acceso a la galería del usuario.
+         No los necesitamos: el ticket se abre desde la caché interna de la app
+         (`getTemporaryDirectory()`), ruta para la que el plugin ni siquiera
+         evalúa permisos (`pathRequiresPermission()` es false dentro de dataDir).
+         Si algún día se abriera un archivo de almacenamiento externo, habría que
+         quitar estas líneas y volver a pedir el permiso que corresponda. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:node="remove"/>
 
     <application
         android:label="arjipagos"

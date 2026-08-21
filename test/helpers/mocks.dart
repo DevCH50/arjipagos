@@ -6,9 +6,12 @@ library;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
+import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
+import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
+import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
@@ -19,10 +22,16 @@ import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/banners/GetBannersUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaPagadosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/GetFacturasUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/ticket/DescargarTicketUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
@@ -121,6 +130,53 @@ EdoCtaUseCases createMockEdoCtaUseCases({
 }) {
   return EdoCtaUseCases(
     getEstadosDeCuenta: getEstadosDeCuenta ?? MockGetEstadosDeCuentaUseCase(),
+  );
+}
+
+/// Mock del repositorio de pagos realizados.
+class MockEdoCtaPagadosRepository extends Mock
+    implements EdoCtaPagadosRepository {}
+
+/// Mock del caso de uso de obtener los pagos realizados.
+class MockGetEstadosDeCuentaPagadosUseCase extends Mock
+    implements GetEstadosDeCuentaPagadosUseCase {}
+
+/// Crea un EdoCtaPagadosUseCases con todos los use cases mockeados.
+EdoCtaPagadosUseCases createMockEdoCtaPagadosUseCases({
+  MockGetEstadosDeCuentaPagadosUseCase? getEstadosDeCuentaPagados,
+}) {
+  return EdoCtaPagadosUseCases(
+    getEstadosDeCuentaPagados:
+        getEstadosDeCuentaPagados ?? MockGetEstadosDeCuentaPagadosUseCase(),
+  );
+}
+
+/// Mock del repositorio de banners informativos.
+class MockBannerRepository extends Mock implements BannerRepository {}
+
+/// Mock del caso de uso de obtener banners.
+class MockGetBannersUseCase extends Mock implements GetBannersUseCase {}
+
+/// Crea un BannerUseCases con todos los use cases mockeados.
+BannerUseCases createMockBannerUseCases({
+  MockGetBannersUseCase? getBanners,
+}) {
+  return BannerUseCases(getBanners: getBanners ?? MockGetBannersUseCase());
+}
+
+/// Mock del repositorio del ticket de pago.
+class MockTicketRepository extends Mock implements TicketRepository {}
+
+/// Mock del caso de uso de descargar el ticket.
+class MockDescargarTicketUseCase extends Mock
+    implements DescargarTicketUseCase {}
+
+/// Crea un TicketUseCases con todos los use cases mockeados.
+TicketUseCases createMockTicketUseCases({
+  MockDescargarTicketUseCase? descargarTicket,
+}) {
+  return TicketUseCases(
+    descargarTicket: descargarTicket ?? MockDescargarTicketUseCase(),
   );
 }
 

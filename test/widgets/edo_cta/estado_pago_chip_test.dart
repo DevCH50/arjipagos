@@ -8,6 +8,35 @@ import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chi
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Monta la píldora suelta, con el tema y el contexto de tinte que pida el test.
+Future<void> montar(
+  WidgetTester tester,
+  EstadoPago estado, {
+  ThemeData? tema,
+  bool sobreTinte = false,
+}) {
+  return tester.pumpWidget(
+    MaterialApp(
+      theme: tema,
+      home: Scaffold(
+        body: EstadoPagoChip(estadoPago: estado, sobreTinte: sobreTinte),
+      ),
+    ),
+  );
+}
+
+/// `Container` de la píldora: el ancestro más cercano de su texto.
+///
+/// Se busca así y no con `find.byType(Container)` porque el punto de color es
+/// también un `Container`, y una búsqueda por tipo devolvería los dos.
+Container pildora(WidgetTester tester, String etiqueta) {
+  return tester.widget<Container>(
+    find
+        .ancestor(of: find.text(etiqueta), matching: find.byType(Container))
+        .first,
+  );
+}
+
 void main() {
   group('EstadoPagoChip', () {
     // =========================================================================
@@ -50,156 +79,98 @@ void main() {
     // TESTS DE ESTILO EN TEMA CLARO
     // =========================================================================
 
-    group('tema claro', () {
-      testWidgets('tiene el estilo correcto para estado pendiente',
-          (WidgetTester tester) async {
-        // Arrange: Crear el widget en tema claro con estado pendiente
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: ThemeData.light(),
-            home: const Scaffold(
-              body: EstadoPagoChip(estadoPago: EstadoPago.pendiente),
-            ),
-          ),
-        );
+    // Los colores salen del `ColorScheme` del tema, no de constantes: es lo
+    // que hace que claro y oscuro se resuelvan solos. Por eso los tests leen
+    // el esquema en vez de comparar contra hexes escritos a mano.
+    for (final tema in <({String nombre, ThemeData datos})>[
+      (nombre: 'tema claro', datos: ThemeData.light()),
+      (nombre: 'tema oscuro', datos: ThemeData.dark()),
+    ]) {
+      group(tema.nombre, () {
+        testWidgets('la píldora usa el contenedor del tema y radio 8',
+            (WidgetTester tester) async {
+          await montar(tester, EstadoPago.pendiente, tema: tema.datos);
 
-        // Act: Obtener el Container y Text del widget
-        final container = tester.widget<Container>(find.byType(Container));
-        final text = tester.widget<Text>(find.text('Pendiente'));
+          final decoracion = pildora(tester, 'Pendiente').decoration!;
 
-        // Assert: Verificar decoración del container
-        final decoration = container.decoration as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(12));
+          expect((decoracion as BoxDecoration).borderRadius,
+              BorderRadius.circular(8));
+          expect(decoracion.color, tema.datos.colorScheme.surfaceContainerHighest);
+        });
 
-        // Verificar color de fondo (warning con alpha 0.15 para tema claro)
-        final expectedBgColor = AppColors.warning.withValues(alpha: 0.15);
-        expect(decoration.color, expectedBgColor);
+        testWidgets('sobre un renglón teñido la píldora se despega con surface',
+            (WidgetTester tester) async {
+          await montar(tester, EstadoPago.vencido,
+              tema: tema.datos, sobreTinte: true);
 
-        // Verificar estilo del texto
-        expect(text.style?.fontSize, 11);
-        expect(text.style?.fontWeight, FontWeight.w500);
-        expect(text.style?.color, AppColors.warning);
+          final decoracion =
+              pildora(tester, 'Vencido').decoration! as BoxDecoration;
+
+          expect(decoracion.color, tema.datos.colorScheme.surface);
+        });
+
+        testWidgets('el pendiente se escribe en el gris de apoyo',
+            (WidgetTester tester) async {
+          await montar(tester, EstadoPago.pendiente, tema: tema.datos);
+
+          final texto = tester.widget<Text>(find.text('Pendiente'));
+
+          expect(texto.style?.fontSize, 11);
+          expect(texto.style?.fontWeight, FontWeight.w500);
+          expect(texto.style?.letterSpacing, 0.5);
+          expect(texto.style?.color, tema.datos.colorScheme.onSurfaceVariant);
+        });
+
+        testWidgets('el vencido se escribe en el color de error del tema',
+            (WidgetTester tester) async {
+          await montar(tester, EstadoPago.vencido, tema: tema.datos);
+
+          final texto = tester.widget<Text>(find.text('Vencido'));
+
+          expect(texto.style?.color, tema.datos.colorScheme.error);
+        });
       });
-
-      testWidgets('tiene el estilo correcto para estado vencido',
-          (WidgetTester tester) async {
-        // Arrange: Crear el widget en tema claro con estado vencido
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: ThemeData.light(),
-            home: const Scaffold(
-              body: EstadoPagoChip(estadoPago: EstadoPago.vencido),
-            ),
-          ),
-        );
-
-        // Act: Obtener el Container y Text del widget
-        final container = tester.widget<Container>(find.byType(Container));
-        final text = tester.widget<Text>(find.text('Vencido'));
-
-        // Assert: Verificar decoración del container
-        final decoration = container.decoration as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(12));
-
-        // Verificar color de fondo (error con alpha 0.15 para tema claro)
-        final expectedBgColor = AppColors.error.withValues(alpha: 0.15);
-        expect(decoration.color, expectedBgColor);
-
-        // Verificar estilo del texto
-        expect(text.style?.fontSize, 11);
-        expect(text.style?.fontWeight, FontWeight.w500);
-        expect(text.style?.color, AppColors.error);
-      });
-    });
-
-    // =========================================================================
-    // TESTS DE ESTILO EN TEMA OSCURO
-    // =========================================================================
-
-    group('tema oscuro', () {
-      testWidgets('tiene el estilo correcto para estado pendiente',
-          (WidgetTester tester) async {
-        // Arrange: Crear el widget en tema oscuro con estado pendiente
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: ThemeData.dark(),
-            home: const Scaffold(
-              body: EstadoPagoChip(estadoPago: EstadoPago.pendiente),
-            ),
-          ),
-        );
-
-        // Act: Obtener el Container y Text del widget
-        final container = tester.widget<Container>(find.byType(Container));
-        final text = tester.widget<Text>(find.text('Pendiente'));
-
-        // Assert: Verificar decoración del container
-        final decoration = container.decoration as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(12));
-
-        // Verificar color de fondo (warning con alpha 0.3 para tema oscuro)
-        final expectedBgColor = AppColors.warning.withValues(alpha: 0.3);
-        expect(decoration.color, expectedBgColor);
-
-        // Verificar estilo del texto (warningLight para tema oscuro)
-        expect(text.style?.fontSize, 11);
-        expect(text.style?.fontWeight, FontWeight.w500);
-        expect(text.style?.color, AppColors.warningLight);
-      });
-
-      testWidgets('tiene el estilo correcto para estado vencido',
-          (WidgetTester tester) async {
-        // Arrange: Crear el widget en tema oscuro con estado vencido
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: ThemeData.dark(),
-            home: const Scaffold(
-              body: EstadoPagoChip(estadoPago: EstadoPago.vencido),
-            ),
-          ),
-        );
-
-        // Act: Obtener el Container y Text del widget
-        final container = tester.widget<Container>(find.byType(Container));
-        final text = tester.widget<Text>(find.text('Vencido'));
-
-        // Assert: Verificar decoración del container
-        final decoration = container.decoration as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(12));
-
-        // Verificar color de fondo (error con alpha 0.3 para tema oscuro)
-        final expectedBgColor = AppColors.error.withValues(alpha: 0.3);
-        expect(decoration.color, expectedBgColor);
-
-        // Verificar estilo del texto (errorLight para tema oscuro)
-        expect(text.style?.fontSize, 11);
-        expect(text.style?.fontWeight, FontWeight.w500);
-        expect(text.style?.color, AppColors.errorLight);
-      });
-    });
+    }
 
     // =========================================================================
     // TESTS DE ESTRUCTURA
     // =========================================================================
 
     testWidgets('tiene el padding correcto', (WidgetTester tester) async {
-      // Arrange: Crear el widget
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: EstadoPagoChip(estadoPago: EstadoPago.pendiente),
-          ),
-        ),
-      );
+      await montar(tester, EstadoPago.pendiente);
 
-      // Act: Obtener el Container del widget
-      final container = tester.widget<Container>(find.byType(Container));
-
-      // Assert: Verificar padding
       expect(
-        container.padding,
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        pildora(tester, 'Pendiente').padding,
+        const EdgeInsets.fromLTRB(8, 3, 10, 3),
       );
+    });
+
+    testWidgets('lleva un punto de color además del texto',
+        (WidgetTester tester) async {
+      // El punto es refuerzo, no sustituto: el estado se sigue leyendo escrito
+      // para quien no percibe el color.
+      await montar(tester, EstadoPago.pendiente);
+
+      final punto = tester.widget<Container>(find.byWidgetPredicate((w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).shape == BoxShape.circle));
+
+      expect((punto.decoration! as BoxDecoration).color, AppColors.warning);
+      expect(find.text('Pendiente'), findsOneWidget);
+    });
+
+    testWidgets('el punto del vencido sale del color de error del tema',
+        (WidgetTester tester) async {
+      final tema = ThemeData.light();
+      await montar(tester, EstadoPago.vencido, tema: tema);
+
+      final punto = tester.widget<Container>(find.byWidgetPredicate((w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).shape == BoxShape.circle));
+
+      expect((punto.decoration! as BoxDecoration).color, tema.colorScheme.error);
     });
   });
 }

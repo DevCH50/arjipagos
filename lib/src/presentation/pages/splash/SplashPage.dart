@@ -33,11 +33,11 @@ class _SplashView extends StatelessWidget {
           prev.navigationState != curr.navigationState,
       listener: (context, state) {
         if (state.navigationState == SplashNavigationState.navigateToHome) {
-          Navigator.pushNamedAndRemoveUntil(
+          Navigator.restorablePushNamedAndRemoveUntil(
               context, 'menu_principal', (route) => false);
         } else if (state.navigationState ==
             SplashNavigationState.navigateToLogin) {
-          Navigator.pushNamedAndRemoveUntil(
+          Navigator.restorablePushNamedAndRemoveUntil(
               context, 'login', (route) => false);
         }
       },

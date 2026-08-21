@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/presentation/pages/banners/widgets/banners_strip.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
@@ -39,7 +40,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       final bloc = context.read<NotificacionBloc>();
       if (bloc.state.debeNavegar) {
         bloc.add(const ResetDebeNavegarEvent());
-        Navigator.of(context).pushNamed('notificaciones');
+        Navigator.of(context).restorablePushNamed('notificaciones');
       }
     });
   }
@@ -52,7 +53,7 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       listenWhen: (prev, curr) => curr.debeNavegar && !prev.debeNavegar,
       listener: (context, state) {
         context.read<NotificacionBloc>().add(const ResetDebeNavegarEvent());
-        Navigator.of(context).pushNamed('notificaciones');
+        Navigator.of(context).restorablePushNamed('notificaciones');
       },
       child: Scaffold(
         appBar: AppBar(
@@ -114,6 +115,12 @@ class _MenuPrincipalBody extends StatelessWidget {
             Expanded(
               child: MenuItemsList(items: state.menuItems),
             ),
+            // Carrusel de avisos. Se encoge a cero cuando no hay contenido,
+            // así que el menú se ve igual que antes si no llegan avisos. NO va
+            // envuelto en SafeArea: el propio carrusel descuenta el inset con
+            // MediaQuery.viewPaddingOf, que es el único valor fiable si un
+            // widget padre ya consumió el padding.
+            const BannersStrip(),
           ],
         );
       },
@@ -152,6 +159,6 @@ class _MenuPrincipalBody extends StatelessWidget {
       return;
     }
 
-    Navigator.pushNamed(context, item.ruta!);
+    Navigator.restorablePushNamed(context, item.ruta!);
   }
 }

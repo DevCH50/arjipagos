@@ -33,7 +33,7 @@ class LoginResponse extends StatelessWidget {
             Future.delayed(const Duration(milliseconds: 500), () {
               menuBloc.add(const MenuPrincipalInitialEvent());
             });
-            Navigator.pushNamedAndRemoveUntil(
+            Navigator.restorablePushNamedAndRemoveUntil(
               context,
               'menu_principal',
               (route) => false,

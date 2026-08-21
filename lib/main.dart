@@ -9,6 +9,8 @@ import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/RegisterPage.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/EdoCtaPage.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/EdoCtaPagadosPage.dart';
+import 'package:arjipagos/src/presentation/pages/ticket/TicketPage.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
 import 'package:arjipagos/src/presentation/pages/home/HomePage.dart';
@@ -93,6 +95,12 @@ class MyApp extends StatelessWidget {
           );
         },
         debugShowCheckedModeBanner: false,
+        // Restauración de estado: Android guarda la pila de rutas y la
+        // devuelve si recicla el proceso o la actividad mientras el usuario
+        // está en otra app. Sin esto la app volvía siempre al Menú Principal y
+        // el atrás salía de la aplicación, que era el fallo reportado al
+        // regresar de ver un ticket.
+        restorationScopeId: 'arjipagos',
         title: 'ArjiPagos',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
@@ -104,6 +112,9 @@ class MyApp extends StatelessWidget {
           'menu_principal': (BuildContext context) => const MenuPrincipalPage(),
           'splash': (BuildContext context) => const SplashPage(),
           'edo_cta': (BuildContext context) => const EdoCtaPage(),
+          'edo_cta_pagados': (BuildContext context) =>
+              const EdoCtaPagadosPage(),
+          'ticket': (BuildContext context) => const TicketPage(),
           'carrito': (BuildContext context) => const CarritoPage(),
           'pago_webview': (BuildContext context) => const PagoWebViewPage(),
           'cambiar_contrasena': (BuildContext context) =>

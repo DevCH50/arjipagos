@@ -1,5 +1,7 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_pago_item.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -146,6 +148,44 @@ void main() {
         find.byIcon(Icons.remove_circle_outline),
       );
       expect(icono.color, Theme.of(contexto).colorScheme.error);
+    });
+  });
+
+  group('CarritoPagoItem - lectura y congruencia', () {
+    testWidgets('el importe mide igual que el concepto y va en negrita',
+        (tester) async {
+      // Misma regla que en Pagos Pendientes: el importe destaca por peso y no
+      // por ser un escalón más grande que el concepto.
+      final pago = TestEstadoDeCuenta.pendiente;
+      await montar(tester, ancho: 360, pago: pago);
+
+      final concepto =
+          tester.widget<Text>(find.text(pago.descripcionAbreviada));
+      final monto = tester.widget<Text>(find.text(pago.totalFormatted));
+
+      expect(monto.style?.fontSize, concepto.style?.fontSize);
+      expect(monto.style?.fontWeight, FontWeight.bold);
+    });
+
+    testWidgets('la fecha de vencimiento no se recorta', (tester) async {
+      final pago = TestEstadoDeCuenta.pendiente;
+      await montar(tester, ancho: 320, pago: pago);
+
+      final fecha = tester.widget<Text>(
+        find.text('${AppStrings.edoCtaVence} ${pago.fechaVencimiento}'),
+      );
+
+      expect(fecha.overflow, isNot(TextOverflow.ellipsis));
+      expect(fecha.maxLines, 1);
+    });
+
+    testWidgets('el chip de estado conserva su tamaño natural', (tester) async {
+      const ancho = 360.0;
+      await montar(tester, ancho: ancho, pago: TestEstadoDeCuenta.pendiente);
+
+      final anchoChip = tester.getSize(find.byType(EstadoPagoChip)).width;
+
+      expect(anchoChip, lessThan(ancho / 2));
     });
   });
 }
