@@ -36,7 +36,8 @@ class BannersStrip extends StatefulWidget {
   State<BannersStrip> createState() => _BannersStripState();
 }
 
-class _BannersStripState extends State<BannersStrip> {
+class _BannersStripState extends State<BannersStrip>
+    with WidgetsBindingObserver {
   /// Margen a cada lado; libra la banda del gesto atrás de Android.
   static const double _margenLateral = 16;
 
@@ -57,18 +58,69 @@ class _BannersStripState extends State<BannersStrip> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     context.read<BannerBloc>().add(const BannerCargarEvent());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // Sin esto queda un listener vivo apuntando a una pantalla desmontada.
     _controller?.dispose();
     super.dispose();
   }
 
+  /// Recarga la tirilla al volver a la app.
+  ///
+  /// Es el caso que **no** puede cubrir el push: si el aviso se publica con el
+  /// teléfono guardado, `onMessage` no dispara nada, y el handler de background
+  /// corre en otro isolate donde no hay tirilla que refrescar. Además salva que
+  /// iOS posponga o descarte el push silencioso por bajo consumo: al volver, la
+  /// lista se corrige sola.
+  ///
+  /// La recarga es silenciosa —sin esqueleto—: el usuario no ha pedido nada y
+  /// ver la tirilla parpadear al volver sería un salto injustificado.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<BannerBloc>().add(const BannerRefrescarEvent());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    return BlocListener<BannerBloc, BannerState>(
+      // Solo cuando hay una nota pendiente y la lista ya llegó: el aviso recién
+      // publicado puede no estar en la que se cargó al entrar.
+      listenWhen: (anterior, actual) =>
+          actual.bannerIdAAbrir != null && actual.banners.isNotEmpty,
+      listener: _abrirDetallePendiente,
+      child: _buildTirilla(),
+    );
+  }
+
+  /// Abre la nota que pidió el push, si sigue existiendo en el catálogo.
+  ///
+  /// El id llega en texto y el del modelo es entero, así que se comparan como
+  /// texto. Si el aviso ya no está —lo borraron entre el push y la recarga— no
+  /// se abre nada: la petición se suelta igual para no dejarla colgada.
+  void _abrirDetallePendiente(BuildContext context, BannerState state) {
+    final bloc = context.read<BannerBloc>();
+    final id = state.bannerIdAAbrir;
+
+    final coincidencias =
+        state.banners.where((b) => b.id.toString() == id).toList();
+
+    bloc.add(const BannerDetalleAtendidoEvent());
+
+    if (coincidencias.isEmpty) {
+      return;
+    }
+    mostrarBannerDetalle(context, coincidencias.first);
+  }
+
+  Widget _buildTirilla() {
     return BlocBuilder<BannerBloc, BannerState>(
       builder: (context, state) {
         final medidas = _calcularMedidas(context);

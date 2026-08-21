@@ -2270,6 +2270,66 @@ criterio; `flutter analyze` es el que manda y está limpio.
 
 ---
 
+## Sesión 2026-08-21 (b) — Refresco de la tirilla de Avisos por push
+
+El backend avisa de altas, cambios y bajas de banners con un push. Hasta ahora la
+app lo ignoraba: `BannerBloc` tenía **un solo evento** y se disparaba **una vez**, en
+el `initState` de la tirilla. El push llegaba y la tirilla se quedaba con lo que
+cargó al montarse.
+
+**Contrato acordado con el backend** (`data` del mensaje FCM):
+
+| Clave       | Valor                 | Siempre                        |
+| ----------- | --------------------- | ------------------------------ |
+| `campania`  | `"banner"`            | sí                             |
+| `accion`    | `"refrescar_banners"` | sí                             |
+| `banner_id` | id en texto           | no (ausente si se eliminó)     |
+
+Se exigen **las dos** claves para actuar: un mensaje de otra campaña que por
+casualidad llevara `accion` no debe mover los banners. Hay test que lo cubre.
+
+**Implementado:**
+
+- `BannerRefrescarEvent`: recarga **sin** pasar por el esqueleto. El usuario está
+  mirando y no ha pedido nada; verla parpadear a siluetas grises sería un salto
+  injustificado. `isLoading` queda solo para la carga inicial.
+- `BannerBloc` escucha `onMessage` y `onMessageOpenedApp` con **streams
+  inyectables**, igual que `NotificacionBloc`, para poder probarlo sin Firebase real.
+  `getInitialMessage` se usa solo para el id, no para recargar.
+- `banner_id` → `BannerAbrirDetalleEvent` deja anotada la nota; la tirilla la abre
+  con un `BlocListener` y avisa con `BannerDetalleAtendidoEvent` para soltarla. Sin
+  ese acuse, cualquier reconstrucción reabriría el modal.
+- **Recarga al volver del segundo plano** (`didChangeAppLifecycleState`).
+
+**Discrepancia con la recomendación del backend, y por qué.** Pedían atender también
+`onBackgroundMessage`. **No se hizo, y no debe hacerse:** ese handler corre en un
+**isolate separado**, sin acceso a este BLoC ni al árbol de widgets, y mientras la app
+está en segundo plano no hay tirilla que repintar. Tampoco hay caché local que
+invalidar —se verificó: los banners viven solo en memoria, en `BannerState`—, así que
+volver a pedir la lista *es* la invalidación.
+
+El caso que les preocupaba —el push llega con el teléfono guardado— lo cubre la
+**recarga al reanudar**, que además salva lo que ellos mismos admiten: que iOS
+posponga o descarte el push silencioso por bajo consumo. Al volver a la app, la lista
+se corrige sola sin depender de que el push llegara.
+
+**Se recarga la lista entera, nunca se parchea la local.** En esto sí de acuerdo con
+el backend: el servidor manda el catálogo ya vigente y ya ordenado; aplicar cambios
+sueltos por encima es la forma segura de acabar con dos verdades distintas.
+
+**Nota para tests:** `BannerBloc` ya no se puede construir pelado en un test — pediría
+`FirebaseMessaging.instance` y moriría con "No Firebase App". Hay que inyectarle los
+tres parámetros de FCM, como ya se hacía con `NotificacionBloc`.
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **740 pasando** (antes
+733) · en el Oppo CPH2639 con APK de release: ciclo de segundo plano y vuelta, la
+tirilla reaparece intacta, sin parpadeo de esqueleto y sin errores en logcat.
+
+**Pendiente:** probar el push real de banners de punta a punta cuando el backend lo
+emita, en Android y en iOS.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
