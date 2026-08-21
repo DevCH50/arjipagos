@@ -2330,6 +2330,74 @@ emita, en Android y en iOS.
 
 ---
 
+## Sesión 2026-08-21 (c) — Barrido completo, Flutter 3.47.1 y formateo de importes
+
+Revisión pantalla por pantalla en el Oppo CPH2639 con APK de **release**, cubriendo
+lo que faltaba de las sesiones anteriores: Facturas, Notificaciones, el modal de
+Aviso y el Ticket. Dos defectos encontrados, los dos ajenos al rediseño y los dos
+corregidos.
+
+### 1. Las facturas enseñaban el dinero en crudo
+
+En pantalla salía `Total: 9770.0000` —cuatro decimales, sin símbolo ni separador de
+miles— mientras el resto de la app mostraba `$9,770.00`. `Factura.total` llega del
+backend como **cadena** con los cuatro decimales del timbrado y se pintaba tal cual.
+
+Al ir a arreglarlo apareció lo de fondo: **tres copias idénticas** de un
+`_formatearMonto` privado, en `total_seleccionado_bar`, `carrito_total_bar` y
+`carrito_alumno_card`. Con tres copias, corregir el formato en una dejaba las otras
+dos mostrando el dinero de otra manera.
+
+Se creó `lib/src/core/utils/formato_monto.dart` con `formatearMonto(double)` y
+`formatearMontoTexto(String)` —esta última para el caso de las facturas—, y las tres
+copias se sustituyeron por la función compartida. Un texto que no sea número se
+devuelve tal cual: mejor enseñar el dato crudo que un `$0.00` que parece una cantidad
+real y no lo es. Nueve tests nuevos en `test/unit/utils/formato_monto_test.dart`.
+
+### 2. El título de Notificaciones salía recortado a "Not..."
+
+El botón de texto "Marcar todas leídas" junto al de actualizar no dejaba sitio al
+título. Pasa a **icono con tooltip** (`Icons.done_all`): el título se lee completo y
+la etiqueta sigue disponible para quien la necesite, lectores de pantalla incluidos.
+
+### Estado "Vencido" verificado por fin en dispositivo
+
+Con otra cuenta —EFREN RAYMUNDO, con pagos vencidos— se pudo ver el camino que hasta
+ahora solo estaba verificado por código: barra roja en el canto, tinte
+`errorContainer`, píldora "Vencido" con punto, importe en `onErrorContainer` y
+candados en los siguientes del mismo ciclo. Responde tal como especifica el lienzo.
+
+**Observación, no bug:** "REINS PRIM 26 / 27" muestra `Vence:` sin fecha porque el
+backend la manda vacía.
+
+### Flutter 3.47.0 → 3.47.1
+
+Parche dentro del canal `stable`, autorizado explícitamente. El `flutter upgrade`
+pedía `--force` porque el checkout del SDK tenía modificado su propio
+`pubspec.lock` —archivo que Flutter regenera solo—; se respaldó antes de forzar.
+
+Tras el cambio de SDK se hizo la limpieza obligatoria (`flutter clean` +
+`flutter pub get`). En `pubspec.lock` **solo se movieron transitivas** dentro de las
+restricciones existentes (`archive`, `dbus`, `image`, `objective_c` 9.5.0→9.6.0,
+`vm_service`, entre otras). **Ninguna dependencia directa cambió.**
+
+**`flutter_secure_storage` sigue en 10.3.1.** El salto a 11.0.0 es un *major* y ahí
+viven los tokens de sesión: romperlo dejaría a los usuarios sin login. Se consultó y
+la decisión fue no tocarlo. Sigue pendiente de evaluar fuera de una ventana de
+release.
+
+**iOS intacto tras el upgrade:** `git status ios/` vacío, `LastUpgradeCheck = 2630`,
+`LastUpgradeVersion = "2630"` y las guardas del Podfile en su sitio. Como siempre,
+**iOS no se compiló**: este equipo es Linux y el Archive exige la Mac. Conviene
+correr `pod install` en la Mac antes del próximo Archive, porque `objective_c` subió
+de versión y es justo el pod con la guarda de dSYM.
+
+**Verificación:** `flutter analyze` sin issues · `flutter test` **749 pasando**
+(antes 740) · APK de release recompilado con 3.47.1, instalado y recorrido en el
+Oppo sin errores en logcat.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas

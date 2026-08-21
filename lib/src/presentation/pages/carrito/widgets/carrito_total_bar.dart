@@ -1,5 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/formato_monto.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
@@ -64,7 +65,7 @@ class CarritoTotalBar extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
-            _formatearMonto(state.totalAPagar),
+            formatearMonto(state.totalAPagar),
             maxLines: 1,
             softWrap: false,
             style: theme.textTheme.headlineSmall?.copyWith(
@@ -95,14 +96,5 @@ class CarritoTotalBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     );
-  }
-
-  String _formatearMonto(double monto) {
-    final partes = monto.toStringAsFixed(2).split('.');
-    final parteEntera = partes[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    return '\$$parteEntera.${partes[1]}';
   }
 }

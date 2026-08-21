@@ -82,18 +82,24 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
-        // Botón de marcar todas leídas — solo visible si hay no leídas.
+        // Marcar todas leídas — solo visible si hay no leídas.
+        //
+        // Va como icono con tooltip y no como botón de texto: "Marcar todas
+        // leídas" junto al de actualizar no dejaba sitio al título, que salía
+        // recortado a "Not...". El tooltip conserva la etiqueta completa para
+        // quien la necesite, incluidos los lectores de pantalla.
         BlocBuilder<NotificacionBloc, NotificacionState>(
           buildWhen: (prev, curr) => prev.noLeidas != curr.noLeidas,
           builder: (context, state) {
             if (state.noLeidas > 0) {
-              return TextButton(
+              return IconButton(
+                icon: const Icon(Icons.done_all),
+                tooltip: AppStrings.notificacionesMarcarLeidas,
                 onPressed: () {
                   context.read<NotificacionBloc>().add(
                         const MarcarTodasLeidasEvent(),
                       );
                 },
-                child: const Text(AppStrings.notificacionesMarcarLeidas),
               );
             }
             return const SizedBox.shrink();

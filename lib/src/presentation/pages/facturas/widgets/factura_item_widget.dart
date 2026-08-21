@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/formato_monto.dart';
 import 'package:arjipagos/src/domain/models/Factura.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -118,7 +119,7 @@ class _FacturaItemWidgetState extends State<FacturaItemWidget> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    widget.factura.total,
+                    formatearMontoTexto(widget.factura.total),
                     style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onPrimaryContainer,

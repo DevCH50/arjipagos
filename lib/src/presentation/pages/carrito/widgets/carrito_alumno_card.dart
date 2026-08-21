@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/formato_monto.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_pago_item.dart';
@@ -58,7 +59,7 @@ class CarritoAlumnoCard extends StatelessWidget {
         ),
       ),
       trailing: Text(
-        _formatearMonto(item.subtotal),
+        formatearMonto(item.subtotal),
         style: theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.primary,
@@ -67,12 +68,4 @@ class CarritoAlumnoCard extends StatelessWidget {
     );
   }
 
-  String _formatearMonto(double monto) {
-    final partes = monto.toStringAsFixed(2).split('.');
-    final parteEntera = partes[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    return '\$$parteEntera.${partes[1]}';
-  }
 }

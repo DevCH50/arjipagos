@@ -1,5 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/formato_monto.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -19,7 +20,7 @@ class TotalSeleccionadoBar extends StatelessWidget {
       builder: (context, state) {
         final totalSeleccionado = state.totalSeleccionado;
         final cantidadPagos = state.cantidadPagosSeleccionados;
-        final totalFormateado = _formatearMonto(totalSeleccionado);
+        final totalFormateado = formatearMonto(totalSeleccionado);
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -53,17 +54,6 @@ class TotalSeleccionadoBar extends StatelessWidget {
     );
   }
 
-  /// Formatea el monto como moneda MXN con separadores de miles.
-  String _formatearMonto(double monto) {
-    final partes = monto.toStringAsFixed(2).split('.');
-    final parteEntera = partes[0].replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    return '\$$parteEntera.${partes[1]}';
-  }
-
-  /// Construye la información del total seleccionado.
   Widget _buildInfoTotal(
     ThemeData theme,
     int cantidadPagos,
@@ -106,7 +96,6 @@ class TotalSeleccionadoBar extends StatelessWidget {
     );
   }
 
-  /// Construye el botón para continuar al carrito.
   Widget _buildBotonContinuar(BuildContext context, int cantidadPagos) {
     return ElevatedButton.icon(
       onPressed: cantidadPagos > 0
