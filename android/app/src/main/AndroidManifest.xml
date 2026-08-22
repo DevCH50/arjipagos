@@ -27,7 +27,7 @@
         tools:node="remove"/>
 
     <application
-        android:label="arjipagos"
+        android:label="Arjí Pagos"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

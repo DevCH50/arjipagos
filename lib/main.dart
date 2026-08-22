@@ -19,6 +19,8 @@ import 'package:arjipagos/src/presentation/pages/aviso_de_privacidad/AvisoDePriv
 import 'package:arjipagos/src/presentation/pages/facturas/FacturasPage.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/NotificacionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
+import 'package:arjipagos/src/presentation/utils/AppNavigatorKey.dart';
+import 'package:arjipagos/src/presentation/widgets/ActualizacionObserver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show MultiBlocProvider;
@@ -85,13 +87,19 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: blocProviders,
       child: MaterialApp(
+        // Necesaria para que ActualizacionObserver pueda abrir su diálogo: el
+        // `builder` se inserta por encima del Navigator y su contexto no sirve
+        // para `showDialog`.
+        navigatorKey: appNavigatorKey,
         builder: (context, child) {
           // Preservar el tamaño de fuente del sistema (accesibilidad)
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: MediaQuery.of(context).textScaler,
             ),
-            child: child!,
+            // Vigila que la versión instalada no haya quedado obsoleta. Envuelve
+            // toda la app para que el bloqueo aparezca sobre cualquier pantalla.
+            child: ActualizacionObserver(child: child!),
           );
         },
         debugShowCheckedModeBanner: false,

@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.24+33
+version: 1.0.25+34
 
 environment:
   sdk: ^3.11.0
@@ -107,9 +107,24 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/arji/app_icon.png"
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/arji/app_icon.png"
+
+  # Imagen ya compuesta: la usan iOS y los Android anteriores al icono
+  # adaptativo. Cuadrada y sin alfa, porque iOS no admite transparencia y
+  # redondea las esquinas él mismo.
+  image_path: "assets/arji/icono_app.png"
+
+  # Icono adaptativo (Android 8+): son DOS capas que el lanzador compone y
+  # recorta con su propia máscara —círculo, squircle, gota...—. De los 108 dp
+  # del lienzo solo los 72 centrales están garantizados, así que el emblema de
+  # la capa de frente va al 60 % para no perder nada en el recorte.
+  adaptive_icon_background: "assets/arji/icono_fondo.png"
+  adaptive_icon_foreground: "assets/arji/icono_frente.png"
+
+  # Iconos temáticos de Android 13+: si el usuario los activa, el sistema pinta
+  # esta silueta con los colores de su fondo de pantalla. Sin ella, Android
+  # improvisa una a partir del icono y suele quedar mal.
+  adaptive_icon_monochrome: "assets/arji/icono_mono.png"
+
   remove_alpha_ios: true
 
 # Configuración del Splash Screen nativo

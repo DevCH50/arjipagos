@@ -37,6 +37,8 @@ import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUs
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarTodasLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
+import 'package:arjipagos/src/domain/repository/VersionRepository.dart';
+import 'package:arjipagos/src/domain/useCases/version/VerificarActualizacionUseCase.dart';
 import 'package:mocktail/mocktail.dart';
 
 // ============================================================================
@@ -225,3 +227,14 @@ NotificacionUseCases createMockNotificacionUseCases({
     marcarTodasLeidas: marcarTodasLeidas ?? MockMarcarTodasLeidasUseCase(),
   );
 }
+
+// ============================================================================
+// VERSIÓN DE LA APP
+// ============================================================================
+
+/// Mock del repositorio de la política de versión.
+class MockVersionRepository extends Mock implements VersionRepository {}
+
+/// Mock del caso de uso que decide si hay que actualizar.
+class MockVerificarActualizacionUseCase extends Mock
+    implements VerificarActualizacionUseCase {}

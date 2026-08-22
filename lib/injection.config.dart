@@ -36,6 +36,8 @@ import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart'
     as _i425;
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart'
     as _i965;
+import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dart'
+    as _i7;
 import 'package:arjipagos/src/di/AppModule.dart' as _i21;
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart' as _i1009;
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart' as _i374;
@@ -49,6 +51,8 @@ import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
 import 'package:arjipagos/src/domain/repository/PagoRepository.dart' as _i946;
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart' as _i522;
+import 'package:arjipagos/src/domain/repository/VersionRepository.dart'
+    as _i943;
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart'
     as _i18;
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart' as _i887;
@@ -65,6 +69,8 @@ import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCase
 import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart' as _i604;
 import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart'
     as _i60;
+import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart'
+    as _i922;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
@@ -122,6 +128,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i425.PagoService>(() => appModule.pagoService);
     gh.factory<_i946.PagoRepository>(() => appModule.pagoRepository);
     gh.factory<_i604.PagoUseCases>(() => appModule.pagoUseCases);
+    gh.factory<_i7.VersionService>(() => appModule.versionService);
+    gh.factory<_i943.VersionRepository>(() => appModule.versionRepository);
+    gh.factory<_i922.VersionUseCases>(() => appModule.versionUseCases);
     return this;
   }
 }

@@ -59,4 +59,15 @@ class AppDurations {
 
   /// Duración de toasts
   static const Duration toastDuration = Duration(seconds: 2);
+
+  // ============================================================================
+  // ACTUALIZACIÓN DE LA APP
+  // ============================================================================
+
+  /// Tiempo mínimo entre dos consultas de versión al backend.
+  ///
+  /// La revisión se dispara al arrancar y cada vez que la app vuelve del
+  /// segundo plano; sin este intervalo, alternar entre apps generaría una
+  /// petición por cada regreso.
+  static const Duration intervaloRevisionVersion = Duration(minutes: 15);
 }

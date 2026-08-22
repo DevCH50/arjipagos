@@ -2,6 +2,7 @@ import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/local/TicketArchivoStorage.dart';
+import 'package:arjipagos/src/data/dataSource/local/VersionInstalada.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/BannerService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
@@ -10,6 +11,7 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dart';
 import 'package:arjipagos/src/data/repository/AuthRepositoryImpl.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart';
 import 'package:arjipagos/src/data/repository/BannerRepositoryImpl.dart';
@@ -19,6 +21,7 @@ import 'package:arjipagos/src/data/repository/FacturaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/HomeRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/NotificacionRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/TicketRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/VersionRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
@@ -26,6 +29,7 @@ import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
+import 'package:arjipagos/src/domain/repository/VersionRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
@@ -46,6 +50,8 @@ import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.d
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/ticket/DescargarTicketUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/version/VerificarActualizacionUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/GetFacturasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetCountNoLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUseCase.dart';
@@ -221,5 +227,26 @@ abstract class AppModule {
   PagoUseCases get pagoUseCases => PagoUseCases(
         iniciarPago: IniciarPagoUseCase(pagoRepository),
         verificarPago: VerificarPagoUseCase(pagoRepository),
+      );
+
+  // ============================================================================
+  // VERSIÓN DE LA APP (ACTUALIZACIÓN FORZADA)
+  // ============================================================================
+
+  @injectable
+  VersionService get versionService => VersionService();
+
+  @injectable
+  VersionRepository get versionRepository =>
+      VersionRepositoryImpl(versionService);
+
+  /// El lector de la versión instalada se inyecta como función para que el
+  /// caso de uso se pueda probar sin el canal nativo de `package_info_plus`.
+  @injectable
+  VersionUseCases get versionUseCases => VersionUseCases(
+        verificarActualizacion: VerificarActualizacionUseCase(
+          versionRepository,
+          leerVersionInstalada: leerVersionInstalada,
+        ),
       );
 }

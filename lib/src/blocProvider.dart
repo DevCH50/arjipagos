@@ -1,5 +1,6 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -8,6 +9,8 @@ import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart'
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart';
+import 'package:arjipagos/src/presentation/pages/actualizacion/bloc/ActualizacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
@@ -32,6 +35,15 @@ import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/Notificacio
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 List<BlocProvider> blocProviders = [
+  // La comprobación de versión NO se dispara aquí: la lanza
+  // `ActualizacionObserver` tras el primer frame, cuando ya existe el
+  // navegador que necesita el diálogo de bloqueo.
+  BlocProvider<ActualizacionBloc>(
+    create: (context) => ActualizacionBloc(
+      locator<VersionUseCases>(),
+      locator<SharedPref>(),
+    ),
+  ),
   BlocProvider<LoginBloc>(
     create: (context) =>
         LoginBloc(locator<AuthUseCases>())..add(const LoginInitialEvent()),

@@ -92,8 +92,41 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 1. Ejecutar limpieza obligatoria (ver sección anterior)
 2. Verificar `ApiConfig.isProduction = true`
 3. Abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`)
-4. Menú: **Product → Archive**
-5. En Organizer: **Distribute App → App Store Connect**
+4. **Asignar las apariencias del icono de iOS 18** (ver sección siguiente) — pendiente
+5. Menú: **Product → Archive**
+6. En Organizer: **Distribute App → App Store Connect**
+
+### PENDIENTE en la Mac — apariencias del icono (iOS 18)
+
+Trabajo preparado desde Linux el 2026-08-21 que **solo se puede terminar en la Mac**.
+
+Las variantes oscura y con tinte del icono ya están generadas y copiadas en el catálogo:
+
+```
+ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x-dark.png
+ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x-tinted.png
+```
+
+**Qué hacer (2 minutos):** abrir `Runner.xcworkspace` → `Assets.xcassets` → `AppIcon` →
+en el inspector poner **Appearances: Any, Dark, Tinted** → arrastrar cada PNG a su hueco.
+
+**Por qué no se dejó aplicado, y por qué NO hay que editar el `Contents.json` a mano:**
+
+- El catálogo está en formato antiguo (idioms `iphone`/`ipad`/`ios-marketing`). Las
+  apariencias exigen un slot `universal` de tamaño único, y migrar **borra todas las
+  entradas por tamaño**.
+- El objetivo de despliegue es iOS 15; el icono de tamaño único es de iOS 16+.
+- **`flutter_launcher_icons` reescribe `Contents.json` en cada ejecución**, así que
+  cualquier edición manual se pierde al regenerar el icono. Si se regenera, hay que
+  repetir la asignación en Xcode.
+
+Dejar que Xcode escriba el `Contents.json` es lo seguro: lo adapta a su propia versión.
+Instrucciones largas y JSON alternativo en `otros/iconos_3d/LEEME_ios18.md`.
+
+Mientras no se asignen, Xcode avisa de *unassigned children* en el catálogo. Es un
+**aviso, no un error**, y desaparece al asignarlas.
+
+Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xcassets/`.
 
 ### Configuración crítica — NO modificar sin revisar
 

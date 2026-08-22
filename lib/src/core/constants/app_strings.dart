@@ -460,4 +460,29 @@ class AppStrings {
       'No se pudo descargar el archivo para compartir';
   static const String facturasZipSinDatos = 'Esta factura no tiene archivo adjunto';
   static const String facturasErrorDescarga = 'Error al descargar el archivo ZIP';
+
+  // ============================================================================
+  // ACTUALIZACIÓN DE LA APP
+  // ============================================================================
+
+  static const String actualizacionTituloObligatoria = 'Actualización necesaria';
+  static const String actualizacionTituloSugerida = 'Hay una versión nueva';
+  static const String actualizacionTituloMantenimiento = 'En mantenimiento';
+
+  /// Mensajes de respaldo: solo se usan si el backend no manda el suyo.
+  static const String actualizacionMensajeObligatoria =
+      'Esta versión de ArjiPagos ya no está disponible. Actualiza para seguir '
+      'consultando tus estados de cuenta y realizando pagos.';
+  static const String actualizacionMensajeSugerida =
+      'Ya puedes actualizar ArjiPagos con las últimas mejoras.';
+  static const String actualizacionMensajeMantenimiento =
+      'Estamos realizando trabajos de mantenimiento. Vuelve a intentarlo en '
+      'unos minutos.';
+
+  static const String actualizacionBotonActualizar = 'Actualizar';
+  static const String actualizacionBotonAhoraNo = 'Ahora no';
+  static const String actualizacionBotonReintentar = 'Reintentar';
+
+  static const String actualizacionErrorAbrirTienda =
+      'No se pudo abrir la tienda de aplicaciones. Búscanos como ArjiPagos.';
 }

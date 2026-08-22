@@ -2486,6 +2486,347 @@ y 1.0.24+33 por encima de la 1.0.23+32 publicada.
 
 ---
 
+## Sesión 2026-08-21 (e) — Actualización forzada desde el backend
+
+### Qué se resolvió
+
+No había forma de obligar a un usuario a actualizar. Un release que corrige un fallo de
+pagos, o que depende de un cambio de contrato del backend, convivía indefinidamente con
+versiones viejas que le pegaban al servidor nuevo.
+
+Ahora la app consulta una política de versión al arrancar y al volver del segundo plano.
+Si el build instalado quedó por debajo del mínimo publicado, sale un diálogo **no
+descartable** que solo deja ir a la tienda. El mismo endpoint sirve de interruptor de
+mantenimiento.
+
+Se descartó `in_app_update` (solo Android) y `upgrader` (lee la ficha de tienda, frágil y
+sin control sobre el bloqueo).
+
+### Reglas que gobiernan la feature
+
+1. **Si el endpoint falla, no se bloquea.** Sin red, timeout, 404, 500 o JSON inválido, la
+   app sigue normal. Dejar a un usuario fuera por un problema de red sería peor que
+   permitirle usar una versión vieja un rato más.
+2. **La URL de tienda la manda el backend**, para poder corregirla sin publicar un release.
+   El respaldo compilado solo cubre Android; el de iOS está vacío hasta tener el ID
+   numérico de App Store, y sin URL no se pinta el botón.
+3. **Publicar el mínimo en el backend SOLO cuando el build ya esté vivo en ambas tiendas.**
+   Subirlo antes deja a todos bloqueados sin poder actualizar. Es el único error de
+   operación que puede romper esto.
+4. Se compara por **build number** (`+33`), entero monotónico. Un build ilegible (0) se
+   trata como desconocido y cae a comparar el nombre de versión, para no bloquear a quien
+   sí tiene la versión buena.
+
+### Contrato del backend
+
+`GET /api/v1/app/version?plataforma=android|ios` — **público, sin Bearer**: la revisión
+ocurre antes del login. Todos los campos son opcionales.
+
+```json
+{
+  "build_minimo": 34,
+  "build_recomendado": 35,
+  "version_minima": "1.0.25",
+  "version_recomendada": "1.0.26",
+  "url_tienda": "https://play.google.com/store/apps/details?id=mx.moriah.arjipagos",
+  "mensaje": "Actualiza para seguir usando ArjiPagos",
+  "mantenimiento": false,
+  "mensaje_mantenimiento": ""
+}
+```
+
+Los enteros se aceptan también como texto (`"34"`), y un `build_minimo` en 0 se descarta.
+
+### Archivos nuevos
+
+| Archivo | Papel |
+| --- | --- |
+| `lib/src/domain/models/version/VersionApp.dart` | Modelo con `fromJson` tolerante |
+| `lib/src/domain/models/version/EstadoActualizacion.dart` | Enum + `ResultadoActualizacion` ya resuelto para pintar |
+| `lib/src/core/utils/version_comparador.dart` | `compararSemver` y `requiereActualizacion`, funciones puras |
+| `lib/src/data/dataSource/local/VersionInstalada.dart` | Lee `PackageInfo`; se inyecta como función para poder testear |
+| `lib/src/data/dataSource/remote/services/VersionService.dart` | GET público con `plataforma` |
+| `lib/src/domain/repository/VersionRepository.dart` + `data/repository/VersionRepositoryImpl.dart` | Interfaz e implementación |
+| `lib/src/domain/useCases/version/VerificarActualizacionUseCase.dart` | La regla de negocio completa |
+| `lib/src/domain/useCases/version/VersionUseCases.dart` | Agrupador |
+| `lib/src/presentation/pages/actualizacion/bloc/` | `ActualizacionBloc` + Event + State |
+| `lib/src/presentation/widgets/ActualizacionObserver.dart` | Dispara la revisión y abre el diálogo |
+| `lib/src/presentation/widgets/ActualizacionRequeridaDialog.dart` | `AlertDialog` con `PopScope` |
+| `lib/src/presentation/utils/AppNavigatorKey.dart` | Llave del Navigator raíz |
+
+### Decisiones de diseño que conviene recordar
+
+- **No se tocó `SplashBloc`.** La revisión se dispara desde el `builder` de `MaterialApp`,
+  tras el primer frame, así el bloqueo aplica haya o no sesión y sin meter mano en la
+  navegación existente.
+- **Hizo falta `appNavigatorKey`** porque el `builder` de `MaterialApp` se inserta *por
+  encima* del `Navigator`: desde ese contexto `showDialog` no encuentra navegador.
+- **El candado está por partida doble:** `barrierDismissible: false` al abrir y
+  `PopScope(canPop: false)` dentro. Uno cubre el toque fuera, el otro el botón atrás de
+  Android y el gesto de retroceso de iOS.
+- **Intervalo de 15 min** (`AppDurations.intervaloRevisionVersion`) entre consultas, con la
+  marca en `SharedPref`. Se guarda aunque la consulta falle, para no machacar un servidor
+  caído en cada regreso del segundo plano. El arranque siempre fuerza la revisión.
+- **El error de "no abrió la tienda" se pinta dentro del propio diálogo**, no en un
+  SnackBar (regla del proyecto) ni en otro diálogo encima de uno que bloquea.
+- `url_launcher` ya estaba en `pubspec.yaml` sin usarse en `lib/`: esta feature lo estrena.
+  No se instaló ninguna dependencia nueva.
+
+### Verificación
+
+`flutter analyze` sin incidencias y `flutter test` con **799 pasando**, cero fallos, de los
+cuales 50 son nuevos: comparador, servicio (con `runWithClient`), caso de uso, BLoC y el
+diálogo. El test guardián `services_no_filtran_excepciones_test.dart` cubre el servicio
+nuevo sin tocarlo, porque escanea carpetas completas.
+
+**Falta la prueba en dispositivo**: el endpoint todavía no existe en el backend, así que de
+momento solo se puede comprobar el camino "la consulta falla y la app arranca normal".
+
+---
+
+## Sesión 2026-08-21 (f) — El bloqueo probado en el Oppo, y el fallo que destapó
+
+### El fallo
+
+Con el endpoint ya en producción, la primera prueba en el Oppo (CPH2639, Android 16)
+falló: **el diálogo aparecía y se desvanecía solo un segundo después**, dejando al
+usuario dentro de la app con una versión obsoleta. Es decir, la actualización forzada no
+forzaba nada.
+
+Causa: `SplashPage` termina navegando con
+`Navigator.restorablePushNamedAndRemoveUntil(context, 'login'|'menu_principal', (route) => false)`.
+Ese predicado retira **todas** las rutas de la pila, y la del diálogo es una ruta más.
+El observador no se enteraba: para él el diálogo simplemente "se había cerrado".
+
+Y hubo un segundo fallo encima del primero. Al reabrirlo, el `push` caía **dentro** del
+mismo `removeUntil` que aún estaba vaciando la pila, así que la ruta nueva se iba con la
+misma barrida — sin diálogo y sin aviso en el log. Solo se veía una línea de reapertura y
+nada en pantalla.
+
+### El arreglo
+
+1. **El diálogo siempre se cierra devolviendo un `CierreActualizacion`** (`usuario` o
+   `reintentar`). Para eso el `PopScope` va con `canPop: false` *siempre* y el cierre lo
+   decide `onPopInvokedWithResult`, que es lo que permite devolver un motivo también
+   cuando se sale con el atrás. Se abre con `barrierDismissible: false` en todos los
+   casos, para que no quede ninguna vía de cierre anónima.
+2. Con eso, **un resultado nulo solo puede significar una cosa**: que una navegación se
+   llevó la ruta. `ActualizacionObserver` lo detecta y vuelve a abrir, hasta 5 veces.
+3. Antes de reabrir espera `300 ms` (`_esperaTrasNavegacion`) a que la navegación termine
+   de vaciar la pila. Sin esa espera la reapertura se perdía en silencio.
+4. El diálogo dejó de tocar el BLoC: solo informa de cómo se cerró. Quien traduce eso a
+   eventos —y quien decide reabrir— es el observador.
+
+### Verificado en el dispositivo (Oppo CPH2639, Android 16)
+
+| Caso | Resultado |
+| --- | --- |
+| Endpoint en producción | `200`, parseado. El backend **no manda `build_minimo`**, así que entra el respaldo por nombre de versión — el diseño tolerante era necesario, no decorativo |
+| Aviso sugerido | Diálogo sobre el Menú Principal con "Ahora no" y "Actualizar" |
+| Bloqueo obligatorio (build con `--build-name=1.0.22`) | "Actualización necesaria", un solo botón, **dos pulsaciones del atrás no lo cierran** y la app sigue en primer plano |
+| Botón "Actualizar" | Abre la ficha correcta de Google Play (`mx.moriah.arjipagos`) |
+| Sobrevive al salto del splash | Sí, tras el arreglo |
+
+El caso obligatorio se probó **sin tocar el backend**, compilando con
+`flutter build apk --debug --build-name=1.0.22 --build-number=31` para caer por debajo del
+mínimo publicado. `pubspec.yaml` no se modificó.
+
+### Trampa de testing que costó varias vueltas
+
+`testWidgets` corre el cuerpo dentro de una zona `FakeAsync`. Un BLoC creado en `setUp`
+nace en la zona de **fuera**, y entonces sus eventos no se entregan hasta que la prueba
+termina: los `expect` se evaluaban antes de que el diálogo existiera, y `await bloc.close()`
+en el `tearDown` dejaba el runner colgado hasta el timeout. **En tests de widget, el BLoC
+se construye dentro del cuerpo de la prueba**, no en `setUp`. Queda documentado en la
+cabecera de `test/widgets/common/actualizacion_observer_test.dart`.
+
+### Datos que aportó la prueba
+
+- **ID de App Store conseguido**: la respuesta de `plataforma=ios` trae
+  `id6760574386`. Ya está en `AppUrls.tiendaIos`, percent-encoded como lo manda el backend
+  (`arj%C3%AD-pagos`), porque un carácter no ASCII crudo no sobrevive a `Uri.parse`.
+- El backend hoy devuelve `version_minima: 1.0.24` y `version_recomendada: 1.0.25`.
+
+### Verificación
+
+`flutter analyze` limpio y `flutter test` con **805 pasando** (6 nuevos: 5 del observador
+—incluido el de regresión del salto del splash— y 1 del diálogo). En el Oppo quedó
+instalado el release **1.0.24+33**.
+
+---
+
+## Sesión 2026-08-21 (g) — Mantenimiento probado contra producción y segunda carrera corregida
+
+### Lo que se probó
+
+Con el backend ya mandando `mantenimiento` y `mensaje_mantenimiento`, se verificó el
+camino completo en el Oppo (CPH2639), build **release**, contra producción:
+
+| Comprobación | Resultado |
+| --- | --- |
+| `mantenimiento: true` | Diálogo "En mantenimiento" con el mensaje literal del backend |
+| Sin enlace a tienda | Correcto: solo "Reintentar" |
+| Manda sobre las versiones | Con `recomendada 1.0.25` tocaba el aviso de versión nueva; salió mantenimiento |
+| El atrás no lo cierra | Una pulsación: diálogo intacto, app en primer plano, **mismo PID** |
+| `mantenimiento: false` | La app se comporta igual que antes; las claves nuevas no estorban |
+
+Sobre el atrás: la primera pulsación se la come el diálogo. La segunda manda la app a
+segundo plano, pero **no es una vía de escape** — al volver, el bloqueo sigue puesto.
+
+### El segundo fallo (mismo día, otra carrera)
+
+Al pulsar **Reintentar** el diálogo se cerraba y no volvía nada, ni siquiera el aviso de
+versión nueva que tocaba. En arranque en frío sí salía, así que el hueco estaba en el
+reintento.
+
+Causa: `ActualizacionObserver` mandaba **dos eventos seguidos** —
+`ActualizacionDialogoCerradoEvent` y `ActualizacionVerificarEvent(forzar: true)`— y `bloc`
+**no garantiza el orden entre handlers de eventos distintos**. La comprobación corría
+primero, se encontraba `state.dialogoAbierto == true`, y salía por el guard sin consultar
+nada. Después el cierre reseteaba el estado y la pantalla se quedaba limpia.
+
+Arreglo: **un evento único**, `ActualizacionReintentarEvent`, cuyo handler emite el estado
+neutro y consulta a continuación, en ese orden y sin carrera posible. La consulta se
+extrajo a `_consultar(emit)`, compartida con `_onVerificar`.
+
+⚠️ Lección que vale para todo el proyecto: **si dos eventos tienen que ocurrir en orden,
+son un solo evento.** `bloc` solo garantiza el orden dentro del mismo tipo de evento.
+
+### Verificación
+
+`flutter analyze` limpio y `flutter test` con **807 pasando** (2 nuevos, ambos de
+regresión de esta carrera). Release 1.0.24+33 reinstalado en el Oppo.
+
+### "Reintentar" verificado de verdad
+
+Prueba definitiva en el Oppo, **sin reiniciar la app** (mismo PID 21249 de principio a fin):
+
+1. Con `app_mantenimiento` encendido, arranque en frío → diálogo "En mantenimiento".
+2. Pulsar Reintentar con el mantenimiento **aún encendido** → el diálogo vuelve a salir.
+   Antes del arreglo aquí no volvía nada, así que la reaparición ya prueba que consultó.
+3. Se apaga `app_mantenimiento` en el backend, con el diálogo en pantalla.
+4. Pulsar Reintentar → el diálogo cambia a **"Hay una versión nueva"**.
+
+El paso 4 es el que cierra el círculo: solo puede ocurrir si leyó el valor nuevo del
+servidor, no una copia en memoria. Los cuatro casos de la feature quedan verificados en
+dispositivo contra producción.
+
+---
+
+## Sesión 2026-08-21 (h) — Icono con volumen y nombre "Arjí Pagos"
+
+### Qué se cambió
+
+El icono era el emblema marrón sobre un cuadro blanco: se perdía sobre fondos
+claros y no tenía presencia. Ahora es un cuadro con degradado de marca, barrido de luz
+y el emblema en crema con sombra — el mismo recurso que usan WhatsApp y Temu, que **no
+son 3D**: son figuras planas con degradado y sombra.
+
+Se descartaron dos alternativas probadas: un medallón en relieve (a 48 px el crema sobre
+crema se apagaba) y una extrusión real en 3D (se leía como icono de juego y engrosaba el
+lettering "ARJÍ" al reducirlo). La comparativa está en `otros/iconos_3d/`.
+
+También se cambió la etiqueta del lanzador: **`arjipagos` → `Arjí Pagos`**, en
+`android:label` del manifiesto y en `CFBundleDisplayName` de iOS. `CFBundleName` se dejó
+igual: es el nombre interno, no el visible.
+
+### Assets y por qué son cuatro
+
+El emblema es **línea fina**, así que el tamaño se ajustó midiendo, no a ojo: se renderizó
+a 48, 72 y 96 px y se amplió sin suavizar para ver qué detalle sobrevivía.
+
+| Archivo | Para qué | Escala del emblema |
+| --- | --- | --- |
+| `assets/arji/icono_app.png` | iOS y Android antiguo: imagen ya compuesta | **86 %** |
+| `assets/arji/icono_fondo.png` | Capa de fondo del icono adaptativo | — |
+| `assets/arji/icono_frente.png` | Capa de frente del icono adaptativo | **68 %** |
+| `assets/arji/icono_mono.png` | Iconos temáticos de Android 13+ | 68 % |
+
+**La diferencia de escala es intencional.** El icono adaptativo lo recorta cada lanzador
+con su propia máscara y solo el 66,7 % central está garantizado; al 86 % una máscara
+circular se comería el aro. iOS usa la imagen tal cual y solo redondea esquinas, así que
+puede ir mucho más grande.
+
+`app_icon.png` **no se tocó**, para poder revertir.
+
+### Verificado en el Oppo
+
+Instalado en release: el icono se lee bien junto a sus vecinos del cajón de apps y la
+etiqueta sale como "Arjí Pagos". Se llegó al 68 % en dos pasadas — al 60 % inicial el
+emblema quedaba flotando con demasiado margen.
+
+### iOS: lo que queda pendiente en la Mac
+
+Los 21 PNG se generaron **sin canal alfa** (Apple rechaza en revisión los iconos con
+transparencia) y con las esquinas opacas a sangre. Eso está listo.
+
+Las variantes **oscura y con tinte de iOS 18** están generadas y copiadas en el catálogo,
+pero **sin declarar en `Contents.json`**, a propósito:
+
+- El catálogo está en formato antiguo (idioms `iphone`/`ipad`/`ios-marketing`); las
+  apariencias exigen un slot `universal` de tamaño único, y migrar **borra las entradas
+  por tamaño**.
+- El objetivo de despliegue es iOS 15 y el icono de tamaño único es de iOS 16+.
+- `flutter_launcher_icons` reescribe ese archivo en cada ejecución.
+
+Nada de esto se puede comprobar desde Linux. **Instrucciones completas en
+`otros/iconos_3d/LEEME_ios18.md`**; lo recomendado es asignarlas desde el editor de
+Assets de Xcode, que escribe el `Contents.json` correcto por sí solo.
+
+### Verificación
+
+`flutter analyze` limpio y `flutter test` con **807 pasando**, sin regresiones.
+
+---
+
+## Sesión 2026-08-21 (i) — Release 1.0.25+34
+
+### Versionado
+
+`pubspec.yaml` estaba en `1.0.24+33`, **igual** que la versión publicada en las tiendas.
+La regla del proyecto exige que sea mayor, así que se subió patch y build:
+**`1.0.25+34`**. Coincide además con lo que el backend ya anuncia como
+`version_recomendada`.
+
+Es la **primera versión que consulta el endpoint de versión**: hasta que se publique,
+la actualización forzada no le llega a ningún usuario.
+
+### Verificación previa al release
+
+| Comprobación | Resultado |
+| --- | --- |
+| `ApiConfig.isProduction` | `true` |
+| Permiso INTERNET en el manifiesto | presente |
+| `flutter analyze` | sin incidencias |
+| `flutter test` | **807 pasando**, 0 fallos |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | 2630 en ambos |
+| `LaunchAction` / `ArchiveAction` | `Release` en ambos |
+| Bloques del Podfile (`objective_c`/dwarf, LastUpgradeCheck, iOS 15.0) | presentes |
+| `Info.plist` | XML válido, `CFBundleDisplayName` = "Arjí Pagos" |
+| Catálogo de iconos iOS | `Contents.json` válido, sin referencias rotas, **ningún PNG con alfa** |
+
+### Prueba en el Oppo
+
+Instalado el release `1.0.25+34` (`versionName=1.0.25`, `versionCode=34`): la app entra
+directa al Menú Principal y **ya no sale ningún aviso de actualización**, porque 1.0.25
+iguala la `version_recomendada`. Es el cierre correcto del ciclo: la feature queda muda
+para quien ya está al día.
+
+### Artefactos
+
+- APK: `build/app/outputs/flutter-apk/app-release.apk`
+- AAB: `build/app/outputs/bundle/release/app-release.aab`
+
+### Pendiente al publicar
+
+1. **Subir a las tiendas.** Solo cuando la 1.0.25 esté viva en Play **y** en App Store
+   tiene sentido tocar `version_minima` en el backend, y conviene hacerlo por plataforma
+   por separado (las claves son independientes).
+2. **En la Mac:** limpieza obligatoria, asignar las apariencias del icono de iOS 18
+   (ver `CLAUDE.md`, sección "PENDIENTE en la Mac") y Archive.
+
+---
+
 ## Próximas tareas
 
 - Página de Facturas
@@ -2501,3 +2842,9 @@ y 1.0.24+33 por encima de la 1.0.23+32 publicada.
   compartir (ver sesión 2026-08-21 (d))
 - Revisar si `open_filex` publica 4.8.x, para quitar la supresión de warnings del
   Podfile en vez de arrastrarla
+- **Actualización forzada:** revisar en iOS cuando se pueda usar la Mac
+- **Actualización forzada:** `version_recomendada` está en `1.0.25`, que no existe en
+  ninguna tienda: hoy el aviso sugerido manda al usuario a actualizar a una versión que no
+  puede instalar. Bajarla a `1.0.24` o publicar la 1.0.25
+- **Icono iOS 18:** asignar en Xcode las apariencias oscura y con tinte
+  (ver `otros/iconos_3d/LEEME_ios18.md`) y comprobarlas en el iPhone

@@ -95,4 +95,17 @@ abstract class Endpoints {
 
   /// DELETE - Desregistrar token FCM del dispositivo al hacer logout
   static const String dispositivoEliminar = '/api/v1/dispositivo/eliminar';
+
+  // ============================================================================
+  // VERSIÓN DE LA APP
+  // ============================================================================
+
+  /// GET - Política de versión mínima de la plataforma.
+  ///
+  /// Es el único endpoint **público** (sin Bearer Token): se consulta en el
+  /// arranque, antes de que exista una sesión, para poder bloquear una versión
+  /// obsoleta aunque el usuario no haya iniciado sesión.
+  ///
+  /// Espera el parámetro `plataforma` con valor `android` o `ios`.
+  static const String appVersion = '/api/v1/app/version';
 }
