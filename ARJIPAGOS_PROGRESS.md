@@ -2827,6 +2827,203 @@ para quien ya está al día.
 
 ---
 
+## Sesión 2026-08-23 — Icono con el emblema ARJI 3D sobre blanco
+
+**Petición:** cambiar el icono de la app por `assets/arji/logo_arji_3d.png`, sobre fondo
+blanco y ocupando lo máximo permitido, quitando el fondo que trajera la imagen.
+
+**El problema del origen:** `logo_arji_3d.png` llegó en RGB **sin canal alfa**, con el
+tablero de transparencia del visor ya mezclado en los píxeles (cuadros de 25.6 px que
+alternan gris 205 y blanco 255). Usarlo tal cual habría metido el ajedrez en el icono.
+
+**Cómo se limpió:** reconstruir el tablero por fase falló (quedaba residuo en los bordes
+de cada cuadro). Lo que funcionó fue separar por **cromaticidad**: el emblema es marrón
+(cromático) y todo el fondo —incluidos los huecos calados del anillo— es acromático y
+claro. Máscara de fondo `croma < 14 y luminosidad > 140`, con alfa suave en el antialias.
+El corte por luminosidad conserva los grabados oscuros del relieve, que también son
+acromáticos pero no son claros. Resultado: 0 píxeles de residuo en el fondo.
+
+**Archivos nuevos** (los del icono anterior quedan intactos por si hay que volver atrás):
+
+| Archivo | Uso | Emblema |
+| --- | --- | --- |
+| `assets/arji/icono_app_3d.png` | iOS y Android legacy, RGB sin alfa | 79.2 % |
+| `assets/arji/icono_fondo_3d.png` | capa de fondo adaptativa, blanco liso | — |
+| `assets/arji/icono_frente_3d.png` | capa de frente adaptativa | 77.6 % |
+| `assets/arji/icono_mono_3d.png` | icono temático Android 13+ | 77.6 % |
+| `assets/arji/icono_ios_oscuro_3d.png` | apariencia oscura iOS 18 | 79.2 % |
+| `assets/arji/icono_ios_tinte_3d.png` | apariencia con tinte iOS 18 | 79.2 % |
+
+### El tamaño correcto del emblema — investigado, no tanteado
+
+Se probó a ojo al 68 %, 100 %, 95 %, 90 % y 80 % del botón antes de ir a las guías. Las
+medidas buenas son estas y ya no hay que volver a experimentar:
+
+**Android.** La capa mide 108 dp, el lanzador solo deja ver los 72 dp centrales y cada
+fabricante aplica su forma. Lo único garantizado contra el recorte es un **círculo
+centrado de 66 dp**. Ese 66 dp coincide con la **keyline de círculo de los product icons
+de Material** (176 de 192 dp = 91.7 %) llevada al recuadro de 72 dp — o sea que para un
+emblema circular como el de ARJI no es solo el máximo seguro, es la medida de diseño.
+
+**La trampa de flutter_launcher_icons:** envuelve la capa de frente en un
+`<inset android:inset="16%">` al escribir `mipmap-anydpi-v26/ic_launcher.xml`, que la
+encoge al 68 %. Ese XML se regenera en cada ejecución, así que **la compensación tiene que
+vivir en el PNG de origen**: emblema al **89.9 %** del PNG → 89.9 % × 0.68 × 108 dp = 66 dp.
+Fue justo esto lo que hacía que el primer intento se viera chico: iba al 66.7 % del PNG y
+acababa en 45 dp, un 62 % del botón.
+
+**iOS.** Apple no publica keylines. Dice llenar el lienzo de 1024, **no** redondear las
+esquinas uno mismo (el sistema aplica su superelipse) y mantener lo esencial lejos de las
+esquinas. La convención de las plantillas de icono es **10 % de margen por lado** (arte al
+80 %). Con un emblema circular va holgado: la superelipse nunca se acerca más que los
+puntos medios de los lados.
+
+**Techos reales.** En Android el máximo SEGURO es 66 dp (91.7 % del botón): la
+especificación permite máscaras que llegan a 33 dp del centro, o sea un círculo de 66 dp.
+Entre 66 y 72 dp hay riesgo de recorte según el lanzador; por encima de 72 dp el recorte es
+seguro. En iOS el techo geométrico es el 100 % del lienzo — se verificó numéricamente que el
+punto más cercano al centro de la superelipse está en los puntos medios de los lados, a
+1.0000 de la semianchura—, pero ningún icono de iOS se diseña así.
+
+**Medida elegida: 57 dp = 79.2 % del botón**, que es la keyline de CUADRADO de Material
+(152/192 dp), con 7.5 dp de aire por lado.
+
+**Las dos plataformas al mismo tamaño.** En Android el emblema se mide contra el recuadro
+visible de 72 dp; en iOS el lienzo ENTERO es el botón, sin recuadro más pequeño. Por eso
+"79.2 % en Android" y "75 % en iOS" NO se veían igual: el emblema salía ~5 % más chico en
+iOS. Para igualarlos hay que usar la misma proporción del botón, o sea 57/72 = 79.2 % también
+en iOS. Y esa cifra deja 10.4 % de margen por lado, justo la convención del 10 % de las
+plantillas de Apple: igualar Android y cumplir la guía de iOS resultan ser lo mismo.
+
+Verificado componiendo los dos botones al mismo número de píxeles —Android con sus dos capas,
+el inset del 16 %, el recorte a 72/108 y la squircle; iOS con su superelipse— y midiendo el
+emblema sobre cada render: **79.2 % en los dos**.
+
+Ojo: siguen siendo PNG distintos (`icono_frente_3d.png` para la capa adaptativa,
+`icono_app_3d.png` para iOS y el mipmap legacy). Cambiar uno NO mueve el otro — se comprobó
+por hash. Si se ajusta el tamaño en Android hay que ajustar iOS a mano.
+
+**Trampa del caché de ColorOS.** Reinstalar el APK **no** refresca el icono que pinta el
+sistema: dos capturas seguidas con builds distintos salieron idénticas píxel a píxel. Hay
+que hacer `adb shell am force-stop com.android.settings` antes de volver a abrir
+Información de la aplicación, o se revisa un render viejo creyendo que es el nuevo. Se
+verifica midiendo la proporción emblema/botón en la captura, no a ojo.
+
+**Verificado en Android:** APK release instalado en el Oppo, con el caché forzado a
+refrescarse. Medido sobre la captura: el emblema ocupa el **79.0 %** del botón — el objetivo
+era 79.2 %. Squircle blanco, emblema centrado, sin recortes. El relieve 3D se aplana un poco
+al tamaño del lanzador, pero se lee.
+
+**Verificado en iOS (simulado):** desde Linux no hay iPhone (ver CLAUDE.md), así que se
+aplicó la **superelipse real de iOS** (exponente 5, con supermuestreo) a los PNG que
+`flutter_launcher_icons` ya escribió en el catálogo, a los tamaños reales de pantalla de
+inicio (180 y 120 px) y de Ajustes (87 px), sobre fondo claro y oscuro. Encaja en los tres
+sin recortes. Es una comprobación fiel de la forma, **no** una captura de dispositivo:
+falta confirmarlo en el iPhone cuando haya Mac.
+
+**Pendiente en iOS:** las apariencias oscura y con tinte se regeneraron con el emblema
+nuevo pero siguen **sin asignar** en Xcode — `flutter_launcher_icons` reescribió
+`Contents.json`, así que la asignación manual del catálogo hay que rehacerla en la Mac.
+
+
+## Sesión 2026-08-23 (b) — Invitación a calificar la app
+
+**Petición:** invitar cada cierto tiempo al usuario a calificar la app y escribir reseña.
+
+**Paquete:** `in_app_review 2.0.12` (+ su platform interface). Antes de instalarlo se corrió
+`flutter pub add --dry-run`: añade solo esos 2 paquetes, sin downgrades ni conflictos.
+
+### Lo que hay que entender de estas APIs
+
+1. **El sistema decide si la hoja aparece, no la app.** Se llama a `requestReview()` y puede
+   no pasar nada, sin callback ni error. Apple limita a **3 veces por usuario al año**; Google
+   tiene su propia cuota. Cada llamada gasta cuota **a ciegas**, así que la política propia
+   tiene que ser conservadora o se quema la oportunidad buena.
+2. **Apple prohíbe disparar la hoja desde un botón.** El botón del menú usa
+   `openStoreListing()`, que abre la ficha de la tienda y no consume cuota.
+3. **En Android solo funciona si la app viene de Google Play.** Con `adb install`
+   `isAvailable()` devuelve `false` y no pasa nada. **Esto no se puede probar por USB**: hay
+   que subirlo a una pista de prueba interna.
+
+### Arquitectura
+
+| Capa | Archivo |
+| --- | --- |
+| domain/models | `resena/EstadoResena.dart` |
+| domain/repository | `ResenaRepository.dart` |
+| domain/useCases | `resena/{SolicitarResena,RegistrarPagoExitoso,AbrirFichaTienda,Resena}UseCase(s).dart` |
+| data/dataSource/local | `ResenaStorage.dart` (contadores) · `ResenaNativa.dart` (envoltorio del plugin) |
+| data/repository | `ResenaRepositoryImpl.dart` |
+
+`ResenaNativa` existe solo para que el canal nativo sea mockeable: `InAppReview.instance` es
+un singleton que llama a plataforma y no se puede ejercitar en un unit test. La **política**
+vive en `SolicitarResenaUseCase`, no en el repositorio.
+
+**Condiciones para invitar** — todas a la vez: ≥3 pagos exitosos, ≥7 días desde el primer
+pago, ≥120 días desde la invitación anterior y máximo 3 al año. La comprobación nativa
+(`isAvailable`) va **la última** a propósito: es la única que cruza el canal de plataforma y
+no tiene sentido pagarla si la política ya dijo que no.
+
+El tope anual se guarda como **lista de fechas**, no como contador: el límite de Apple es
+deslizante (3 en 365 días) y cualquier contador con corte fijo se desincroniza del suyo.
+
+### Enganches
+
+- **Automático:** `PagoWebViewPage`. Al confirmarse el pago se llama a
+  `registrarPagoExitoso`; al cerrar el diálogo de éxito, tras el `popUntil` y dentro de un
+  `addPostFrameCallback`, se llama a `solicitarResena`. El post-frame importa: la hoja la
+  pinta el sistema encima de lo que haya, y debe salir sobre el estado de cuenta ya
+  restaurado, no sobre el WebView cerrándose.
+- **Manual:** item "Calificar la app" en el menú (`kMenuCalificarAppId`, sin `ruta`).
+  `MenuPrincipalPage` lo intercepta antes del chequeo de ruta y abre la ficha de la tienda.
+  Si falla, `AlertDialog` con `AppStrings.resenaErrorAbrirTienda` — nunca la excepción cruda.
+
+`AppUrls.appStoreId = '6760574386'`, que `in_app_review` exige para abrir la ficha en iOS.
+
+### Verificación
+
+- **21 tests nuevos** (`solicitar_resena_usecase_test.dart`, `resena_storage_test.dart`):
+  cubren cada condición que corta por separado, la ventana deslizante, los datos corruptos y
+  que un fallo no propague al flujo de pago.
+- Se actualizó `menu_principal_bloc_test.dart`, que daba por hechos 3 items del menú.
+- **Suite completa: 829 tests en verde.** `flutter analyze` sin incidencias.
+- APK release instalado en el Oppo.
+
+### Verificado en el dispositivo (Oppo, APK release)
+
+- La app arranca sin crashes; `logcat` limpio de `FATAL` y `E/flutter`.
+- El item "Calificar la app" sale en el menú, en claro **y** en oscuro.
+- Al pulsarlo, el foco pasa a `com.android.vending` con la ficha de **Arjí Pagos** abierta en
+  "Califica esta app" / "Escribe una opinión". El botón manual funciona de verdad.
+- R8: se comprobó en el dex del APK release que `in_app_review` y `ReviewInfo` (Play Core)
+  sobreviven a la minificación. No hizo falta añadir reglas a `proguard-rules.pro`.
+
+**Pendiente de probar de verdad:** la invitación **automática** no se puede verificar por USB
+(`isAvailable()` da `false` fuera de Play Store). Hay que publicar en una pista de prueba
+interna e instalar desde ahí. En iOS, cuando haya Mac.
+
+**Pendiente en la Mac:** `ios/Podfile.lock` está versionado y **todavía no incluye
+`in_app_review`**. Se resuelve solo con el flujo ya documentado (`flutter clean && flutter pub
+get && cd ios && pod install`) antes del Archive. El plugin pide iOS 12.0 y el proyecto va a
+15.0, así que no hay conflicto de plataforma.
+
+### Hallazgo: `assets/arji/` se empaqueta entero en la app (6.6 MB muertos)
+
+`pubspec.yaml` declara `assets/arji/` como carpeta de assets, así que **todo** lo que hay
+dentro viaja dentro del APK. En el código Dart solo se usa `assets/arji/logo_arji.png`
+(159 KB). Lo demás son insumos de build (`icono_*.png` para flutter_launcher_icons,
+`splash_logo.png`) y basura acumulada — incluidos **dos ZIP** (`iloveimg-resized-ipad.zip` y
+`-iphone.zip`, 1.9 MB entre los dos).
+
+Total: 26 archivos, 6.8 MB empaquetados, de los que **6.6 MB no se usan en runtime**. De esos,
+2.9 MB los añadió el cambio de icono de esta sesión (`icono_*_3d.png` + `logo_arji_3d.png`).
+
+**Arreglo propuesto (NO aplicado — requiere tu visto bueno porque implica mover archivos):**
+sacar los insumos de icono/splash a una carpeta que NO esté declarada en `pubspec.yaml`
+(p. ej. `tool/iconos/`), dejar en `assets/arji/` solo lo que se carga en runtime, y apuntar
+`flutter_launcher_icons` y `flutter_native_splash` a la carpeta nueva. Los ZIP no pintan nada
+en el repo.
+
 ## Próximas tareas
 
 - Página de Facturas

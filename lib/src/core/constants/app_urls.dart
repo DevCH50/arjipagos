@@ -31,4 +31,11 @@ abstract class AppUrls {
   /// un carácter no ASCII crudo en la ruta no sobrevive a `Uri.parse`.
   static const String tiendaIos =
       'https://apps.apple.com/mx/app/arj%C3%AD-pagos/id6760574386';
+
+  /// Identificador numérico de ArjiPagos en la App Store.
+  ///
+  /// Es el `id6760574386` de [tiendaIos] sin el prefijo. Lo exige
+  /// `in_app_review` para abrir la ficha en iOS; en Android no se usa, porque
+  /// ahí la ficha se resuelve por el nombre del paquete.
+  static const String appStoreId = '6760574386';
 }

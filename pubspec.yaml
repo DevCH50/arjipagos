@@ -82,6 +82,7 @@ dependencies:
   # sin código nativo: no toca los builds de Android ni de iOS.
   markdown: ^7.3.1
   pdfx: ^2.11.0
+  in_app_review: ^2.0.12
 
 dev_dependencies:
   flutter_test:
@@ -110,20 +111,37 @@ flutter_launcher_icons:
 
   # Imagen ya compuesta: la usan iOS y los Android anteriores al icono
   # adaptativo. Cuadrada y sin alfa, porque iOS no admite transparencia y
-  # redondea las esquinas él mismo.
-  image_path: "assets/arji/icono_app.png"
+  # redondea las esquinas él mismo (superelipse, no rectángulo redondeado).
+  # Apple no publica keylines: pide llenar el lienzo de 1024 y no redondear
+  # nada uno mismo. La convención de las plantillas de icono es 10 % de margen
+  # por lado. En iOS el lienzo ENTERO es el botón, sin recuadro visible más
+  # pequeño como en Android, así que para que el emblema se vea del MISMO tamaño
+  # en las dos plataformas hay que usar la misma proporción del botón: 57/72 =
+  # 79.2 %. Y esa cifra deja 10.4 % de margen por lado, justo la convención de
+  # Apple: igualar Android y cumplir la guía de iOS resultan ser lo mismo.
+  image_path: "assets/arji/icono_app_3d.png"
 
   # Icono adaptativo (Android 8+): son DOS capas que el lanzador compone y
   # recorta con su propia máscara —círculo, squircle, gota...—. De los 108 dp
-  # del lienzo solo los 72 centrales están garantizados, así que el emblema de
-  # la capa de frente va al 60 % para no perder nada en el recorte.
-  adaptive_icon_background: "assets/arji/icono_fondo.png"
-  adaptive_icon_foreground: "assets/arji/icono_frente.png"
+  # del lienzo el lanzador solo deja ver los 72 centrales, y lo único
+  # garantizado es un círculo de 66 dp. Ese 66 dp es además la keyline de
+  # círculo de los product icons de Material (176/192 dp), así que para un
+  # emblema circular como el de ARJI es LA medida máxima, no un tanteo. Aquí se
+  # usa 57 dp (79.2 % del botón), que es la keyline de CUADRADO de Material
+  # (152/192 dp): a 66 dp el emblema queda pegado al borde de la máscara.
+  #
+  # OJO: flutter_launcher_icons envuelve la capa de frente en un
+  # <inset android:inset="16%"> al escribir mipmap-anydpi-v26/ic_launcher.xml,
+  # que la encoge al 68 %. Por eso el emblema va al 77.6 % dentro de su PNG:
+  # 77.6 % x 0.68 x 108 dp = 57 dp. Ese XML se regenera en cada ejecución, así
+  # que la compensación tiene que vivir en el PNG, no en el XML.
+  adaptive_icon_background: "assets/arji/icono_fondo_3d.png"
+  adaptive_icon_foreground: "assets/arji/icono_frente_3d.png"
 
   # Iconos temáticos de Android 13+: si el usuario los activa, el sistema pinta
   # esta silueta con los colores de su fondo de pantalla. Sin ella, Android
   # improvisa una a partir del icono y suele quedar mal.
-  adaptive_icon_monochrome: "assets/arji/icono_mono.png"
+  adaptive_icon_monochrome: "assets/arji/icono_mono_3d.png"
 
   remove_alpha_ios: true
 

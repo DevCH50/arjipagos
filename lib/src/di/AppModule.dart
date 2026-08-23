@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart';
+import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
@@ -21,6 +23,7 @@ import 'package:arjipagos/src/data/repository/FacturaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/HomeRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/NotificacionRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/TicketRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/ResenaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/VersionRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
@@ -29,6 +32,7 @@ import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
+import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
 import 'package:arjipagos/src/domain/repository/VersionRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
@@ -50,6 +54,10 @@ import 'package:arjipagos/src/domain/useCases/edocta/GetEstadosDeCuentaUseCase.d
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/ticket/DescargarTicketUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/resena/AbrirFichaTiendaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/resena/RegistrarPagoExitosoUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/resena/SolicitarResenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/version/VerificarActualizacionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/GetFacturasUseCase.dart';
@@ -248,5 +256,28 @@ abstract class AppModule {
           versionRepository,
           leerVersionInstalada: leerVersionInstalada,
         ),
+      );
+
+  // ============================================================================
+  // INVITACIÓN A CALIFICAR LA APP
+  // ============================================================================
+
+  /// Contadores de la política de invitaciones (pagos, fechas, tope anual).
+  @injectable
+  ResenaStorage get resenaStorage => ResenaStorage(sharedPref);
+
+  /// Canal nativo de `in_app_review`, aislado para poder mockearlo en tests.
+  @injectable
+  ResenaNativa get resenaNativa => ResenaNativa();
+
+  @injectable
+  ResenaRepository get resenaRepository =>
+      ResenaRepositoryImpl(resenaStorage, resenaNativa);
+
+  @injectable
+  ResenaUseCases get resenaUseCases => ResenaUseCases(
+        registrarPagoExitoso: RegistrarPagoExitosoUseCase(resenaRepository),
+        solicitarResena: SolicitarResenaUseCase(resenaRepository),
+        abrirFichaTienda: AbrirFichaTiendaUseCase(resenaRepository),
       );
 }

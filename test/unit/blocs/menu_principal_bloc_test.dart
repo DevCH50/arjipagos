@@ -119,15 +119,21 @@ void main() {
       });
     });
 
-    test('defaultMenuItems contiene los items de pagos y facturas', () {
+    test('defaultMenuItems contiene los items de pagos, facturas y calificar',
+        () {
       // Act
       final items = MenuPrincipalState.defaultMenuItems;
 
       // Assert
-      expect(items, hasLength(3));
+      expect(items, hasLength(4));
       expect(
         items.map((i) => i.id),
-        containsAll(['pagos_pendientes', 'pagos_realizados', 'facturas']),
+        containsAll([
+          'pagos_pendientes',
+          'pagos_realizados',
+          'facturas',
+          kMenuCalificarAppId,
+        ]),
       );
     });
 
@@ -143,6 +149,15 @@ void main() {
       expect(rutasPorId['pagos_pendientes'], equals('edo_cta'));
       expect(rutasPorId['pagos_realizados'], equals('edo_cta_pagados'));
       expect(rutasPorId['facturas'], equals('facturas'));
+    });
+
+    test('el item de calificar no tiene ruta', () {
+      // No navega dentro de la app: abre la ficha de la tienda. Si algún día
+      // se le pusiera una ruta, MenuPrincipalPage intentaría navegar a ella.
+      final calificar = MenuPrincipalState.defaultMenuItems
+          .firstWhere((i) => i.id == kMenuCalificarAppId);
+
+      expect(calificar.ruta, isNull);
     });
   });
 

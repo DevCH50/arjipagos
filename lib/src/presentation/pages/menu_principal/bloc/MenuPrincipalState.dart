@@ -8,6 +8,12 @@ import 'package:flutter/material.dart';
 // Re-export MenuItem para mantener compatibilidad
 export 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_item_model.dart';
 
+/// Id del item que abre la ficha de la app en la tienda.
+///
+/// Lo comparten el estado (que crea el item) y la página (que lo intercepta
+/// antes de tratarlo como una ruta), así que vive aquí y no duplicado.
+const String kMenuCalificarAppId = 'calificar_app';
+
 /// Estado del BLoC de Menú Principal.
 class MenuPrincipalState extends Equatable {
   /// Nombre del usuario logueado.
@@ -87,6 +93,13 @@ class MenuPrincipalState extends Equatable {
       titulo: AppStrings.menuFacturas,
       icono: Icons.receipt_long,
       ruta: 'facturas',
+    ),
+    // Sin `ruta`: no navega dentro de la app, abre la ficha de la tienda.
+    // Lo maneja MenuPrincipalPage antes de mirar la ruta.
+    const MenuItem(
+      id: kMenuCalificarAppId,
+      titulo: AppStrings.menuCalificarApp,
+      icono: Icons.star_outline,
     ),
   ];
 

@@ -9,6 +9,9 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart' as _i667;
+import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart'
+    as _i518;
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart'
     as _i260;
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart'
@@ -50,6 +53,7 @@ import 'package:arjipagos/src/domain/repository/HomeRepository.dart' as _i123;
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
 import 'package:arjipagos/src/domain/repository/PagoRepository.dart' as _i946;
+import 'package:arjipagos/src/domain/repository/ResenaRepository.dart' as _i434;
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart' as _i522;
 import 'package:arjipagos/src/domain/repository/VersionRepository.dart'
     as _i943;
@@ -67,6 +71,8 @@ import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart'
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart'
     as _i274;
 import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart' as _i604;
+import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart'
+    as _i131;
 import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart'
     as _i60;
 import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart'
@@ -131,6 +137,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i7.VersionService>(() => appModule.versionService);
     gh.factory<_i943.VersionRepository>(() => appModule.versionRepository);
     gh.factory<_i922.VersionUseCases>(() => appModule.versionUseCases);
+    gh.factory<_i518.ResenaStorage>(() => appModule.resenaStorage);
+    gh.factory<_i667.ResenaNativa>(() => appModule.resenaNativa);
+    gh.factory<_i434.ResenaRepository>(() => appModule.resenaRepository);
+    gh.factory<_i131.ResenaUseCases>(() => appModule.resenaUseCases);
     return this;
   }
 }

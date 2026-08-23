@@ -103,6 +103,13 @@ class AppStrings {
   static const String menuPagosPendientes = 'Pagos Pendientes';
   static const String menuPagosRealizados = 'Pagos Realizados';
   static const String menuFacturas = 'Facturas';
+
+  /// Item del menú que abre la ficha de la app en la tienda.
+  static const String menuCalificarApp = 'Calificar la app';
+
+  /// Error al no poder abrir Google Play o la App Store desde el menú.
+  static const String resenaErrorAbrirTienda =
+      'No se pudo abrir la tienda de aplicaciones. Inténtalo de nuevo más tarde.';
   static const String menuCerrando = 'Cerrando sesión...';
   static const String menuNoPudoCargar = 'No se pudo cargar la información del usuario';
 

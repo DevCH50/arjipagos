@@ -6,6 +6,7 @@ library;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
+import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
@@ -56,6 +57,9 @@ class MockEdoCtaRepository extends Mock implements EdoCtaRepository {}
 
 /// Mock de SharedPreferences wrapper.
 class MockSharedPref extends Mock implements SharedPref {}
+
+/// Mock del repositorio de invitaciones a calificar la app.
+class MockResenaRepository extends Mock implements ResenaRepository {}
 
 /// Mock del servicio de Firebase Cloud Messaging.
 class MockFcmService extends Mock implements FcmService {}

@@ -1,4 +1,7 @@
+import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banners_strip.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
@@ -155,10 +158,34 @@ class _MenuPrincipalBody extends StatelessWidget {
       (i) => i.id == state.selectedItemId,
     );
 
+    // "Calificar la app" no navega: abre la ficha de la tienda. Se intercepta
+    // antes del chequeo de ruta porque su MenuItem no tiene ninguna.
+    if (item.id == kMenuCalificarAppId) {
+      _abrirFichaTienda(context);
+      return;
+    }
+
     if (item.ruta == null) {
       return;
     }
 
     Navigator.restorablePushNamed(context, item.ruta!);
+  }
+
+  /// Abre Google Play o la App Store en la ficha de ArjiPagos.
+  ///
+  /// Se usa `openStoreListing` y no la hoja de reseña nativa porque Apple
+  /// prohíbe disparar esa hoja desde un botón; además así no se consume la
+  /// cuota de invitaciones automáticas del sistema.
+  Future<void> _abrirFichaTienda(BuildContext context) async {
+    try {
+      await locator<ResenaUseCases>().abrirFichaTienda.run();
+    } catch (e) {
+      AppLogger.warning('No se pudo abrir la ficha de la tienda: $e',
+          tag: 'Resena');
+      if (context.mounted) {
+        _showErrorDialog(context, AppStrings.resenaErrorAbrirTienda);
+      }
+    }
   }
 }

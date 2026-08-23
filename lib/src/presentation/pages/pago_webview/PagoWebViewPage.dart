@@ -1,3 +1,5 @@
+import 'package:arjipagos/injection.dart';
+import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
 import 'dart:convert';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'dart:typed_data';
@@ -126,6 +128,9 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     _pagoProcessed = true;
     if (result.success) {
       context.read<CarritoBloc>().add(const CarritoPagoExitosoEvent());
+      // Suma el pago a la cuenta de la política de reseñas antes de mostrar el
+      // diálogo, para que al cerrarlo el contador ya esté al día.
+      locator<ResenaUseCases>().registrarPagoExitoso.run();
       _mostrarDialogoExito();
     } else {
       context.read<CarritoBloc>().add(CarritoPagoFallidoEvent(result.message));
@@ -139,8 +144,23 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
       onAceptar: () {
         context.read<EdoCtaListBloc>().add(const EdoCtaListRefreshEvent());
         Navigator.of(context).popUntil((route) => route.settings.name == 'edo_cta');
+        _invitarACalificar();
       },
     );
+  }
+
+  /// Invita a calificar la app, si la política lo permite.
+  ///
+  /// Va después del `popUntil` y en un post-frame a propósito: la hoja de
+  /// reseña la pinta el sistema encima de lo que haya, y debe salir sobre el
+  /// estado de cuenta ya restaurado, no sobre el WebView que se está cerrando.
+  ///
+  /// No se espera el resultado ni se avisa de nada: el caso de uso decide si
+  /// toca, y ni Apple ni Google informan de si la hoja llegó a mostrarse.
+  void _invitarACalificar() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      locator<ResenaUseCases>().solicitarResena.run();
+    });
   }
 
   void _mostrarDialogoError(String mensaje) {
