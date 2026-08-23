@@ -247,6 +247,31 @@ lib/src/
 - **Storage local:** shared_preferences
 - **Caché imágenes:** cached_network_image
 
+### Dependencias bloqueadas — NO reintentar
+
+**`flutter_secure_storage` se queda en la serie 10.x (`^10.1.0`).**
+
+Comprobado el 2026-08-23: subir a **11.0.0 no compila** con el toolchain actual. El plugin
+declara `compileSdk = 37` en su `android/build.gradle` y eso choca por partida doble:
+
+1. Google ya **no publica la plataforma `android-37` a secas**. El repositorio solo ofrece
+   `android-37.0`, `android-37.1` y las beta de `37.2`. AGP traduce el 37 entero al hash
+   `android-37` y el build muere con *"Failed to find target with hash string 'android-37'"*.
+2. Forzar `compileSdkMinor = 0` desde `android/build.gradle.kts` resuelve el hash pero destapa
+   el bloqueo de fondo: **AGP 9.0.1 no soporta API 37**. El propio Gradle lo dice —
+   *"Update this project's version of the Android Gradle plugin to one that supports 37"*.
+
+Salir de ahí exigiría subir AGP a una versión que soporte API 37, otro salto mayor de toolchain
+sobre el que ya está fijado (AGP 9.0.1 / Gradle 9.3.1 / KGP 2.3.20). No compensa: la 11.0.0 solo
+quita APIs deprecadas que este proyecto **ya no usa** (`SecureStorage` está migrado a v10, sin
+`encryptedSharedPreferences` ni `sharedPreferencesName`) y añade opciones biométricas que no se
+usan aquí. Cero beneficio, riesgo de toolchain alto.
+
+Reintentar solo cuando AGP estable soporte API 37 **y** el plugin declare la versión menor.
+
+**`injectable_generator` se queda en 3.0.2** — no puede subir a 3.1.x porque el SDK fija
+`test_api` en 0.7.11. No forzar con `dependency_overrides`.
+
 ## Reglas del código
 
 - Busca la mejor manera de hacer tu trabajo sin consumir tantos tokens.

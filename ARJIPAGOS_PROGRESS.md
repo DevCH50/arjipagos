@@ -3174,6 +3174,50 @@ fila que más destaca. No se tocó por no meterlo en este cambio.
 `assets/errores/error_noti.jpeg` sigue versionado aunque `assets/errores/` esté en el
 `.gitignore` (se añadió antes que la regla). Los otros dos JPEG de esa carpeta sí están fuera.
 
+## Sesión 2026-08-23 (e) — Verificación completa y cierre de la 1.0.25+34
+
+### Estado verificado
+
+Repaso completo del proyecto antes de generar los binarios de la 1.0.25+34, que sigue sin
+publicarse en ninguna tienda (por eso se reutiliza y no se incrementa).
+
+- `flutter analyze` — **sin incidencias**.
+- `flutter test` — **843 tests, todos en verde**. Incluidos los dos guardianes:
+  `assets_declarados_test.dart` y `services_no_filtran_excepciones_test.dart`.
+- `ApiConfig.isProduction = true` y permiso `INTERNET` en el manifiesto: confirmados.
+- iOS, configuración crítica intacta: `LastUpgradeCheck = 2630`,
+  `LastUpgradeVersion = "2630"`, `IPHONEOS_DEPLOYMENT_TARGET = 15.0`,
+  `platform :ios, '15.0'` y los bloques del `Podfile` (`objective_c` con `dwarf`, forzado de
+  15.0 y restauración del 2630) en su sitio.
+
+El Archive de iOS sigue sin poder verificarse desde Linux; eso solo se cierra en la Mac.
+
+### El bump de `flutter_secure_storage` a 11.0.0 NO es viable
+
+Era la única dependencia directa desatrasada. Se intentó y **no compila**. El plugin declara
+`compileSdk = 37` en su `build.gradle` y eso choca dos veces:
+
+1. Google ya no publica la plataforma `android-37` a secas — el repositorio solo ofrece
+   `android-37.0`, `android-37.1` y las beta de `37.2`. AGP traduce el 37 entero al hash
+   `android-37` y el build muere con *"Failed to find target with hash string 'android-37'"*.
+2. Forzar `compileSdkMinor = 0` desde `android/build.gradle.kts` resuelve el hash pero destapa
+   el bloqueo de fondo: **AGP 9.0.1 no soporta API 37**. Lo dice el propio Gradle —
+   *"Update this project's version of the Android Gradle plugin to one that supports 37"*.
+
+Salir de ahí exigiría subir AGP por encima del toolchain fijado (AGP 9.0.1 / Gradle 9.3.1 /
+KGP 2.3.20), y no compensa: la 11.0.0 solo elimina APIs deprecadas que el proyecto **ya no
+usa** —`SecureStorage` está migrado a v10, sin `encryptedSharedPreferences` ni
+`sharedPreferencesName`— y añade opciones biométricas que aquí no se usan.
+
+Se revirtieron **ambos** cambios: `pubspec.yaml` vuelve a `^10.1.0` y el parche del
+`build.gradle.kts` se deshizo. Queda documentado en `CLAUDE.md` (sección "Dependencias
+bloqueadas — NO reintentar") para que nadie lo reintente a ciegas.
+
+### Lo único que sí subió
+
+`archive` 4.1.0 → 4.2.0, dependencia transitiva de desarrollo. Es el único cambio de
+`pubspec.lock`. Las 11 restantes siguen frenadas por constraints del SDK.
+
 ## Próximas tareas
 
 - **Contraste en oscuro:** el importe de la fila seleccionada en Estados de Cuenta queda
@@ -3184,9 +3228,10 @@ fila que más destaca. No se tocó por no meterlo en este cambio.
 - **Antes del 29-oct-2026:** verificar que la renovación del certificado instale
   `fullchain.pem` (ver sesión 2026-08-13)
 - Decidir si se elimina `SplashNavigationState.error` (valor de enum sin usar)
-- Evaluar el bump de los 11 paquetes Dart bloqueados por constraints (ver sesión
-  2026-08-13 (f)); revisar en especial `flutter_secure_storage` 10.3.1 → 11.0.0 y
-  `package_config` 2.2.0 → 3.0.0, que son cambios de major
+- Evaluar el bump de los paquetes Dart bloqueados por constraints (ver sesión 2026-08-13 (f)).
+  `flutter_secure_storage` 11.0.0 ya está **descartado y documentado** (ver sesión 2026-08-23
+  (e)): pide API 37 y AGP 9.0.1 no la soporta. Queda `package_config` 2.2.0 → 3.0.0, que es
+  cambio de major
 - Confirmar en pantalla si el ticket abre en el visor de PDF o cae a la hoja de
   compartir (ver sesión 2026-08-21 (d))
 - Revisar si `open_filex` publica 4.8.x, para quitar la supresión de warnings del
