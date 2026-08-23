@@ -345,7 +345,12 @@ class AppStrings {
 
   static const String pagoSingular = 'pago';
   static const String pagoPlural = 'pagos';
-  static const String pagosSeleccionadosLabel = 'seleccionados';
+
+  // El participio concuerda con el sustantivo: "1 pago seleccionado" frente a
+  // "2 pagos seleccionados". Antes era una constante fija en plural y con un
+  // solo pago salía "1 pago seleccionados".
+  static const String seleccionadoSingular = 'seleccionado';
+  static const String seleccionadoPlural = 'seleccionados';
 
   // ============================================================================
   // GENERAL — EXTRAS

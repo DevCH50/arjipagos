@@ -3083,8 +3083,101 @@ cuando no haya imagen o falle la carga).
 esta sesión, así que no es una regresión. Lo natural sería sacar `_LogoutLoadingDialog` a su
 propio archivo, pero es un refactor aparte y no se hizo sin pedirlo.
 
+## Sesión 2026-08-23 (d) — Concordancia en la barra de total y limpieza de assets
+
+### Qué se arregló: "1 pago seleccionados"
+
+`total_seleccionado_bar.dart` pluralizaba el sustantivo pero dejaba el participio fijo en
+plural, así que con un único pago la barra inferior de Estados de Cuenta leía **"1 pago
+seleccionados"**. Con dos o más concordaba bien, y por eso pasaba desapercibido.
+
+- `AppStrings.pagosSeleccionadosLabel` (constante fija `'seleccionados'`) se sustituye por
+  `seleccionadoSingular` / `seleccionadoPlural`.
+- La barra elige sustantivo y participio con el mismo criterio, en dos variables locales en
+  vez de dos ternarios metidos en la interpolación.
+- La barra del Carrito no sufría el fallo: dice "2 pagos" a secas, sin participio.
+
+**Test de regresión:** `test/widgets/edo_cta/total_seleccionado_bar_test.dart` — cubre
+singular, plural, cero y tema oscuro, y comprueba explícitamente que la forma incorrecta ya
+no aparezca.
+
+### Assets: 34 MB fuera de la app
+
+`pubspec.yaml` declaraba carpetas enteras, lo que empaquetaba también lo que git ignora. Los
+assets pasan a declararse **archivo por archivo** (solo quedan `logo_arji.png` y
+`background_shopping.jpg`, 364 KB en total) y los insumos de diseño se agrupan en
+`assets/disenio/`. El APK baja de **95.5 MB a 61.6 MB**.
+
+**No se borró nada:** los 38 MB de insumos siguen en disco. `assets/disenio/` está dentro de
+`assets/` y aun así **no entra al bundle**, porque solo se empaqueta lo declarado archivo por
+archivo. Comprobado con `flutter build bundle`: `build/flutter_assets/assets/` pesa 364 KB y
+tiene exactamente los dos archivos declarados.
+
+Eso hace la regla de declarar archivo por archivo **más** crítica: cambiar la lista por un
+`- assets/` metería los 38 MB en la app de una sola vez. Queda anotado en `CLAUDE.md`.
+
+`assets/disenio/` se queda con lo que hace falta para construir: `iconos/` (4.4 MB) y
+`splash/` (104 KB), que `pubspec.yaml` referencia para `flutter_launcher_icons` y
+`flutter_native_splash`. Ambas se versionan.
+
+### Regla nueva: `otros/` es el almacén local
+
+**En `otros/` va todo lo que no debe subir al repositorio pero sí hay que conservar.** Ya
+estaba en el `.gitignore`, pero ahora está escrito como regla en `CLAUDE.md`: ante la duda
+entre borrar algo y dejarlo en el repo "por si acaso", se mueve ahí. Es lo contrario de
+borrar — nada se pierde, solo deja de viajar al remoto.
+
+Los 34 MB de material sin usar pasan a `otros/sin_usar/` (136 archivos, íntegros). Con eso
+desaparece la regla que había hecho falta en el `.gitignore`: `otros/` ya la cubre.
+
+### iOS: el ahorro es idéntico
+
+Verificado con `flutter build bundle`: `build/flutter_assets/` se genera del mismo
+`pubspec.yaml`, sin ramas por plataforma, y es lo que Android mete en el APK y iOS en
+`Runner.app/Frameworks/App.framework/flutter_assets`. El IPA adelgaza lo mismo.
+
+Nada de iOS referenciaba la carpeta `assets/`: ni `Info.plist`, ni `LaunchScreen.storyboard`,
+ni `project.pbxproj`, ni los `Contents.json`. `LaunchImage.imageset`, `LaunchBackground.imageset`
+y las variantes de icono de iOS 18 viven en `ios/Runner/Assets.xcassets/` y no se tocaron.
+
+### Verificación en el Oppo (CPH2639), APK release 1.0.25+34
+
+Recorrido completo en **tema claro y oscuro**, sin una sola excepción de Dart, ni `FATAL`, ni
+`Unable to load asset` en `logcat`:
+
+- Login, Menú Principal con avisos, Drawer con solo el nombre de pila.
+- Estados de Cuenta: selección ascendente por ciclo (el primero con casilla, el resto con
+  candado), cascada al marcar, total correcto ($23,136.00 = 11,568 × 2).
+- Carrito: orden invertido para que solo el último del ciclo sea quitable, arrastre correcto
+  al quitarlo, y la deselección se refleja de vuelta en Estados de Cuenta.
+- Notificaciones: lista, no leídas resaltadas, detalle con HTML y marcado como leída.
+
+**Suite completa: 843 tests en verde** (839 previos + 4 nuevos). `flutter analyze` sin
+incidencias.
+
+### Aviso para quien pruebe en un Oppo: el teclado seguro apaga las capturas
+
+En cuanto el foco entra en un campo `obscureText`, ColorOS lanza
+`com.oplus.securitykeyboard` y **bloquea `adb exec-out screencap`**: la captura sale negra
+salvo la barra de estado. La app está perfectamente viva. Para volver a capturar, cerrar el
+teclado (`input keyevent 4`) y comprobar que `dumpsys input_method` marque `mInputShown=false`.
+
+Distinto es la pantalla negra tras `adb install -r` con la app abierta: ahí el proceso viejo
+queda apuntando a un APK ya borrado. Se arregla con `am force-stop` y relanzar.
+
+### Detalle señalado, no tocado
+
+En tema oscuro, el importe de la fila **seleccionada** de Estados de Cuenta queda apagado
+frente al amarillo vivo de las no seleccionadas. Es legible, pero pierde jerarquía justo en la
+fila que más destaca. No se tocó por no meterlo en este cambio.
+
+`assets/errores/error_noti.jpeg` sigue versionado aunque `assets/errores/` esté en el
+`.gitignore` (se añadió antes que la regla). Los otros dos JPEG de esa carpeta sí están fuera.
+
 ## Próximas tareas
 
+- **Contraste en oscuro:** el importe de la fila seleccionada en Estados de Cuenta queda
+  apagado frente a las no seleccionadas (ver sesión 2026-08-23 (d))
 - Página de Facturas
 - Manejo automático de token expirado (refresh token o logout automático)
 - Completar información en App Store Connect y enviar a revisión

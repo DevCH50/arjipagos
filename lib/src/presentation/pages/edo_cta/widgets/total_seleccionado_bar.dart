@@ -60,12 +60,21 @@ class TotalSeleccionadoBar extends StatelessWidget {
     String totalFormateado,
     double totalSeleccionado,
   ) {
+    // Sustantivo y participio concuerdan en número: con uno solo la frase es
+    // "1 pago seleccionado", no "1 pago seleccionados".
+    final bool esSingular = cantidadPagos == 1;
+    final String sustantivo =
+        esSingular ? AppStrings.pagoSingular : AppStrings.pagoPlural;
+    final String participio = esSingular
+        ? AppStrings.seleccionadoSingular
+        : AppStrings.seleccionadoPlural;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$cantidadPagos ${cantidadPagos == 1 ? AppStrings.pagoSingular : AppStrings.pagoPlural} ${AppStrings.pagosSeleccionadosLabel}',
+          '$cantidadPagos $sustantivo $participio',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

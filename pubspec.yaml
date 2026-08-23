@@ -119,7 +119,7 @@ flutter_launcher_icons:
   # en las dos plataformas hay que usar la misma proporción del botón: 57/72 =
   # 79.2 %. Y esa cifra deja 10.4 % de margen por lado, justo la convención de
   # Apple: igualar Android y cumplir la guía de iOS resultan ser lo mismo.
-  image_path: "assets/arji/icono_app_3d.png"
+  image_path: "assets/disenio/iconos/icono_app_3d.png"
 
   # Icono adaptativo (Android 8+): son DOS capas que el lanzador compone y
   # recorta con su propia máscara —círculo, squircle, gota...—. De los 108 dp
@@ -135,13 +135,13 @@ flutter_launcher_icons:
   # que la encoge al 68 %. Por eso el emblema va al 77.6 % dentro de su PNG:
   # 77.6 % x 0.68 x 108 dp = 57 dp. Ese XML se regenera en cada ejecución, así
   # que la compensación tiene que vivir en el PNG, no en el XML.
-  adaptive_icon_background: "assets/arji/icono_fondo_3d.png"
-  adaptive_icon_foreground: "assets/arji/icono_frente_3d.png"
+  adaptive_icon_background: "assets/disenio/iconos/icono_fondo_3d.png"
+  adaptive_icon_foreground: "assets/disenio/iconos/icono_frente_3d.png"
 
   # Iconos temáticos de Android 13+: si el usuario los activa, el sistema pinta
   # esta silueta con los colores de su fondo de pantalla. Sin ella, Android
   # improvisa una a partir del icono y suele quedar mal.
-  adaptive_icon_monochrome: "assets/arji/icono_mono_3d.png"
+  adaptive_icon_monochrome: "assets/disenio/iconos/icono_mono_3d.png"
 
   remove_alpha_ios: true
 
@@ -153,7 +153,7 @@ flutter_native_splash:
 
   # Imagen fullscreen con fondo marrón y círculo blanco
   fullscreen: true
-  image: assets/arji/splash_logo.png
+  image: assets/disenio/splash/splash_logo.png
 
   # Android 12+ (usa icono adaptativo con círculo)
   android_12:
@@ -176,9 +176,14 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  # Se declaran ARCHIVO POR ARCHIVO, no la carpeta. Declarar la carpeta empaqueta
+  # todo lo que haya dentro —incluido lo que git ignora—, y así se habían colado
+  # 34 MB de insumos de diseño y respaldos en la app. Los fuentes de icono y
+  # splash viven ahora en `assets/disenio/`, que NO se empaqueta: al declararse
+  # archivo por archivo, estar dentro de assets/ no basta para entrar al bundle.
   assets:
-    - assets/img/
-    - assets/arji/
+    - assets/img/background_shopping.jpg
+    - assets/arji/logo_arji.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

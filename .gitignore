@@ -68,7 +68,10 @@ mygit_1.sh
 .claudeignore
 # .claude/settings.json SÍ se comparte con el equipo (ver .claude/settings.json)
 
-# Carpeta otros (archivos locales)
+# Almacén local: todo lo que NO debe subir al repo pero sí hay que conservar.
+# Insumos de diseño en bruto, respaldos, material que ya no usa nadie, notas,
+# exportaciones... Si algo hay que guardar y no pinta nada en el repositorio,
+# va aquí. Ver la regla en CLAUDE.md.
 otros/
 
 # Archivos temporales de assets (zips y carpetas de WhatsApp)

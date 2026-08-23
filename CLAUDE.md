@@ -29,8 +29,66 @@ flutter build apk --release              # APK para Android
 
 # Utilidades
 flutter pub run flutter_launcher_icons   # Regenerar iconos
-flutter pub run flutter_native_splash:create  # Regenerar splash
+# NO ejecutar flutter_native_splash:create — ver aviso mas abajo
 ```
+
+## Assets: qué se empaqueta y qué no
+
+`pubspec.yaml` declara los assets **archivo por archivo**, NO por carpeta. Es
+deliberado: declarar `assets/arji/` empaqueta todo lo que haya dentro —incluido
+lo que git ignora—, y así se colaron **34 MB** de insumos de diseño y respaldos
+dentro de la app (el APK pasó de 95.5 MB a 61.6 MB al sacarlos).
+
+| Carpeta | Se empaqueta | Va al repo | Para qué |
+| --- | --- | --- | --- |
+| `assets/` | Sí, solo los archivos declarados | Sí | Lo que carga el código en runtime |
+| `assets/disenio/iconos/` | No | Sí | Fuentes del icono para flutter_launcher_icons |
+| `assets/disenio/iconos/anterior/` | No | Sí | Icono anterior, por si hay que volver atrás |
+| `assets/disenio/splash/` | No | Sí | Fuente del splash |
+| `otros/` | No | **No** | Almacén local (ver abajo) |
+
+**`assets/disenio/` vive DENTRO de `assets/` y aun así no se empaqueta**, porque lo único que
+entra al bundle es lo declarado archivo por archivo. Comprobado con `flutter build bundle`:
+`build/flutter_assets/assets/` pesa 364 KB y contiene solo `logo_arji.png` y
+`background_shopping.jpg`.
+
+Eso vuelve la regla de arriba **más** crítica, no menos: bastaría con que alguien cambiara la
+lista por un `- assets/` para meter los insumos de diseño en la app de golpe. Si algún día hace
+falta declarar una carpeta entera, sacar `disenio/` de `assets/` primero.
+
+## `otros/` — el almacén local
+
+**En `otros/` va todo aquello que no debe subir al repositorio pero sí hay que conservar.**
+
+Insumos en bruto, respaldos, material que ya no usa nadie, notas, exportaciones, capturas de
+depuración. Si algo hay que guardar y no pinta nada en el repositorio, ahí va. Está en el
+`.gitignore` desde siempre, así que basta con mover el archivo dentro para que deje de subir.
+
+Es lo contrario de borrar: nada se pierde, simplemente deja de viajar al remoto. Ante la duda
+entre borrar algo y dejarlo en el repo "por si acaso", la respuesta es **moverlo a `otros/`**.
+
+Hoy guarda, entre otras cosas, `otros/sin_usar/` (34 MB de material de diseño que no usa
+ningún build) y `otros/iconos_3d/` con las instrucciones del icono de iOS 18.
+
+**Al añadir un asset nuevo:** darlo de alta en `pubspec.yaml` **y** en
+`test/unit/assets_declarados_test.dart`, que falla si el código carga algo sin
+declarar. Sin ese test, olvidarlo compila pero revienta en runtime con
+"Unable to load asset".
+
+## NO ejecutar `flutter_native_splash:create`
+
+El splash generado está **hecho a mano encima de lo que produjo el generador** y
+volver a ejecutarlo lo destroza. Comprobado el 2026-08-23: reescribe los cuatro
+`styles.xml` (rompiendo el edge-to-edge de Android 15), **borra** los
+`drawable-night-*/splash.png`, y cambia `ios/Runner/Info.plist` y
+`LaunchScreen.storyboard`.
+
+No depende de la ruta de la imagen: es la versión actual del paquete, que genera
+distinto de la que se usó en su día. Si alguien lo ejecuta por error:
+`git checkout -- android/app/src/main/res ios/Runner`.
+
+Cambiar el splash implica rehacer a mano el edge-to-edge después. Los drawables
+y el storyboard ya generados están versionados; ahí es donde se toca.
 
 ## Instrucciones para Release (Agente)
 
@@ -212,6 +270,10 @@ lib/src/
 - No Toast, no SnackBar — utiliza `AlertDialog` (con `showDialog`) para mostrar mensajes de éxito o error al usuario. Usar `dialogContext` del builder para `Navigator.pop` del dialog, y `context` externo solo para navegar fuera de la pantalla.
 - Quita del git, todo aquello que no debe ir o que es peligroso que este en git. Me refiero al  
   remoto. Incluye la carpeta "otros".
+- **En `otros/` va todo aquello que no debe subir al repo pero sí hay que conservar.** Es el
+  almacén local: insumos en bruto, respaldos, material que ya no usa nadie, notas. Antes de
+  borrar algo por no ensuciar el repositorio, moverlo ahí. Ver la sección "`otros/` — el
+  almacén local".
 - Revisa que no haya desperdicio de memoria o de espacio en disco. Sino que tengas un uso eficiente de los recursos. Y que no quede ningun tipo de basura. Por ejemplo, si vas a usar una variable, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una función, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una clase, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un widget, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un evento, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un estado, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un repositorio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un caso de uso, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un modelo, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una entidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar una interfaz, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un servicio, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar una utilidad, asegúrate de que la uses y no la dejes ahí sin usar. Si vas a usar un archivo de configuración, asegúrate de que lo uses y no lo dejes ahí sin usar. Si vas a usar un archivo de prueba, asegúrate de que lo uses y no lo dejes ahí sin usar.
 - Todos los strings hardcodeados en el código que deberían estar en AppStrings
 - Nunca mostrar una excepción cruda al usuario. En los `catch` de los Services usar
