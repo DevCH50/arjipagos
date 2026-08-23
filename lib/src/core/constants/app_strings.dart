@@ -119,9 +119,6 @@ class AppStrings {
 
   static const String drawerDatosPersonales = 'Datos personales';
   static const String drawerMiCuenta = 'Mi cuenta';
-  static const String drawerIdLabel = 'ID';
-  static const String drawerEmail = 'Email';
-  static const String drawerCelular = 'Celular';
   static const String drawerFamilia = 'Familia';
   static const String drawerSinRegistrar = 'Sin registrar';
 

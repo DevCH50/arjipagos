@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// Header del drawer con avatar y nombre del usuario.
+/// Header del drawer con avatar y nombre de pila del usuario.
 ///
 /// Muestra un gradiente con el color primario del tema,
 /// compatible con tema claro y oscuro.
 /// Incluye SafeArea top para iOS con notch.
+///
+/// No lleva correo ni nombre completo a propósito: el header es una
+/// identificación breve, y los apellidos y el email solo lo recargaban.
 class UserDrawerHeader extends StatelessWidget {
-  /// Nombre del usuario a mostrar.
+  /// Nombre de pila del usuario, sin apellidos.
   final String nombre;
-
-  /// Email del usuario (opcional).
-  final String? email;
 
   const UserDrawerHeader({
     super.key,
     required this.nombre,
-    this.email,
   });
 
   @override
@@ -27,7 +26,6 @@ class UserDrawerHeader extends StatelessWidget {
     final gradientStart = colorScheme.primary;
     final gradientEnd = colorScheme.primary.withValues(alpha: 0.7);
     final textColor = colorScheme.onPrimary;
-    final subtitleColor = colorScheme.onPrimary.withValues(alpha: 0.7);
 
     return Container(
       width: double.infinity,
@@ -42,11 +40,11 @@ class UserDrawerHeader extends StatelessWidget {
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          // El nombre va a la derecha del avatar, no debajo: ocupa menos alto
+          // y deja más sitio a la lista de datos en pantallas cortas.
+          child: Row(
             children: [
-              // Avatar
+              // Avatar con la inicial del nombre
               CircleAvatar(
                 radius: 32,
                 backgroundColor: colorScheme.onPrimary,
@@ -59,25 +57,20 @@ class UserDrawerHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Nombre
-              Text(
-                nombre,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 16),
+              // Nombre de pila. Va en Expanded para que un nombre largo se
+              // recorte en vez de desbordar la fila.
+              Expanded(
+                child: Text(
+                  nombre,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // Email
-              if (email != null && email!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  email!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: subtitleColor,
-                  ),
-                ),
-              ],
             ],
           ),
         ),

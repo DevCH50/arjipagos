@@ -3024,6 +3024,65 @@ sacar los insumos de icono/splash a una carpeta que NO esté declarada en `pubsp
 `flutter_launcher_icons` y `flutter_native_splash` a la carpeta nueva. Los ZIP no pintan nada
 en el repo.
 
+## Sesión 2026-08-23 (c) — Drawer simplificado
+
+**Petición:** quitar del drawer el ID, el correo y el celular; dejar solo el nombre de pila y
+ponerlo a la derecha del avatar.
+
+### Qué se quitó
+
+De la sección "Datos personales" salieron **ID**, **Email** y **Celular**. Quedan solo
+**Usuario** y **Familia**.
+
+También se quitó el correo de la **cabecera**, no solo la fila de la lista: estaba debajo del
+nombre y seguía siendo el email a la vista dentro del drawer. Si se quiere de vuelta, es
+reponer el parámetro `email` en `UserDrawerHeader`.
+
+Al quedar sin uso se borraron `AppStrings.drawerIdLabel`, `drawerEmail` y `drawerCelular`.
+`drawerSinRegistrar` sigue en uso por Familia.
+
+### Nombre de pila, no nombre completo
+
+El header usa **`user.nombre`**, que el backend ya manda separado de `apPaterno`/`apMaterno`,
+en vez de partir `fullName`: adivinar dónde corta un nombre compuesto sale mal. Por eso se ve
+"ILEANA KRISTELL" entero —es el nombre compuesto— y desaparecen los apellidos.
+
+Hay respaldo en `UserDrawer._nombreDePila`: si `user` no ha cargado o `nombre` llega vacío,
+recorta la primera palabra de `nombreUsuario`, para que el header nunca acabe mostrando
+apellidos.
+
+### Cabecera en fila
+
+`UserDrawerHeader` pasó de `Column` (avatar arriba, nombre debajo) a `Row` (avatar a la
+izquierda, nombre a su derecha). El nombre va en `Expanded` con `maxLines: 2` y
+`TextOverflow.ellipsis`: el avatar es de ancho fijo, así que el que tiene que ceder en un
+drawer estrecho es el texto. Se conserva el `SafeArea(bottom: false)` para el notch de iOS.
+
+### Verificación
+
+- **7 tests nuevos** en `test/widgets/menu_principal/drawer_header_test.dart`: que muestra el
+  nombre, la inicial del avatar (y su respaldo con nombre vacío), que **no** aparece ningún
+  correo, que el nombre queda a la derecha del avatar y no debajo, y que aguanta tanto un
+  nombre larguísimo como un drawer de 220 dp sin desbordar.
+- **Suite completa: 836 tests en verde.** `flutter analyze` sin incidencias.
+- En el Oppo, APK release, **tema claro y oscuro**: cabecera con avatar + nombre de pila, y
+  "Datos personales" con solo Usuario y Familia. Sin crashes en `logcat`.
+- iOS: el cambio es Dart puro, sin código de plataforma ni plugins nuevos. No hay nada que
+  regenerar.
+
+### Nota: `pathImageProfile` no se usa en ninguna parte
+
+El modelo `User` trae `pathImageProfile`, pero **ningún widget de la app lo consume**: el
+avatar es la inicial sobre un círculo, no una foto. Si algún día se quiere la foto real, es un
+cambio aparte (`cached_network_image` ya está de dependencia, más el respaldo a la inicial
+cuando no haya imagen o falle la carga).
+
+### Deuda señalada, no tocada
+
+`user_drawer.dart` tiene 300 líneas, por encima de la regla de 200. Ya estaba en 298 antes de
+esta sesión, así que no es una regresión. Lo natural sería sacar `_LogoutLoadingDialog` a su
+propio archivo, pero es un refactor aparte y no se hizo sin pedirlo.
+
 ## Próximas tareas
 
 - Página de Facturas

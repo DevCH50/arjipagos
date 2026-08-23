@@ -18,6 +18,9 @@ import '../../../../../main.dart';
 ///
 /// Muestra datos personales, familia, alumnos y versiones.
 /// Todos los campos son copiables al portapapeles.
+///
+/// No se muestran el ID, el correo ni el celular: son datos que el usuario no
+/// necesita consultar aquí y solo recargaban la sección de datos personales.
 /// Compatible con tema claro y oscuro, Android e iOS.
 class UserDrawer extends StatelessWidget {
   const UserDrawer({super.key});
@@ -91,6 +94,25 @@ class UserDrawer extends StatelessWidget {
     );
   }
 
+  /// Nombre de pila del usuario para el header.
+  ///
+  /// Se toma `user.nombre`, que el backend ya manda separado de los apellidos,
+  /// en vez de partir `fullName`: adivinar dónde corta un nombre compuesto sale
+  /// mal. Si no hay datos del usuario se recorta la primera palabra del nombre
+  /// completo, para que el header nunca acabe mostrando los apellidos.
+  static String _nombreDePila(MenuPrincipalState state) {
+    final nombre = state.user?.nombre.trim() ?? '';
+    if (nombre.isNotEmpty) {
+      return nombre;
+    }
+
+    final completo = state.nombreUsuario?.trim() ?? '';
+    if (completo.isEmpty) {
+      return AppStrings.loginUsername;
+    }
+    return completo.split(RegExp(r'\s+')).first;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -103,10 +125,7 @@ class UserDrawer extends StatelessWidget {
           return Column(
             children: [
               // Header del drawer (incluye SafeArea top)
-              UserDrawerHeader(
-                nombre: state.nombreUsuario ?? AppStrings.loginUsername,
-                email: state.emailUsuario,
-              ),
+              UserDrawerHeader(nombre: _nombreDePila(state)),
               // Lista de datos del usuario
               Expanded(
                 child: SafeArea(
@@ -118,26 +137,9 @@ class UserDrawer extends StatelessWidget {
                       const SectionHeader(title: AppStrings.drawerDatosPersonales),
                       if (user != null) ...[
                         CopyableListTile(
-                          icon: Icons.badge_outlined,
-                          label: AppStrings.drawerIdLabel,
-                          value: user.id.toString(),
-                        ),
-                        CopyableListTile(
                           icon: Icons.person_outline,
                           label: AppStrings.loginUsername,
                           value: user.username,
-                        ),
-                        CopyableListTile(
-                          icon: Icons.email_outlined,
-                          label: AppStrings.drawerEmail,
-                          value: user.email,
-                        ),
-                        CopyableListTile(
-                          icon: Icons.phone_android,
-                          label: AppStrings.drawerCelular,
-                          value: user.celulares.isNotEmpty
-                              ? user.celulares
-                              : AppStrings.drawerSinRegistrar,
                         ),
                         CopyableListTile(
                           icon: Icons.family_restroom,
