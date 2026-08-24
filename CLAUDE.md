@@ -150,39 +150,65 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 1. Ejecutar limpieza obligatoria (ver sección anterior)
 2. Verificar `ApiConfig.isProduction = true`
 3. Abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`)
-4. **Asignar las apariencias del icono de iOS 18** (ver sección siguiente) — pendiente
-5. Menú: **Product → Archive**
-6. En Organizer: **Distribute App → App Store Connect**
+4. Menú: **Product → Archive**
+5. En Organizer: **Distribute App → App Store Connect**
 
-### PENDIENTE en la Mac — apariencias del icono (iOS 18)
+Si Xcode ofrece **"Update to recommended settings"**, rechazarlo: reescribe
+`LastUpgradeCheck` y tira abajo el blindaje de 2630.
 
-Trabajo preparado desde Linux el 2026-08-21 que **solo se puede terminar en la Mac**.
+### Apariencias del icono (iOS 18) — decidido: NO se usan
 
-Las variantes oscura y con tinte del icono ya están generadas y copiadas en el catálogo:
+**Resuelto el 2026-08-23. El catálogo no lleva variantes Dark ni Tinted, y es
+deliberado.** No volver a añadirlas sin leer esto entero.
+
+**Por qué.** `AppIcon.appiconset` está en formato antiguo: 11 entradas `iphone`,
+13 `ipad`, 1 `ios-marketing`, y **ningún slot `universal`**. En ese formato
+**Xcode no muestra el control "Appearances" en el inspector** — no existe ningún
+hueco Dark/Tinted donde soltar un PNG. Habilitarlo exige migrar al formato
+*single-size* (un solo 1024 universal), lo que **borra las 25 entradas por
+tamaño**, y el objetivo de despliegue es iOS 15.
+
+**Qué pasa si alguien arrastra PNG al catálogo.** Xcode los copia dentro de
+`AppIcon.appiconset/` pero **no los referencia en `Contents.json`**, porque no hay
+slot al que asignarlos. Quedan como *huérfanos* y Xcode avisa en cada build:
 
 ```
-ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x-dark.png
-ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x-tinted.png
+The app icon set "AppIcon" has N unassigned children.
 ```
 
-**Qué hacer (2 minutos):** abrir `Runner.xcworkspace` → `Assets.xcassets` → `AppIcon` →
-en el inspector poner **Appearances: Any, Dark, Tinted** → arrastrar cada PNG a su hueco.
+Es un **aviso amarillo** —no bloquea build, instalación, Archive ni la subida a
+App Store Connect— pero ensucia el log. Pasó dos veces el 2026-08-23 antes de
+entender la causa.
 
-**Por qué no se dejó aplicado, y por qué NO hay que editar el `Contents.json` a mano:**
+**Estado actual.** El appiconset tiene 25 entradas en `Contents.json` y 21 PNG,
+con **0 huérfanos y 0 fantasmas**. Verificable así:
 
-- El catálogo está en formato antiguo (idioms `iphone`/`ipad`/`ios-marketing`). Las
-  apariencias exigen un slot `universal` de tamaño único, y migrar **borra todas las
-  entradas por tamaño**.
-- El objetivo de despliegue es iOS 15; el icono de tamaño único es de iOS 16+.
-- **`flutter_launcher_icons` reescribe `Contents.json` en cada ejecución**, así que
-  cualquier edición manual se pierde al regenerar el icono. Si se regenera, hay que
-  repetir la asignación en Xcode.
+```bash
+python3 -c "
+import json,os
+p='ios/Runner/Assets.xcassets/AppIcon.appiconset'
+d=json.load(open(p+'/Contents.json'))
+refs={i.get('filename') for i in d['images'] if i.get('filename')}
+files={f for f in os.listdir(p) if f.endswith('.png')}
+print('HUERFANOS (causan el aviso):',sorted(files-refs) or 'ninguno')
+print('FANTASMAS (rompen el build):',sorted(refs-files) or 'ninguno')
+"
+```
 
-Dejar que Xcode escriba el `Contents.json` es lo seguro: lo adapta a su propia versión.
-Instrucciones largas y JSON alternativo en `otros/iconos_3d/LEEME_ios18.md`.
+En iOS 18+ el sistema aplica su propio tratamiento automático al icono normal en
+modo oscuro y con tinte. Se pierde el control fino sobre esas dos variantes; a
+cambio, el catálogo queda coherente y sin avisos.
 
-Mientras no se asignen, Xcode avisa de *unassigned children* en el catálogo. Es un
-**aviso, no un error**, y desaparece al asignarlas.
+**Dónde está el material, por si algún día se retoma:**
+
+| Ruta | Qué hay |
+| --- | --- |
+| `assets/disenio/iconos/` | Fuentes 3D, incluidas `icono_ios_oscuro_3d.png` e `icono_ios_tinte_3d.png` (1024×1024). Va al repo, **no** se empaqueta |
+| `otros/iconos_3d/` | Los `Icon-App-1024x1024@1x-dark.png` y `-tinted.png` que estuvieron versionados hasta el 2026-08-23. **No** va al repo (`otros/` está en `.gitignore`) |
+
+Retomarlo implica la migración a *single-size* y volver a probar el icono en
+dispositivo antes de un Archive. **No** editar `Contents.json` a mano: además de
+ser frágil, `flutter_launcher_icons` lo reescribe entero en cada ejecución.
 
 Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xcassets/`.
 
@@ -198,6 +224,31 @@ Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xc
 | `Package.swift` (SPM generado) | plataforma `.iOS("15.0")`        | Firebase exige 15.0; el `post_install` del Podfile lo fuerza |
 
 ### Errores conocidos y soluciones
+
+**Ruido normal en la consola de Xcode — NO son fallos**
+
+Estos mensajes salen en cada arranque y **no hay nada que corregir**. Verificados
+en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23:
+
+| Mensaje | Qué es |
+| --- | --- |
+| `FIRMessaging ... will swizzle remote notification receiver handlers` | Firebase avisa de que intercepta los handlers de push. Silenciarlo con `FirebaseAppDelegateProxyEnabled = NO` obliga a implementarlos a mano: **no tocar**, rompería las notificaciones |
+| `FlutterView implements focusItemsInRect:` | Log interno del engine de Flutter sobre UIKit |
+| `Using the Impeller rendering backend (Metal)` | Informativo, y es buena señal |
+| `empty dSYM file detected` en `objective_c` | Esperado: es un XCFramework precompilado sin debug info. Lo que exige App Store Connect es que el **UUID** del dSYM coincida con el del binario, y coincide (comprobar con `dwarfdump --uuid`) |
+| `Unable to simultaneously satisfy constraints` con `_UIModernBarButton` / `_UIButtonBarButton` | Bug interno de UIKit en la barra del *share sheet* nativo. Todas las clases implicadas son de UIKit, ninguna del proyecto. UIKit se autorepara |
+| `LaunchServices`, `canmaplsdatabase`, `sandbox extension`, `RBS`, `usermanagerd`, `WebContent`, `GPUProcessProxy IdleExit` | Ruido del sistema por permisos que una app normal no tiene |
+| `Failed to request default share mode` / `error fetching item for URL` al abrir un PDF o ZIP | Ruido de LaunchServices al resolver el tipo de archivo desde `open_filex`. Los archivos abren bien |
+
+**Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
+
+- Causa: `main.dart` pedía `DeviceOrientation.portraitDown`, pero el `Info.plist`
+  solo declara `UIInterfaceOrientationPortrait`, y los iPhone con Dynamic Island
+  no admiten upside-down por hardware. iOS respondía `response-not-possible`.
+- Solución (aplicada el 2026-08-23): `setPreferredOrientations` pide **solo**
+  `portraitUp`. No añadir `portraitDown` sin declarar antes
+  `UIInterfaceOrientationPortraitUpsideDown` en el `Info.plist` — y aun así no
+  funcionará en iPhone moderno.
 
 **Error: "Missing dSYM" al subir a App Store Connect**
 

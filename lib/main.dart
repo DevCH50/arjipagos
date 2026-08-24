@@ -28,10 +28,13 @@ import 'package:flutter_bloc/flutter_bloc.dart' show MultiBlocProvider;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Bloquear orientación a solo vertical
+  // Bloquear orientación a solo vertical.
+  // Solo portraitUp: el Info.plist de iOS declara únicamente
+  // UIInterfaceOrientationPortrait, y los iPhone con Dynamic Island no admiten
+  // portraitDown. Pedirla hacía que iOS respondiera con
+  // "BSActionErrorDomain Code=1 (response-not-possible)" en cada arranque.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
   ]);
 
   // Android 15 (SDK 35): activar edge-to-edge explícitamente.

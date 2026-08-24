@@ -3218,6 +3218,82 @@ bloqueadas — NO reintentar") para que nadie lo reintente a ciegas.
 `archive` 4.1.0 → 4.2.0, dependencia transitiva de desarrollo. Es el único cambio de
 `pubspec.lock`. Las 11 restantes siguen frenadas por constraints del SDK.
 
+## Sesión 2026-08-23 (f) — Archive de la 1.0.25+34 en la Mac
+
+Primera sesión en la Mac tras traer del remoto los 5 commits de la 1.0.25+34. Se hizo la
+limpieza obligatoria de iOS, se resolvieron los dos avisos que ensuciaban el build y se
+subió el Archive a App Store Connect.
+
+### Limpieza obligatoria y verificación
+
+`flutter clean` → `flutter pub get` → `pod install` → `./scripts/build_ios.sh`. El
+`post_install` del Podfile hizo su trabajo: restauró `LastUpgradeCheck` y
+`LastUpgradeVersion` a 2630 y devolvió `Package.swift` a `.iOS("15.0")` después de que
+`flutter clean` lo reseteara a 13.0. `flutter analyze` sin incidencias y los 843 tests en
+verde.
+
+### Apariencias del icono iOS 18 — descartadas
+
+El pendiente que arrastraba el proyecto desde el 2026-08-21 queda **cerrado, decidiendo no
+hacerlo**. La causa real apareció al inspeccionar el catálogo: `AppIcon.appiconset` está en
+formato antiguo (11 `iphone`, 13 `ipad`, 1 `ios-marketing`, **ningún `universal`**), y en
+ese formato **Xcode no muestra el control "Appearances"**. No hay hueco Dark/Tinted donde
+soltar los PNG, así que arrastrarlos solo los copia dentro de la carpeta sin referenciarlos
+en `Contents.json`: quedan huérfanos y generan el aviso *"has 2 unassigned children"*.
+
+Ocurrió dos veces antes de entender el porqué. Y conviene subrayarlo: **el aviso ya venía
+del repo** —los `Icon-App-1024x1024@1x-dark.png` y `-tinted.png` estaban versionados dentro
+del appiconset sin asignar—, no lo introdujo esta sesión.
+
+Se optó por quitar los huérfanos en vez de migrar a *single-size*, que habría borrado las 25
+entradas por tamaño con un deployment target en iOS 15. El catálogo quedó con 25 entradas y
+21 PNG, **0 huérfanos y 0 fantasmas**, y el build salió sin un solo warning.
+
+Nada se perdió: los dos PNG versionados se respaldaron en `otros/iconos_3d/` antes de
+eliminarlos —eran **distintos** a los 3D, comprobado con `cmp`— y las fuentes siguen en
+`assets/disenio/iconos/`. Las copias que Xcode había metido en el appiconset sí eran
+idénticas a esas fuentes, así que quitarlas no costó nada.
+
+En iOS 18+ el sistema aplicará su tratamiento automático al icono normal. Documentado en
+`CLAUDE.md`, sección "Apariencias del icono (iOS 18) — decidido: NO se usan", con el
+script de verificación de huérfanos.
+
+### `BSActionErrorDomain Code=1` al arrancar — corregido
+
+`main.dart` pedía `portraitUp` **y** `portraitDown`, pero el `Info.plist` solo declara
+`UIInterfaceOrientationPortrait`. iOS respondía `response-not-possible` en cada arranque. Se
+suma que los iPhone con Dynamic Island —el iPhone 17 Pro Max de pruebas entre ellos— no
+admiten upside-down por hardware, así que esa orientación nunca podría cumplirse.
+
+Ahora `setPreferredOrientations` pide solo `portraitUp`, con el porqué comentado en el
+propio código para que nadie la reponga. El comportamiento de la app no cambia. Confirmado
+en dispositivo: el error desapareció del log.
+
+### Resto de la consola: ruido, nada que corregir
+
+Se revisó el log completo del arranque en iPhone 17 Pro Max con iOS 26.6.1 y **no hay ni un
+error de la app**. Todo catalogado en `CLAUDE.md` → "Ruido normal en la consola de Xcode":
+swizzling de Firebase, `focusItemsInRect`, Impeller, el `empty dSYM` de `objective_c`, los
+`Unable to simultaneously satisfy constraints` de `_UIModernBarButton` —bug interno de UIKit
+en el *share sheet*, ninguna clase del proyecto implicada— y el ruido de LaunchServices y RBS.
+
+Dos comprobaciones que merecía la pena hacer antes del Archive:
+
+- **dSYM de `objective_c`:** el aviso de LLDB dice "empty dSYM", y es esperado porque el
+  XCFramework viene precompilado sin debug info. Lo que valida App Store Connect es el UUID,
+  y coincide con el del binario (`E32865A6-9B3B-3EFD-9DAA-BCA94A1CA52D`, verificado con
+  `dwarfdump --uuid`). El fix del Podfile funciona.
+- **Assets:** ni un `Unable to load asset`. Era el riesgo principal tras sacar los 34 MB del
+  bundle en la sesión (d).
+
+### Comprobado en dispositivo
+
+Ticket en PDF y ZIP abren bien —el log muestra que caen a la hoja de compartir, con el ruido
+habitual de LaunchServices—, y la invitación a calificar se disparó
+(`InAppReviewPlugin: handle openStoreListing`).
+
+Archive subido a App Store Connect sin incidencias.
+
 ## Próximas tareas
 
 - **Contraste en oscuro:** el importe de la fila seleccionada en Estados de Cuenta queda
@@ -3232,13 +3308,22 @@ bloqueadas — NO reintentar") para que nadie lo reintente a ciegas.
   `flutter_secure_storage` 11.0.0 ya está **descartado y documentado** (ver sesión 2026-08-23
   (e)): pide API 37 y AGP 9.0.1 no la soporta. Queda `package_config` 2.2.0 → 3.0.0, que es
   cambio de major
-- Confirmar en pantalla si el ticket abre en el visor de PDF o cae a la hoja de
-  compartir (ver sesión 2026-08-21 (d))
 - Revisar si `open_filex` publica 4.8.x, para quitar la supresión de warnings del
   Podfile en vez de arrastrarla
-- **Actualización forzada:** revisar en iOS cuando se pueda usar la Mac
 - **Actualización forzada:** `version_recomendada` está en `1.0.25`, que no existe en
   ninguna tienda: hoy el aviso sugerido manda al usuario a actualizar a una versión que no
-  puede instalar. Bajarla a `1.0.24` o publicar la 1.0.25
-- **Icono iOS 18:** asignar en Xcode las apariencias oscura y con tinte
-  (ver `otros/iconos_3d/LEEME_ios18.md`) y comprobarlas en el iPhone
+  puede instalar. Bajarla a `1.0.24` o publicar la 1.0.25. **Sube de prioridad**: la
+  1.0.25+34 ya está subida a App Store Connect (sesión 2026-08-23 (f)), así que el desfase
+  se cierra en cuanto se publique
+- **Actualización forzada:** falta ejercitar el diálogo bloqueante en iOS de punta a punta.
+  En la sesión (f) se confirmó que el código va en el binario, pero no que el flujo se
+  dispare contra el backend
+
+### Resueltas en la sesión 2026-08-23 (f)
+
+- ~~**Icono iOS 18:** asignar las apariencias oscura y con tinte~~ → **descartado a
+  propósito**: el catálogo no admite Appearances sin migrar a *single-size*. Ver la sesión
+  (f) y `CLAUDE.md`. No reintentar sin leerlo
+- ~~Confirmar si el ticket abre en el visor de PDF o cae a la hoja de compartir~~ → **cae a
+  la hoja de compartir**, y abre bien. El log lo evidencia (`Failed to request default share
+  mode`, `LSBindingEvaluator`), verificado con PDF y ZIP en el iPhone 17 Pro Max
