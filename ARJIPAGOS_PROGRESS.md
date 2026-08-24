@@ -13,6 +13,17 @@ _(ninguno)_
 
 ### Pendiente
 
+- **PUBLICAR LA 1.0.26+35** (arreglo del crash de cierre de sesión, commit `7db8f6e`):
+  - **Play Store:** subir `build/app/outputs/bundle/release/app-release.aab` (63.2 MB). Ya
+    generado y verificado — `versionCode 35`, `versionName 1.0.26`. Si se regenera, basta
+    `flutter build appbundle --release`
+  - **App Store:** hace falta la Mac. Limpieza obligatoria (`flutter clean && flutter pub get
+    && cd ios && pod install && ./scripts/build_ios.sh`), abrir `Runner.xcworkspace` y
+    Product → Archive. El build 35 sube sin chocar con el 34 que ya está en ASC
+  - **Backend:** subir `version_recomendada` de `1.0.25` a `1.0.26` una vez publicada. Hoy
+    queda por detrás del binario
+  - **Sin verificar en iPhone:** el arreglo del logout solo se probó en Android (Oppo
+    CPH2639). Es Dart puro, así que debería ir igual, pero conviene ejercitarlo
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
 - **En la Mac:** `pod install` para que entren los pods de `pdfx` y `open_filex` (visor de
