@@ -12,8 +12,6 @@ import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/section_
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../main.dart';
-
 /// Drawer con información detallada del usuario.
 ///
 /// Muestra datos personales, familia, alumnos y versiones.
@@ -76,10 +74,16 @@ class UserDrawer extends StatelessWidget {
 
     // Navegar usando el NavigatorState pre-capturado (el contexto del drawer
     // ya no es válido después del await, pero NavigatorState sí lo es).
-    navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MyApp()),
-      (route) => false,
-    );
+    //
+    // Se va a la ruta 'login', NO a un `MyApp` nuevo: empujar otro `MyApp`
+    // monta un SEGUNDO `MaterialApp` dentro del que ya corre, y ambos declaran
+    // el mismo `navigatorKey` (`appNavigatorKey`, un GlobalKey) y el mismo
+    // `restorationScopeId`. Flutter aborta con "Multiple widgets used the same
+    // GlobalKey" — era el crash del cierre de sesión en Android e iOS.
+    //
+    // `restorable*` para que la pila que Android guarda al reciclar el proceso
+    // quede en 'login' y no devuelva al usuario al Menú Principal ya sin sesión.
+    navigator.restorablePushNamedAndRemoveUntil('login', (route) => false);
   }
 
   /// Muestra un diálogo de carga animado mientras se procesa el cierre de sesión.

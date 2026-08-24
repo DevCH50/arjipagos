@@ -3,7 +3,6 @@ import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaState.dart';
-import 'package:arjipagos/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,9 +33,16 @@ class CambiarContrasenaResponse extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop(); // cerrar dialog
-              // Cerrar sesión: navegar a MyApp removiendo todas las rutas
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const MyApp()),
+              // La sesión ya la cerró el BLoC: volver al login removiendo
+              // todas las rutas.
+              //
+              // NO se empuja un `MyApp` nuevo: eso monta un segundo
+              // `MaterialApp` dentro del que ya corre, con el mismo
+              // `navigatorKey` (un GlobalKey) y el mismo `restorationScopeId`,
+              // y Flutter aborta con "Multiple widgets used the same GlobalKey".
+              Navigator.restorablePushNamedAndRemoveUntil(
+                context,
+                'login',
                 (route) => false,
               );
             },

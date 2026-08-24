@@ -277,6 +277,53 @@ en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23:
 - NO borrar ese bloque del Podfile. Si se toca, verificar con un `pod install` que ambos valores queden en 2630.
 - `./scripts/build_ios.sh` sigue siendo válido como capa extra, pero ya no es imprescindible para este fix.
 
+## Volver al login: NUNCA montar un segundo `MyApp`
+
+**`MyApp` solo se instancia en el `runApp` de `lib/main.dart`.** Para volver al login —cierre
+de sesión, o al terminar de cambiar la contraseña— se navega a la ruta con nombre:
+
+```dart
+Navigator.restorablePushNamedAndRemoveUntil(context, 'login', (route) => false);
+```
+
+**Por qué.** Hasta el 2026-08-24 el cierre de sesión hacía esto:
+
+```dart
+navigator.pushAndRemoveUntil(
+  MaterialPageRoute(builder: (_) => const MyApp()),  // ← MAL
+  (route) => false,
+);
+```
+
+Eso monta un **segundo `MaterialApp` dentro del que ya corre**. Los dos declaran el mismo
+`navigatorKey` (`appNavigatorKey`, un `GlobalKey<NavigatorState>`), así que Flutter
+**reparenta** el `Navigator` existente hacia dentro del nuevo `MaterialApp`… que vive dentro
+de una ruta de **ese mismo `Navigator`**. El árbol queda cíclico y `redepthChildren` desborda
+la pila:
+
+```
+I flutter : Stack Overflow
+I flutter : #3  SlottedContainerRenderObjectMixin.redepthChildren
+I flutter : #4  RenderObject.redepthChild        ← se repite hasta agotar la pila
+```
+
+Es un fallo de Dart: reventaba **igual en Android y en iOS**. Los `restorationScopeId`
+duplicados iban por el mismo camino.
+
+**Usar la variante `restorable*`**, como ya hace `SplashPage`. Sin ella, la pila que Android
+guarda al reciclar el proceso conserva `menu_principal` y devuelve al usuario a una pantalla
+para la que ya no hay sesión.
+
+**Los BLoCs sobreviven al cierre de sesión.** Los de `blocProviders` viven en la raíz de la
+app, así que al no recrearse `MyApp` conservan los datos del usuario anterior. `LoginResponse`
+refresca al entrar `MenuPrincipalBloc`, `HomeBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y
+`FacturaBloc` —los que solo cargaban al crearse—. `CarritoBloc` y `NotificacionBloc` ya se
+recargan en el `initState` de su página, y `BannerBloc` al montarse la tirilla. **Si se añade
+un BLoC de datos a `blocProviders`, hay que refrescarlo ahí también.**
+
+Hay test guardián: `test/unit/no_reinstancia_myapp_test.dart` falla si alguien vuelve a
+instanciar `MyApp` fuera de `lib/main.dart`.
+
 ## Arquitectura
 
 Clean Architecture con BLoC pattern:

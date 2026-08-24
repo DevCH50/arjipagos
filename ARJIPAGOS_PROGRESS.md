@@ -3312,9 +3312,9 @@ Archive subido a App Store Connect sin incidencias.
   Podfile en vez de arrastrarla
 - **Actualización forzada:** `version_recomendada` está en `1.0.25`, que no existe en
   ninguna tienda: hoy el aviso sugerido manda al usuario a actualizar a una versión que no
-  puede instalar. Bajarla a `1.0.24` o publicar la 1.0.25. **Sube de prioridad**: la
-  1.0.25+34 ya está subida a App Store Connect (sesión 2026-08-23 (f)), así que el desfase
-  se cierra en cuanto se publique
+  puede instalar. Bajarla a `1.0.24` o publicar. **Actualizado el 2026-08-24:** el binario
+  va ya en `1.0.26+35`, así que la `version_recomendada` queda además por detrás de la app.
+  El desfase se cierra publicando la 1.0.26 y subiendo `version_recomendada` a `1.0.26`
 - **Actualización forzada:** falta ejercitar el diálogo bloqueante en iOS de punta a punta.
   En la sesión (f) se confirmó que el código va en el binario, pero no que el flujo se
   dispare contra el backend
@@ -3327,3 +3327,89 @@ Archive subido a App Store Connect sin incidencias.
 - ~~Confirmar si el ticket abre en el visor de PDF o cae a la hoja de compartir~~ → **cae a
   la hoja de compartir**, y abre bien. El log lo evidencia (`Failed to request default share
   mode`, `LSBindingEvaluator`), verificado con PDF y ZIP en el iPhone 17 Pro Max
+
+### 2026-08-24 — El cierre de sesión reventaba en Android e iOS
+
+**Síntoma reportado.** "Cierro sesión, sí cierra la sesión pero crashea tanto en iOS como en
+Android."
+
+**Causa raíz.** `user_drawer.dart` volvía al login empujando un `MyApp` **nuevo**:
+
+```dart
+navigator.pushAndRemoveUntil(
+  MaterialPageRoute(builder: (_) => const MyApp()),
+  (route) => false,
+);
+```
+
+Eso monta un **segundo `MaterialApp` dentro del que ya está corriendo**. Los dos declaran el
+mismo `navigatorKey` (`appNavigatorKey`, un `GlobalKey<NavigatorState>`), así que Flutter
+**reparenta** el `Navigator` que ya existía hacia dentro del nuevo `MaterialApp`… que a su vez
+vive dentro de una ruta de **ese mismo `Navigator`**. El árbol queda cíclico y la recursión de
+`redepthChildren` desborda la pila. Capturado en el Oppo CPH2639 con el APK 1.0.25+34:
+
+```
+I flutter : Stack Overflow
+I flutter : #1  SlottedContainerRenderObjectMixin.childForSlot
+I flutter : #3  SlottedContainerRenderObjectMixin.redepthChildren
+I flutter : #4  RenderObject.redepthChild            ← se repite hasta agotar la pila
+```
+
+Es un fallo de Dart, de ahí que se diera igual en las dos plataformas. Los dos
+`restorationScopeId: 'arjipagos'` duplicados iban por el mismo camino.
+
+`CambiarContrasenaResponse.dart` tenía **el mismo bug**: al aceptar el diálogo de "contraseña
+actualizada" empujaba otro `MyApp`.
+
+**Corrección.**
+
+| Archivo | Cambio |
+| --- | --- |
+| `user_drawer.dart` | `navigator.restorablePushNamedAndRemoveUntil('login', (r) => false)` |
+| `CambiarContrasenaResponse.dart` | Lo mismo, con `Navigator.restorablePushNamedAndRemoveUntil` |
+| `LoginResponse.dart` | Refresca `HomeBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y `FacturaBloc` al entrar |
+
+Se usa la variante `restorable*` —igual que ya hacía `SplashPage`— para que la pila que Android
+guarda al reciclar el proceso quede en `login` y no devuelva al usuario al Menú Principal ya sin
+sesión.
+
+**Por qué hizo falta tocar `LoginResponse`.** Al dejar de recrear la app, los BLoCs de
+`blocProviders` (que viven en la raíz) **sobreviven** al cierre de sesión. Sin refrescarlos, el
+siguiente usuario vería los estados de cuenta, pagados y facturas del anterior: `HomeBloc`,
+`EdoCtaListBloc`, `EdoCtaPagadosBloc` y `FacturaBloc` solo cargaban al crearse. `CarritoBloc` y
+`NotificacionBloc` ya se recargan solos en el `initState` de su página, y `BannerBloc` al
+montarse la tirilla. La sesión persistida sí se limpiaba bien: `AuthRepositoryImpl.logout()`
+hace `secureStorage.clearUserSession()` + `sharedPref.clear()`.
+
+**Test guardián nuevo.** `test/unit/no_reinstancia_myapp_test.dart` falla si alguien vuelve a
+instanciar `MyApp` fuera de `lib/main.dart`.
+
+**Verificado en dispositivo** (Oppo CPH2639, Android, APK release):
+
+1. Crash reproducido con el build anterior — `Stack Overflow` en logcat
+2. Con el arreglo: cerrar sesión aterriza limpio en el login, logcat sin una sola excepción
+3. Volver a entrar carga el Menú Principal del usuario correcto
+4. Estados de Cuenta recarga bien y con la selección vacía (`0 pagos seleccionados`)
+5. Segundo cierre de sesión: idéntico, sin crash
+6. El botón atrás desde el login **sale de la app**, no vuelve al menú sin sesión
+7. Reabrir la app aterriza en el login: la sesión quedó cerrada
+
+`flutter analyze` limpio. `flutter test`: **844 pasan**.
+
+**Versión: `1.0.25+34` → `1.0.26+35`.**
+
+La publicada en tiendas sigue siendo la `1.0.24+33`. La `1.0.25+34` nunca llegó a publicarse,
+pero **su Archive ya está subido a App Store Connect**, así que reutilizar el build 34 haría que
+ASC rechazara la subida (*"the bundle version must be higher than the previously uploaded
+version"*). Decisión de Carlos: versión nueva completa, no solo build number, porque el arreglo
+del crash de cierre de sesión merece número propio.
+
+**Ojo con `version_recomendada`:** el backend la tiene en `1.0.25`, que ahora queda **por
+detrás** de la del binario. No rompe nada (el aviso solo se dispara si la instalada es menor),
+pero conviene subirla a `1.0.26` cuando esta se publique.
+
+**Pendiente de esta sesión.**
+- Verificar el mismo flujo en el iPhone (aquí solo hay Linux; requiere la Mac)
+- `MenuPrincipalBloc._onLogout` / `MenuPrincipalLogout` y `HomeLogoutEvent` son **código
+  muerto** en producción: solo los despachan los tests, y duplican lo que ya hace el drawer.
+  No se borran sin preguntar
