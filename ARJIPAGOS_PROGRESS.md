@@ -14,11 +14,12 @@ _(ninguno)_
 ### Pendiente
 
 - **PUBLICAR LA 1.0.26+35** (arreglo del crash de cierre de sesión, commit `7db8f6e`):
-  - **Play Store:** subir `build/app/outputs/bundle/release/app-release.aab` (63.2 MB con
-    `versionCode 35` / `versionName 1.0.26`). **Hay que regenerarlo:** el `flutter clean` del
-    2026-08-24 —parte de la limpieza obligatoria de iOS— borró `build/` entero y con él el AAB
-    que estaba listo. Basta `flutter build appbundle --release`
-  - **App Store: HECHO el 2026-08-24.** Limpieza obligatoria ejecutada en la Mac
+  - **Play Store — trabajo de la máquina Linux, no de la Mac.** Generar el AAB con
+    `flutter build appbundle --release` (`versionCode 35`, `versionName 1.0.26`, ~63.2 MB) y
+    subirlo a Play Console. El que se dio por listo el 2026-08-23 no sirve de referencia aquí:
+    `build/` es local a cada máquina, y en la Mac lo borró entero el `flutter clean` de la
+    limpieza iOS del 2026-08-24
+  - **App Store — trabajo de la Mac. HECHO el 2026-08-24.** Limpieza obligatoria ejecutada
     (`flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh`),
     `Runner.app` de 26.4 MB, todos los blindajes verificados después
     (`LastUpgradeCheck`/`LastUpgradeVersion` en 2630, `Package.swift` en `.iOS("15.0")`,

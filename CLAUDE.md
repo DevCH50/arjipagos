@@ -90,7 +90,31 @@ distinto de la que se usó en su día. Si alguien lo ejecuta por error:
 Cambiar el splash implica rehacer a mano el edge-to-edge después. Los drawables
 y el storyboard ya generados están versionados; ahí es donde se toca.
 
+## Dos máquinas: la Mac hace iOS, la Linux hace Android
+
+**Los builds están repartidos y no son intercambiables.**
+
+| Máquina | Qué se hace ahí |
+| --- | --- |
+| **Mac** | Solo iOS: limpieza obligatoria, `./scripts/build_ios.sh`, Archive y Distribute a App Store Connect |
+| **Linux** | Solo Android: `flutter build apk --release`, `flutter build appbundle --release`, `adb install` y la subida a Play Console |
+
+Las instrucciones de release de abajo describen **el trabajo de Android**, y por tanto solo
+aplican en la Linux. En la Mac no hay que lanzarlas: ni siquiera hace falta el SDK de Android.
+
+Dos consecuencias prácticas:
+
+- **No dar por hecho que un APK o un AAB existe en la máquina donde se está.** Si
+  `ARJIPAGOS_PROGRESS.md` dice que el AAB "ya está generado", puede estar en la otra máquina
+  —o haber desaparecido aquí—: `build/` es local y el `flutter clean` de la limpieza iOS lo
+  borra entero. Pasó el 2026-08-24, con el AAB de la 1.0.26+35 listo.
+- **Al listar lo que falta para publicar, separar por máquina.** Que iOS esté subido no dice
+  nada del estado de Android, y al revés.
+
 ## Instrucciones para Release (Agente)
+
+> **Esto se ejecuta en la máquina Linux.** Ver la sección anterior.
+
 
 **Cuando el usuario diga:** "nueva versión", "release", "sube versión", "build release", "genera APK"
 
@@ -133,6 +157,8 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 ## iOS — Archive & Distribute (App Store)
 
 ### Limpieza obligatoria antes de cualquier build iOS
+
+> **Todo lo de esta sección ocurre en la Mac.**
 
 Siempre ejecutar esta secuencia antes de Archive o build en dispositivo físico, para garantizar que se usen las últimas versiones:
 
