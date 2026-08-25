@@ -14,25 +14,78 @@ _(ninguno)_
 ### Pendiente
 
 - **PUBLICAR LA 1.0.26+35** (arreglo del crash de cierre de sesión, commit `7db8f6e`):
-  - **Play Store:** subir `build/app/outputs/bundle/release/app-release.aab` (63.2 MB). Ya
-    generado y verificado — `versionCode 35`, `versionName 1.0.26`. Si se regenera, basta
-    `flutter build appbundle --release`
-  - **App Store:** hace falta la Mac. Limpieza obligatoria (`flutter clean && flutter pub get
-    && cd ios && pod install && ./scripts/build_ios.sh`), abrir `Runner.xcworkspace` y
-    Product → Archive. El build 35 sube sin chocar con el 34 que ya está en ASC
+  - **Play Store:** subir `build/app/outputs/bundle/release/app-release.aab` (63.2 MB con
+    `versionCode 35` / `versionName 1.0.26`). **Hay que regenerarlo:** el `flutter clean` del
+    2026-08-24 —parte de la limpieza obligatoria de iOS— borró `build/` entero y con él el AAB
+    que estaba listo. Basta `flutter build appbundle --release`
+  - **App Store: HECHO el 2026-08-24.** Limpieza obligatoria ejecutada en la Mac
+    (`flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh`),
+    `Runner.app` de 26.4 MB, todos los blindajes verificados después
+    (`LastUpgradeCheck`/`LastUpgradeVersion` en 2630, `Package.swift` en `.iOS("15.0")`,
+    AppIcon con 0 huérfanos). **Archive limpio y build 35 subido a App Store Connect**, sin
+    chocar con el 34 que ya estaba. Queda esperar el procesado y enviar a revisión
   - **Backend:** subir `version_recomendada` de `1.0.25` a `1.0.26` una vez publicada. Hoy
     queda por detrás del binario
-  - **Sin verificar en iPhone:** el arreglo del logout solo se probó en Android (Oppo
-    CPH2639). Es Dart puro, así que debería ir igual, pero conviene ejercitarlo
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
-- **En la Mac:** `pod install` para que entren los pods de `pdfx` y `open_filex` (visor de
-  ticket dentro de la app). Sin eso el ticket caerá al panel de respaldo en iOS.
 - **Vigilar `pdfx`:** aplica el Kotlin Gradle Plugin y Flutter avisa que versiones futuras
   fallarán al compilar con plugins que lo hagan. Hoy compila bien; seguir su changelog.
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **La 1.0.26+35 verificada en iPhone (2026-08-24):**
+
+  Primera vez que el arreglo del cierre de sesión y el visor de ticket propio se ejercitan en
+  iOS. Hasta hoy ambos solo se habían probado en Android (Oppo CPH2639).
+
+  **Limpieza completa antes de probar**, tal como manda `CLAUDE.md`: `flutter clean` →
+  `flutter pub get` → `pod install` → `./scripts/build_ios.sh`. El `post_install` del Podfile
+  hizo su trabajo solo, y lo dejó por escrito en la consola: `✔ Run Script 'Generate dSYM for
+  objective_c native asset' configurado` y `✔ LastUpgradeCheck fijado en 2630`. Resultado:
+  `build/ios/iphoneos/Runner.app`, 26.4 MB, en 161 s.
+
+  **Blindajes comprobados después del build** —el momento en que Flutter los degrada—:
+
+  | Invariante | Estado |
+  | --- | --- |
+  | `LastUpgradeCheck` / `LastUpgradeVersion` | 2630 en ambos |
+  | `Package.swift` (SPM efímero) | `.iOS("15.0")`, forzado por el `post_install` |
+  | `LaunchAction` / `ArchiveAction` | ambas en `Release` |
+  | `objective_c` → `dwarf` en el Podfile | intacto |
+  | AppIcon | 25 entradas / 21 PNG, 0 huérfanos y 0 fantasmas |
+  | `ApiConfig.isProduction` | `true` |
+  | Binario | `1.0.26` build 35, `com.example.arjipagos` |
+  | Tests | 844 pasando tras la limpieza |
+
+  **Verificado en el dispositivo** (iPhone 17 Pro Max, corriendo desde Xcode con el botón Run,
+  que usa `LaunchAction = Release`):
+
+  - **Cerrar sesión funciona.** Es lo que arreglaba el commit `7db8f6e`; en iOS tampoco
+    revienta ya con el `Stack Overflow` de `redepthChildren`.
+  - **El ticket abre DENTRO de la app.** No cae al `TicketListoWidget` de respaldo, que era el
+    riesgo si los plugins nativos no entraban. Quedó explicado por qué entran: `open_filex`
+    sigue por CocoaPods —`open_filex.framework` está dentro del `.app`— y **`pdfx 2.11.0` entra
+    por Swift Package Manager**, enlazado estático, así que no aparece como framework aparte.
+    De ahí el aviso `The following plugins do not support Swift Package Manager: open_filex`,
+    que es informativo: por eso `pod install` sigue siendo parte del flujo.
+  - **Navegación por todos los módulos** sin un solo error de la app en consola.
+
+  **Cuatro mensajes nuevos de consola catalogados como ruido** en la tabla de `CLAUDE.md`:
+  `Reading from public effective user settings`, `Gesture: System gesture gate timed out`,
+  `RTIInputSystemClient ... dismissAutoFillPanel`, y `Snapshotting a view (UIKeyboardImpl)`.
+  Los dos últimos van siempre en pareja al abrir y cerrar campos de texto: iOS quiere cerrar
+  su panel de autorrelleno y fotografiar su teclado, pero el engine de Flutter gestiona su
+  propio `TextInput` y UIKit no se entera. Todas son clases de UIKit; **ninguna del proyecto**,
+  y silenciarlas exigiría tocar el manejo de teclado del engine.
+
+  **Aviso de CocoaPods que tampoco es un fallo:** `CocoaPods did not set the base configuration
+  of your project`. Los tres `ios/Flutter/*.xcconfig` ya incluyen los de Pods con `#include?`;
+  comprobado archivo por archivo.
+
+  **Desenlace:** con todo lo anterior en verde se hizo el **Archive, que salió sin problemas**,
+  y el **build 35 quedó subido a App Store Connect** el mismo día. Ni un aviso de dSYM que
+  atender: el Run Script del Podfile hizo su trabajo.
 
 - **El ticket se ve DENTRO de la app + restauración de estado (2026-08-21):**
 
