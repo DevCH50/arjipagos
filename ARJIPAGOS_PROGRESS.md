@@ -24,7 +24,8 @@ _(ninguno)_
     `Runner.app` de 26.4 MB, todos los blindajes verificados después
     (`LastUpgradeCheck`/`LastUpgradeVersion` en 2630, `Package.swift` en `.iOS("15.0")`,
     AppIcon con 0 huérfanos). **Archive limpio y build 35 subido a App Store Connect**, sin
-    chocar con el 34 que ya estaba. Queda esperar el procesado y enviar a revisión
+    chocar con el 34 que ya estaba. **Ficha completada y enviada a revisión el mismo día: en
+    espera de la revisión de Apple.** Nada más que hacer en la Mac para esta versión
   - **Backend:** subir `version_recomendada` de `1.0.25` a `1.0.26` una vez publicada. Hoy
     queda por detrás del binario
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
