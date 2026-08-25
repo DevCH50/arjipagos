@@ -13,21 +13,10 @@ _(ninguno)_
 
 ### Pendiente
 
-- **PUBLICAR LA 1.0.26+35** (arreglo del crash de cierre de sesión, commit `7db8f6e`):
-  - **Play Store — trabajo de la máquina Linux, no de la Mac.** Generar el AAB con
-    `flutter build appbundle --release` (`versionCode 35`, `versionName 1.0.26`, ~63.2 MB) y
-    subirlo a Play Console. El que se dio por listo el 2026-08-23 no sirve de referencia aquí:
-    `build/` es local a cada máquina, y en la Mac lo borró entero el `flutter clean` de la
-    limpieza iOS del 2026-08-24
-  - **App Store — trabajo de la Mac. HECHO el 2026-08-24.** Limpieza obligatoria ejecutada
-    (`flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh`),
-    `Runner.app` de 26.4 MB, todos los blindajes verificados después
-    (`LastUpgradeCheck`/`LastUpgradeVersion` en 2630, `Package.swift` en `.iOS("15.0")`,
-    AppIcon con 0 huérfanos). **Archive limpio y build 35 subido a App Store Connect**, sin
-    chocar con el 34 que ya estaba. **Ficha completada y enviada a revisión el mismo día: en
-    espera de la revisión de Apple.** Nada más que hacer en la Mac para esta versión
-  - **Backend:** subir `version_recomendada` de `1.0.25` a `1.0.26` una vez publicada. Hoy
-    queda por detrás del binario
+- **Backend — último cabo suelto de la 1.0.26+35:** subir `version_recomendada` de `1.0.25`
+  a `1.0.26` **una vez que las tiendas terminen de publicar**. Hoy queda por detrás del
+  binario. Adelantarlo avisaría de una versión que todavía no se puede descargar. Las dos
+  tiendas ya tienen el build 35 subido; ver "La 1.0.26+35 entregada a las dos tiendas"
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
 - **Vigilar `pdfx`:** aplica el Kotlin Gradle Plugin y Flutter avisa que versiones futuras
@@ -35,6 +24,23 @@ _(ninguno)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **La 1.0.26+35 entregada a las dos tiendas (2026-08-24):**
+
+  Con esto queda cerrada la parte de la app. La versión lleva el arreglo del crash de cierre
+  de sesión (commit `7db8f6e`) y el visor de ticket dentro de la app.
+
+  | Tienda | Máquina | Estado |
+  | --- | --- | --- |
+  | App Store | Mac | Archive limpio, build 35 subido a App Store Connect y ficha enviada. **En espera de la revisión de Apple** |
+  | Play Store | Linux | AAB subido a Play Console (`build/app/outputs/bundle/release/app-release.aab`, 63.2 MB, `versionCode 35` / `versionName 1.0.26`) |
+
+  El AAB **sí estaba en la máquina Linux**, pese a que el `flutter clean` de la limpieza iOS
+  lo había borrado en la Mac. Es justo el caso que documenta `CLAUDE.md` en "Dos máquinas":
+  `build/` es local, y el estado de una máquina no dice nada del de la otra.
+
+  **Lo único que falta para cerrar la versión** es subir `version_recomendada` a `1.0.26` en
+  el backend, y no antes de que las tiendas publiquen.
 
 - **La 1.0.26+35 verificada en iPhone (2026-08-24):**
 
