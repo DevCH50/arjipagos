@@ -11,6 +11,28 @@
 
 _(ninguno)_
 
+### Sesión 2026-08-26 (Mac) — 1.0.28+37 verificada en el iPhone 17 Pro Max
+
+`git pull` de los 5 commits de la Linux (separación por emisor fiscal, 1.0.27+36 ya
+publicada en Play Store). **912 tests en verde.** Limpieza obligatoria completa
+(`flutter clean` → `pub get` → `pod install` → `build_ios.sh`) y ejecución en el iPhone 17
+Pro Max desde Xcode: **la app corre bien y todo funciona.**
+
+Blindajes verificados después del build: `LastUpgradeCheck`/`LastUpgradeVersion` en 2630,
+`Package.swift` en `.iOS("15.0")`, `ApiConfig.isProduction = true`,
+`NSFaceIDUsageDescription` presente, scheme con Launch y Archive en `Release`, iconos con
+0 huérfanos y 0 fantasmas, y `git status` limpio tras la limpieza.
+
+La consola solo escupió ruido conocido. Cinco mensajes que no estaban catalogados se
+añadieron a la tabla de `CLAUDE.md` (`containerToPush is nil`, `Unable to hide query
+parameters`, `markAllLayersVolatile`, `Failed to terminate process … No such process
+found` y `-- LLDB integration loaded --`), tras comprobar con `grep -rI` que ninguno
+aparece en `lib/`, `ios/Runner/` ni en los Pods.
+
+**Enviada a las dos tiendas el 2026-08-26.** En App Store Connect quedó en Espera de
+Revisión; en Play Store se envió desde la Linux con el AAB de la misma versión. La
+**1.0.27+36 ya está publicada en ambas**. Las dos plataformas van a la par.
+
 ### Pendiente
 
 - 🟡 **"Otros pagos" (emisor fiscal 2) — TERMINADO y verificado. Publicable con los datos

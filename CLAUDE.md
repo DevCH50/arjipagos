@@ -263,8 +263,10 @@ Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xc
 **Ruido normal en la consola de Xcode — NO son fallos**
 
 Estos mensajes salen en cada arranque y **no hay nada que corregir**. Verificados
-en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23 y ampliados el 2026-08-24 tras
-recorrer todos los módulos de la app:
+en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23, ampliados el 2026-08-24 tras
+recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
+(las cinco últimas filas). Ninguno de estos símbolos aparece en `lib/`, `ios/Runner/`
+ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
 | --- | --- |
@@ -280,6 +282,11 @@ recorrer todos los módulos de la app:
 | `RTIInputSystemClient ... dismissAutoFillPanel ... requires a valid sessionID` | iOS intenta cerrar el panel de autorrelleno cuando ya no hay sesión de texto activa. Es constante en Flutter porque el engine gestiona su propio `TextInput` y UIKit no se entera. Sale una línea por cada teclado que se cierra |
 | `Snapshotting a view (UIKeyboardImpl) that is not in a visible window` | UIKit fotografía su propio teclado para la animación de salida cuando ya lo quitó de pantalla. Clase de UIKit, no del proyecto |
 | `The variant selector cell index number could not be found` | UIKit construyendo las celdas de variantes del teclado (los tonos de piel y variantes de presentación de emoji). Sale en tandas, una línea por celda. Comprobado el 2026-08-25: el símbolo no aparece en `lib/`, `ios/Runner/` ni en los Pods — no sale del proyecto |
+| `containerToPush is nil, will not push anything to candidate receiver for request token: …` | El subsistema de continuidad de iOS evaluando si hay algo que ofrecer a un dispositivo cercano. No hay actividad que empujar, así que no empuja nada. Sale intercalado con las tandas del teclado |
+| `Unable to hide query parameters from script (missing data)` | WebKit intentando aplicar su protección contra rastreo por enlace en el `WKWebView` del pago, sin datos que aplicar |
+| `WebProcess::markAllLayersVolatile: Failed to mark layers as volatile` | WebKit liberando las capas de la webview al dejar de estar en primer plano |
+| `Failed to terminate process … RBSRequestErrorDomain Code=3 "No such process found"` | WebKit cerrando un proceso `WebContent` que ya había salido solo. Llega tarde y no encuentra a quién matar |
+| `-- LLDB integration loaded --` | El depurador de Xcode adjuntándose. Solo sale al correr desde Xcode, nunca en la app instalada |
 
 **Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
 
