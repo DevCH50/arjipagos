@@ -13,12 +13,14 @@ _(ninguno)_
 
 ### Pendiente
 
-- **Backend — `version_recomendada` a `1.0.26`, y ni una más por ahora.** Sigue en `1.0.25`,
-  por detrás del binario. Ya se puede subir a **`1.0.26`** sin riesgo: esa versión está
-  publicada en las dos tiendas.
-  **No adelantarla a `1.0.27` todavía.** Android ya la tiene publicada, pero **iOS sigue en
-  revisión de Apple**. Ponerla en `1.0.27` avisaría a los usuarios de iPhone de una versión
-  que aún no pueden descargar. Cuando Apple publique, entonces sí
+- **Vigilar el aviso de versión en iPhone hasta que Apple publique.**
+  `version_recomendada` se puso en **`1.0.27`** el 2026-08-25, con iOS todavía en revisión.
+  Consecuencia: un usuario de iPhone en la `1.0.26` ve el diálogo de versión nueva y el botón
+  lo lleva a una ficha donde aún está la `1.0.26`.
+  **No bloquea**: `version_recomendada` produce el estado `sugerida`, que se descarta con
+  "Ahora no". El que encierra al usuario es `version_minima` (`obligatoria`) — **esa no puede
+  estar en `1.0.27`** mientras iOS siga en revisión, o los usuarios de iPhone se quedan fuera
+  de la app sin poder actualizar. Se resuelve solo en cuanto Apple publique
 - **Push de "pago exitoso" — falta comprobarlo con un push de verdad:** la mitad de la app
   está **hecha** (§6 de `PLAN_PUSH_PAGO_EXITOSO.md`; ver "La app ya atiende el push de pago
   exitoso"). Queda que el backend lo mande al confirmar el cobro con Adquira, y entonces
