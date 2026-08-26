@@ -339,8 +339,10 @@ no la abre.
 
 ## 7. iOS
 
-> **Todo lo de iOS está escrito y auditado, pero NO probado**: requiere la Mac. Abajo está la
-> lista exacta de lo que hay que comprobar allí.
+> **Verificado en iPhone 17 Pro Max el 2026-08-25** sobre el build release, tras la limpieza
+> obligatoria completa. La lista de abajo se recorrió y salió correcta. Queda **un solo cabo de
+> documentación**: el punto 5 pide anotar qué `LocalAuthExceptionCode` llega al denegar el
+> permiso de Face ID, y ese dato sigue sin escribirse.
 
 ### Lo que ya está hecho y verificado sobre el papel
 

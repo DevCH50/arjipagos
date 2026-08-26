@@ -22,9 +22,6 @@ _(ninguno)_
   exitoso"). Queda que el backend lo mande al confirmar el cobro con Adquira, y entonces
   recorrer en dispositivo los tres casos: app abierta, en segundo plano y cerrada. Hasta que
   llegue un push real solo está probado con streams inyectados.
-- **Verificar el bloqueo biométrico en iOS (Mac):** el código está escrito y auditado, pero no
-  probado en iPhone. Lista exacta de comprobaciones en `PLAN_FACE_ID.md` §7. Ojo al caso que
-  solo se da en iOS: denegar el permiso de Face ID la primera vez.
 - **Login biométrico (segunda mitad del Face ID):** bloqueado por el backend. Necesita tres
   endpoints y una tabla — todo en `PLAN_FACE_ID_BACKEND.md`, listo para pasárselo tal cual.
   Sin esto, tras cerrar sesión se entra con usuario y contraseña, como siempre.
@@ -35,6 +32,11 @@ _(ninguno)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **Bloqueo biométrico verificado en iPhone (2026-08-25):** recorrido el checklist de
+  `PLAN_FACE_ID.md` §7 en el iPhone 17 Pro Max sobre el build release. Con esto el **cerrojo**
+  queda cerrado en las dos plataformas. Sigue faltando el **login biométrico**, que es la otra
+  mitad y depende del backend (`PLAN_FACE_ID_BACKEND.md`).
 
 - **Archive iOS de la 1.0.27+36 en la Mac (2026-08-25):** limpieza obligatoria completa
   (`flutter clean` → `pub get` → `pod install` → `build_ios.sh`), blindajes verificados
@@ -3784,6 +3786,7 @@ y `System gesture gate timed out`.
   Mientras esté "en espera de revisión" la versión **no** está publicada.
 - **Play Console:** el APK y el AAB de esta misma 1.0.27+36 están generados y verificados en el
   Oppo, pero la subida se hace en la Linux y **no** está confirmada.
-- **El checklist del cerrojo biométrico en iOS (`PLAN_FACE_ID.md` §7) sigue sin darse por
-  recorrido entero.** La app funciona, pero no está confirmado el caso que solo se da en iOS:
-  denegar el permiso de Face ID la primera vez.
+- **Cerrojo biométrico: checklist de `PLAN_FACE_ID.md` §7 recorrido y correcto en el iPhone.**
+  Queda un detalle de documentación, no de código: el §7.5 pide **anotar qué
+  `LocalAuthExceptionCode` llega al denegar el permiso de Face ID la primera vez**, y ese dato
+  sigue sin escribirse.
