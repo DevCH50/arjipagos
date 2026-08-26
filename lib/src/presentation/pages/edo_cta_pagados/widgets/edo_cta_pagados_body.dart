@@ -45,7 +45,11 @@ class EdoCtaPagadosBody extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async => _recargarDatos(context),
-          child: AlumnosPagadosList(alumnos: alumnosConPagos),
+          child: AlumnosPagadosList(
+            alumnos: alumnosConPagos,
+            alumnoDestacadoId: state.alumnoDestacadoId,
+            folioDestacado: state.folioDestacado,
+          ),
         );
       },
     );

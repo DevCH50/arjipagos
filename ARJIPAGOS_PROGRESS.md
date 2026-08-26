@@ -17,6 +17,17 @@ _(ninguno)_
   a `1.0.26` **una vez que las tiendas terminen de publicar**. Hoy queda por detrás del
   binario. Adelantarlo avisaría de una versión que todavía no se puede descargar. Las dos
   tiendas ya tienen el build 35 subido; ver "La 1.0.26+35 entregada a las dos tiendas"
+- **Push de "pago exitoso" — falta comprobarlo con un push de verdad:** la mitad de la app
+  está **hecha** (§6 de `PLAN_PUSH_PAGO_EXITOSO.md`; ver "La app ya atiende el push de pago
+  exitoso"). Queda que el backend lo mande al confirmar el cobro con Adquira, y entonces
+  recorrer en dispositivo los tres casos: app abierta, en segundo plano y cerrada. Hasta que
+  llegue un push real solo está probado con streams inyectados.
+- **Verificar el bloqueo biométrico en iOS (Mac):** el código está escrito y auditado, pero no
+  probado en iPhone. Lista exacta de comprobaciones en `PLAN_FACE_ID.md` §7. Ojo al caso que
+  solo se da en iOS: denegar el permiso de Face ID la primera vez.
+- **Login biométrico (segunda mitad del Face ID):** bloqueado por el backend. Necesita tres
+  endpoints y una tabla — todo en `PLAN_FACE_ID_BACKEND.md`, listo para pasárselo tal cual.
+  Sin esto, tras cerrar sesión se entra con usuario y contraseña, como siempre.
 - Mejorar manejo de errores en WebView (timeout, sin conexión)
 - Manejo automático de token expirado (refresh token o logout automático)
 - **Vigilar `pdfx`:** aplica el Kotlin Gradle Plugin y Flutter avisa que versiones futuras
@@ -24,6 +35,203 @@ _(ninguno)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **La app ya atiende el push de pago exitoso (2026-08-25):**
+
+  Es la §6 de `PLAN_PUSH_PAGO_EXITOSO.md` —la mitad que toca a la app—. El
+  backend todavía tiene que mandar el push, así que **el viaje completo no está
+  comprobado en dispositivo**: los tres canales se prueban con streams
+  inyectados, como en `BannerBloc`.
+
+  **Lo primero era no romper lo que ya había.** `NotificacionBloc` escuchaba
+  `onMessageOpenedApp` y `getInitialMessage` sin filtrar y navegaba a
+  Notificaciones ante *cualquier* toque. Ahora ignora los de `campania: "pago"`.
+  El filtro es **solo para el toque**: en primer plano la notificación sigue
+  entrando en la lista y encendiendo el punto rojo, venga de donde venga, porque
+  el push de pago también tiene que quedar registrado en Notificaciones.
+
+  **`EdoCtaPagadosBloc` atiende el push**, con los tres canales y el mismo filtro
+  de dos claves que usan los banners (`campania` + `accion`). Al llegar recarga
+  la lista —el pago es de hace segundos y la de memoria no lo tiene— y deja
+  `debeNavegar` en el estado. No navega él: vive en la raíz y no tiene
+  `Navigator`. Quien navega es `MenuPrincipalPage`, con el mismo mecanismo que ya
+  usaba para las notificaciones, y por `restorablePushNamed`.
+
+  **Dos guardas al navegar, las dos por el mismo `RutaActualObserver` que ya usa
+  el cerrojo biométrico.** No se abre la pantalla encima de `pago_webview` —el
+  push llega al confirmar el cobro, y el usuario puede seguir en la página del
+  banco; sacarlo de ahí a media transacción es lo último que hay que hacer— ni se
+  apila una segunda copia si ya está arriba. En los dos casos el alumno y el
+  folio señalados **se conservan**, así que cuando el usuario entre por su cuenta
+  la lista se irá igualmente hasta su pago, ya recargado.
+
+  **Al abrir, la vista se va al alumno y se marca su pago.** La tarjeta del
+  alumno se resalta con un halo y se hace `Scrollable.ensureVisible` hasta ella;
+  los renglones cuyo folio coincide con el del ticket recién emitido se pintan
+  más marcados. A los 3 segundos se apaga solo.
+
+  **Lo que manda el backend y cómo se usa:**
+
+  | Clave | Uso en la app |
+  | --- | --- |
+  | `alumno_id` | Desplazarse hasta su tarjeta. **Puede faltar**: el backend lo omite si el cobro tocó a varios alumnos |
+  | `ticket_folio` | Marcar los renglones de ese ticket, que suelen ser **varios**. **Puede faltar**: si el cobro tocó a dos emisores fiscales hay dos folios, y mandar uno haría pensar que del otro no se cobró |
+  | `ticket_id` | **Se ignora a propósito.** La app no maneja ese identificador: `EstadoDeCuenta` solo conoce el folio, que es además lo que ve el usuario. Guardarlo sin usarlo sería dejar basura |
+  | `ticket_url` | **No se manda**, por decisión del encargo: el push viaja por servidores de Google y esa liga lleva datos del pago. La app pide el ticket por su API autenticada |
+
+  Si no viene ninguna pista, se abre la pantalla y ya — mejor eso que señalar al
+  alumno equivocado.
+
+  Los widgets de la pantalla siguen siendo presentacionales: el folio baja por
+  parámetro en vez de leerse del BLoC en la hoja, para que sigan probándose sin
+  montar un `BlocProvider` encima (era lo que rompía
+  `pagos_realizados_orden_test`).
+
+  Tests nuevos: los tres canales, el filtrado por campaña, `alumno_id` ausente o
+  no numérico, `ticket_folio` ausente, y el apagado de las dos señales. Más el
+  filtro en `notificacion_bloc_test`. `flutter analyze` limpio y **888 tests** en
+  verde. La lista de Pagos Realizados verificada en el Oppo tras reescribirla.
+
+  Archivos: los tres del BLoC de pagos realizados,
+  `lib/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart`,
+  `lib/src/presentation/pages/menu_principal/MenuPrincipalPage.dart` y los
+  cuatro widgets de `edo_cta_pagados/widgets/`.
+
+- **Al entrar con otro usuario ya no quedan datos del anterior (2026-08-25):**
+
+  Reportado en el Oppo: se abría sesión con `CATutorM974`, se cerraba, se entraba con
+  `CATutorM820`, y la app seguía enseñando la **familia** del primero.
+
+  **Causa: dos piezas que se apoyaban la una en la otra sin ninguna garantía.**
+
+  1. Los BLoCs de `blocProviders` viven en la raíz de la app y **sobreviven al cierre de
+     sesión** —`MyApp` solo se instancia una vez, en el `runApp`—. Al cerrar sesión nadie los
+     vaciaba.
+  2. Tras el login, la recarga de esos BLoCs se lanzaba con un `Future.delayed(500 ms)` a ojo,
+     sin esperar a que la sesión nueva estuviera escrita. `LoginResponse` mandaba el guardado
+     como un evento de BLoC —que no se puede esperar— y arrancaba el temporizador en paralelo.
+
+  Si `flutter_secure_storage` —que cifra contra el keystore— tardaba más que el temporizador,
+  `MenuPrincipalInitialEvent` leía `getUserSession() == null`, caía en el `else` y no emitía
+  nada. Y como el `copyWith` de estos estados nunca vacía un campo (`familia ?? this.familia`),
+  lo del usuario anterior se quedaba en pantalla **para siempre**, sin error ni aviso. Lo mismo
+  pasaba si la llamada de red fallaba.
+
+  **Medido en el dispositivo, con el ciclo 974 → cerrar sesión → 820:**
+
+  | | Antes | Ahora |
+  | --- | --- | --- |
+  | El login responde | 17:19:56.964 | 17:34:12.009 |
+  | Arranca la recarga | 17:19:57.500 (+536 ms a ojo) | 17:34:12.110 (+101 ms, lo que tardó el guardado) |
+  | Datos del usuario nuevo | 17:19:58.65 (**+1,69 s**) | 17:34:13.30 (**+1,29 s**) |
+  | Registros de FCM por login | 2 | 1 |
+
+  **Qué se hizo:**
+
+  - `cerrarSesionCompleta` ahora recibe el `BuildContext` y **vacía los cinco BLoCs de datos**
+    antes de cualquier `await`, con eventos `…LimpiarSesion` nuevos que emiten el estado
+    inicial entero. Se hace antes de esperar porque la baja del token de FCM es una llamada de
+    red y no puede haber ni un fotograma con los datos de quien se va.
+  - `LoginResponse` **espera** el guardado de la sesión —directo por el `locator`, como ya hacía
+    el cierre de sesión— y solo después manda las recargas y navega. Fuera el temporizador.
+  - Se retiró código muerto que la carrera había ido dejando: `MenuPrincipalRegistrarFcm` (que
+    duplicaba el registro de FCM en cada login), `LoginSaveUserSession`, `MenuPrincipalLogout`,
+    `HomeLogoutEvent` y `_eliminarTokenFcm` —los tres últimos duplicaban el logout que ya hace
+    `cerrarSesionCompleta`—. `HomeBloc` ya no recibe `AuthUseCases`.
+  - Test guardián nuevo: `test/unit/sesion_no_arrastra_usuario_anterior_test.dart`. Falla si
+    vuelve el `Future.delayed`, si se deja de esperar el guardado, o si alguien añade a
+    `blocProviders` un BLoC que carga datos al crearse y no lo vacía en el cierre de sesión.
+
+  Verificado en el Oppo (CPH2639, Android 15) haciendo el ciclo completo dos veces y abriendo el
+  cajón nada más entrar: familia correcta las dos veces. `flutter analyze` limpio y los 874
+  tests en verde.
+
+  Archivos: `lib/src/presentation/utils/CierreDeSesion.dart`,
+  `lib/src/presentation/pages/auth/login/includes/LoginResponse.dart`, los cinco BLoCs de datos
+  y sus eventos, `lib/src/blocProvider.dart`,
+  `lib/src/presentation/pages/menu_principal/widgets/user_drawer.dart`,
+  `lib/src/presentation/widgets/CerrojoBiometrico.dart`.
+
+- **Pagos Realizados: se respeta el orden del backend (2026-08-25):**
+
+  El historial salía desordenado. `PagosRealizadosList` tenía un
+  `..sort((a, b) => b.id.compareTo(a.id))` que **pisaba el orden que manda el servidor**.
+
+  **El backend viene bien.** Comprobado contra producción con la cuenta CATutorM974: los dos
+  alumnos llegan descendentes por `fecha_de_pago`, del más reciente al más antiguo. El
+  desorden lo metía la app.
+
+  **Por qué ordenar por `id` estaba mal.** Coincide con ordenar por fecha solo mientras los
+  ids se emitan en el mismo orden que los pagos, y no se cumple: las reinscripciones viven en
+  un rango de ids alto (15036) y las colegiaturas en uno bajo (3418), sin relación con cuándo
+  se pagó cada una. Caso real, alumna LEAH:
+
+  | orden del backend | id | fecha de pago |
+  | --- | --- | --- |
+  | 1 | 3418 | 25-08-2026 11:39 |
+  | 2 | 15036 | 24-08-2026 17:28 |
+
+  El `sort` subía el 15036 al primer puesto, así que la app mostraba **el pago del 24 por
+  encima del pago del 25**. Capturado en el Oppo antes y después del arreglo.
+
+  La lista ahora pinta lo que recibe, sin criterio propio. Si algún día el orden se ve mal, el
+  sitio donde mirar es el backend, no este archivo.
+
+  Guardián nuevo: `test/unit/blocs/pagos_realizados_orden_test.dart`, con los datos reales de
+  LEAH. Verificado que **falla** si alguien reintroduce el `sort`.
+
+  **No se tocaron** los `sort` de `edo_cta/widgets/pagos_list.dart` ni de
+  `carrito/widgets/carrito_alumno_card.dart`: ahí el orden por id sostiene la regla de
+  selección de pagos pendientes (ascendente al seleccionar, descendente para poder quitar del
+  carrito), que es negocio y no un dato del servidor.
+
+- **Bloqueo biométrico — el cerrojo (2026-08-25):**
+
+  Pedir Face ID / huella al volver a la aplicación. **Es la mitad de la función**: el *login
+  biométrico* —entrar sin teclear la contraseña tras cerrar sesión— está sin hacer y espera
+  tres endpoints del backend. Se partió así a propósito, para poder entregar ya lo que no
+  depende de nadie. El cerrojo es 100 % local: **no habla con el servidor en ningún momento**.
+
+  Plan completo en `PLAN_FACE_ID.md`; lo que falta del backend, en `PLAN_FACE_ID_BACKEND.md`.
+
+  Decisiones tomadas con el usuario: cerrojo y login biométrico (por fases), secreto =
+  refresh token del backend, fallback al PIN/patrón, interruptor en el drawer.
+
+  **Qué se construyó.** `local_auth` 3.x —no la 2.x: errores tipados y `minSdk 24`, el mismo
+  del proyecto—. Capa limpia completa: `AutenticadorBiometrico` (canal nativo aislado, al
+  estilo de `ResenaNativa`), `BiometriaStorage`, repositorio, tres casos de uso,
+  `BiometriaBloc`, `CerrojoBiometrico` (overlay en el `builder` del MaterialApp, como
+  `ActualizacionObserver`), `CerrojoPantalla`, `InterruptorBiometria` y `RutaActualObserver`.
+  Se extrajo `cerrarSesionCompleta()` porque el cerrojo necesitaba el mismo cierre de sesión
+  que el drawer, baja del token FCM incluida.
+
+  **Tres cosas que rompían y ya no.** Están detalladas en `CLAUDE.md`:
+
+  1. `MainActivity` pasó a `FlutterFragmentActivity` — `BiometricPrompt` lo exige. La guarda
+     del *launcher relaunch bug* se conservó y se volvió a comprobar (`sz=1`).
+  2. `NormalTheme` pasó a AppCompat en `values/` y `values-night/`. **Era un crash**, no un
+     detalle estético: `androidx.biometric` pinta su propio diálogo con el `AlertDialog` de
+     appcompat cuando `SDK_INT < 28` —o en API 28 sin sensor de huella— y revienta con un tema
+     de plataforma. Verificado leyendo el bytecode. Los `values-v31/` y `LaunchTheme` no se
+     tocaron.
+  3. La preferencia vive en `SecureStorage` y **nunca** en `SharedPref`, porque `logout()`
+     hace `sharedPref.clear()`. Hay test guardián.
+
+  **El fallo que solo se vio en el teléfono.** El cerrojo no se echaba nunca: Android manda
+  una pausa espuria justo antes de la reanudación, que pisaba el instante de salida y hacía
+  que el tiempo fuera se calculara en 0,1 s en vez de 39 s. Sin crash y sin error, la función
+  simplemente no hacía nada. Arreglado con `??=` y con test de regresión. Es el ejemplo de por
+  qué no basta con que los tests pasen.
+
+  **Verificado en el Oppo CPH2639 (Android 16):** 15 comprobaciones con captura, incluidas la
+  gracia en los dos sentidos, que el cerrojo absorbe los toques, el tema oscuro y que
+  "Entrar con mi contraseña" da de baja el token FCM (200) y lleva al login. Tabla completa en
+  `PLAN_FACE_ID.md` §10.
+
+  869 tests en verde (24 nuevos). Versión subida a **1.0.27+36**.
+
+  **Pendiente:** verificar iOS en la Mac —está escrito y auditado, pero no probado; la lista
+  exacta está en `PLAN_FACE_ID.md` §7— y el emulador API 26 para confirmar el punto 2.
 
 - **La 1.0.26+35 entregada a las dos tiendas (2026-08-24):**
 

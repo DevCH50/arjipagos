@@ -9,9 +9,13 @@ import 'package:flutter/material.dart';
 class AlumnoPagadoCard extends StatelessWidget {
   final Alumno alumno;
 
+  /// Folio del ticket recién pagado, si se llegó desde un push de pago exitoso.
+  final String? folioDestacado;
+
   const AlumnoPagadoCard({
     super.key,
     required this.alumno,
+    this.folioDestacado,
   });
 
   @override
@@ -45,7 +49,10 @@ class AlumnoPagadoCard extends StatelessWidget {
             ),
           ),
           children: [
-            PagosRealizadosList(pagos: alumno.estadoDeCuenta),
+            PagosRealizadosList(
+              pagos: alumno.estadoDeCuenta,
+              folioDestacado: folioDestacado,
+            ),
           ],
         ),
       ),

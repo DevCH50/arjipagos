@@ -14,12 +14,24 @@ import 'package:flutter/material.dart';
 /// columnas: con el botón *Ver ticket* compitiendo por el espacio horizontal, al
 /// concepto le quedaba tan poco ancho que se partía en dos líneas y la fecha de
 /// pago se recortaba con puntos suspensivos.
+///
+/// Al llegar desde un push de pago exitoso se marca el renglón cuyo folio
+/// coincide con el del ticket recién emitido. Suelen ser **varios**: un mismo
+/// folio cubre todos los pagos que entraron en el cobro.
 class PagoRealizadoItem extends StatelessWidget {
   final EstadoDeCuenta pago;
+
+  /// Folio del ticket recién pagado, si se llegó desde un push.
+  ///
+  /// Se recibe por parámetro y no se lee del BLoC a propósito: estos widgets son
+  /// presentacionales —solo saben del pago que pintan— y así siguen probándose
+  /// sin montar un `BlocProvider` encima.
+  final String? folioDestacado;
 
   const PagoRealizadoItem({
     super.key,
     required this.pago,
+    this.folioDestacado,
   });
 
   @override
@@ -27,8 +39,18 @@ class PagoRealizadoItem extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      color: AppColors.success.withValues(alpha: isDark ? 0.12 : 0.05),
+    final bool recienPagado = folioDestacado != null &&
+        pago.ticketFolio.isNotEmpty &&
+        pago.ticketFolio == folioDestacado;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      color: AppColors.success.withValues(
+        alpha: recienPagado
+            ? (isDark ? 0.34 : 0.18)
+            : (isDark ? 0.12 : 0.05),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Column(
         mainAxisSize: MainAxisSize.min,

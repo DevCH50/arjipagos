@@ -308,6 +308,50 @@ recorrer todos los módulos de la app:
 - NO borrar ese bloque del Podfile. Si se toca, verificar con un `pod install` que ambos valores queden en 2630.
 - `./scripts/build_ios.sh` sigue siendo válido como capa extra, pero ya no es imprescindible para este fix.
 
+## Bloqueo biométrico (Face ID / huella) — tres cosas que no se pueden tocar
+
+Añadido el 2026-08-25 con `local_auth` 3.x. El plan completo está en `PLAN_FACE_ID.md`; lo que
+falta del backend, en `PLAN_FACE_ID_BACKEND.md`. **Solo está hecho el cerrojo** —pedir la
+identidad al volver a la app—, que es 100 % local y no habla con el servidor. El login
+biométrico está sin hacer y espera tres endpoints.
+
+**1. `MainActivity` extiende `FlutterFragmentActivity`, no `FlutterActivity`.**
+`BiometricPrompt` de androidx necesita una `FragmentActivity` para adjuntar su fragmento. La
+guarda del *launcher relaunch bug* del `onCreate` se conserva intacta y sigue funcionando
+(comprobado: la tarea se queda en `sz=1` tras un intent del launcher).
+
+**2. `NormalTheme` deriva de AppCompat en `values/` y `values-night/`. No devolverlo a
+`@android:style/Theme.*`: es un CRASH, no un detalle estético.**
+`androidx.biometric` 1.1.0 pinta su propio diálogo con `androidx.appcompat.app.AlertDialog$Builder`
+cuando `isUsingFingerprintDialog()` da true, y ese constructor revienta con *"You need to use a
+Theme.AppCompat theme"* si el tema no desciende de AppCompat. Ocurre con `SDK_INT < 28` —el
+`minSdk` aquí es 24— y también en API 28 sin sensor de huella. Verificado leyendo el bytecode.
+Los `values-v31/` **no** se tocaron: cubren API 31+, donde ese camino no se toma, y son los que
+mandan en el edge-to-edge. `LaunchTheme` tampoco.
+
+**3. La preferencia del bloqueo vive en `SecureStorage`, JAMÁS en `SharedPref`.**
+`AuthRepositoryImpl.logout()` hace `sharedPref.clear()`. Lo que se guarde ahí se borra en cada
+cierre de sesión — que es exactamente cuando el login biométrico lo va a necesitar. Sería un
+fallo silencioso, sin crash. Hay test guardián:
+`test/unit/biometria_no_en_sharedpref_test.dart`.
+
+**Detalles de diseño que parecen arbitrarios y no lo son:**
+
+- El cerrojo es un **overlay en el `builder` del `MaterialApp`**, como `ActualizacionObserver`.
+  No es una ruta del `Navigator`: ver la sección de abajo sobre el *Stack Overflow*.
+- **Gracia de 30 s** antes de bloquear al volver del segundo plano, y **nunca** encima de
+  `pago_webview`. Sin eso, el cerrojo salta cuando el usuario sale a copiar el código que le
+  mandó el banco y no puede terminar de pagar. La ruta visible la sigue `RutaActualObserver`,
+  para no tocar `PagoWebViewPage`.
+- Mientras el diálogo nativo está abierto se **ignoran los cambios de ciclo de vida**: en
+  Android el propio `BiometricPrompt` hace que la app reporte `paused`, y sin esa guarda el
+  cerrojo se rebloquea a sí mismo en bucle.
+- Si el aparato deja de admitir biometría, **el bloqueo se apaga solo**. El interruptor para
+  apagarlo está dentro de la app; sin esto, quien borre sus huellas se queda encerrado fuera.
+
+`ios/Runner/Info.plist` **debe** llevar `NSFaceIDUsageDescription`: sin esa clave iOS no da un
+error, **mata el proceso** en cuanto se invoca Face ID.
+
 ## Volver al login: NUNCA montar un segundo `MyApp`
 
 **`MyApp` solo se instancia en el `runApp` de `lib/main.dart`.** Para volver al login —cierre
@@ -346,14 +390,34 @@ guarda al reciclar el proceso conserva `menu_principal` y devuelve al usuario a 
 para la que ya no hay sesión.
 
 **Los BLoCs sobreviven al cierre de sesión.** Los de `blocProviders` viven en la raíz de la
-app, así que al no recrearse `MyApp` conservan los datos del usuario anterior. `LoginResponse`
-refresca al entrar `MenuPrincipalBloc`, `HomeBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y
-`FacturaBloc` —los que solo cargaban al crearse—. `CarritoBloc` y `NotificacionBloc` ya se
-recargan en el `initState` de su página, y `BannerBloc` al montarse la tirilla. **Si se añade
-un BLoC de datos a `blocProviders`, hay que refrescarlo ahí también.**
+app, así que al no recrearse `MyApp` conservan los datos del usuario anterior. Se ataca por los
+dos lados, y hacen falta los dos:
 
-Hay test guardián: `test/unit/no_reinstancia_myapp_test.dart` falla si alguien vuelve a
-instanciar `MyApp` fuera de `lib/main.dart`.
+1. **Al cerrar sesión se vacían.** `cerrarSesionCompleta(context)` manda un evento
+   `…LimpiarSesion` a `MenuPrincipalBloc`, `HomeBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y
+   `FacturaBloc`, y cada uno emite su **estado inicial entero**. No vale un `copyWith`: el de
+   estos estados nunca vacía un campo (`familia ?? this.familia`), así que arrastraría lo del
+   usuario que se va. `CarritoBloc` y `NotificacionBloc` se recargan solos en el `initState` de
+   su página, y `BannerBloc` al montarse la tirilla.
+2. **Al entrar se recargan, y en orden.** `LoginResponse` **espera** (`await`) a que la sesión
+   esté escrita antes de mandar los eventos de recarga, porque cada servicio lee el token y el
+   `user_id` del almacenamiento. El guardado va directo por el `locator`, no por el BLoC: un
+   evento de BLoC no se puede esperar.
+
+**Si se añade un BLoC de datos a `blocProviders`, hay que vaciarlo en `cerrarSesionCompleta` y
+recargarlo en `LoginResponse`.**
+
+**No volver al `Future.delayed(500 ms)`.** Hasta el 2026-08-25 la recarga se lanzaba con un
+temporizador a ojo, sin ninguna garantía de que la sesión nueva estuviera guardada. Cuando
+`flutter_secure_storage` —que cifra contra el keystore— tardaba más que el temporizador, la
+recarga leía una sesión que aún no existía, no emitía nada, y **la familia del usuario anterior
+se quedaba en pantalla para siempre**, sin error ni aviso. Reproducido en el Oppo entrando con
+`CATutorM974` y luego con `CATutorM820`.
+
+Hay dos tests guardianes: `test/unit/no_reinstancia_myapp_test.dart` falla si alguien vuelve a
+instanciar `MyApp` fuera de `lib/main.dart`, y
+`test/unit/sesion_no_arrastra_usuario_anterior_test.dart` falla si vuelve el temporizador, si
+se deja de esperar el guardado, o si aparece un BLoC de datos nuevo sin vaciar.
 
 ## Arquitectura
 

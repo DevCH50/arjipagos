@@ -12,12 +12,15 @@
 /// - ResetDebeNavegarEvent (limpiar señal de navegación automática)
 library;
 
+import 'dart:async';
+
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -31,7 +34,11 @@ void main() {
   late MockMarcarTodasLeidasUseCase mockMarcarTodasLeidas;
 
   // Construye el BLoC inyectando streams vacíos para aislar Firebase.
-  NotificacionBloc buildBloc() => NotificacionBloc(
+  NotificacionBloc buildBloc({
+    Stream<RemoteMessage>? toque,
+    Future<RemoteMessage?> Function()? mensajeInicial,
+  }) =>
+      NotificacionBloc(
         createMockNotificacionUseCases(
           getNotificaciones: mockGetNotificaciones,
           getCountNoLeidas: mockGetCountNoLeidas,
@@ -39,8 +46,8 @@ void main() {
           marcarTodasLeidas: mockMarcarTodasLeidas,
         ),
         fcmForegroundStream: const Stream.empty(),
-        fcmBackgroundTapStream: const Stream.empty(),
-        getInitialMessage: () async => null,
+        fcmBackgroundTapStream: toque ?? const Stream.empty(),
+        getInitialMessage: mensajeInicial ?? () async => null,
       );
 
   setUp(() {
@@ -498,5 +505,52 @@ void main() {
             .having((s) => s.hayNueva, 'hayNueva', true),
       ],
     );
+  });
+
+  /// El toque del push de pago exitoso NO lleva a Notificaciones.
+  ///
+  /// Sin este filtro, este BLoC se traga *cualquier* toque y el usuario acaba en
+  /// la pantalla equivocada: el push de pago tiene que abrir Pagos Realizados,
+  /// que es lo que atiende `EdoCtaPagadosBloc`.
+  group('NotificacionBloc — filtrado del push de pago', () {
+    RemoteMessage push(String campania) => RemoteMessage(data: {
+          'campania': campania,
+          'accion': campania == 'pago' ? 'pago_exitoso' : 'nueva_notificacion',
+        });
+
+    test('un toque de campania=pago no pide navegar', () async {
+      final canal = StreamController<RemoteMessage>();
+      final bloc = buildBloc(toque: canal.stream);
+
+      canal.add(push('pago'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(bloc.state.debeNavegar, isFalse);
+      await canal.close();
+      await bloc.close();
+    });
+
+    test('un toque corriente sí pide navegar', () async {
+      when(() => mockGetCountNoLeidas.run())
+          .thenAnswer((_) async => Success(1));
+      final canal = StreamController<RemoteMessage>();
+      final bloc = buildBloc(toque: canal.stream);
+
+      canal.add(push('notificacion'));
+      await bloc.stream.firstWhere((s) => s.debeNavegar);
+
+      expect(bloc.state.debeNavegar, isTrue);
+      await canal.close();
+      await bloc.close();
+    });
+
+    test('el mensaje inicial de un pago tampoco lleva a Notificaciones',
+        () async {
+      final bloc = buildBloc(mensajeInicial: () async => push('pago'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(bloc.state.debeNavegar, isFalse);
+      await bloc.close();
+    });
   });
 }

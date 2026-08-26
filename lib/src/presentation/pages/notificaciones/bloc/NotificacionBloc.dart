@@ -8,6 +8,7 @@ import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCase
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -57,14 +58,16 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     // Caso 2: app en background → usuario toca la notificación del sistema.
     _fcmBackgroundTapSub =
         (fcmBackgroundTapStream ?? FirebaseMessaging.onMessageOpenedApp)
-            .listen((_) {
-      add(const NotificacionAbiertaDesdeBackgroundEvent());
+            .listen((message) {
+      if (_llevaASuPropiaPantalla(message)) {
+        add(const NotificacionAbiertaDesdeBackgroundEvent());
+      }
     });
 
     // Caso 3: app terminada → la notificación la lanzó; leer el mensaje inicial.
     (getInitialMessage ?? FirebaseMessaging.instance.getInitialMessage)()
         .then((message) {
-      if (message != null) {
+      if (message != null && _llevaASuPropiaPantalla(message)) {
         add(const NotificacionAbiertaDesdeBackgroundEvent());
       }
     });
@@ -80,6 +83,22 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   // ---------------------------------------------------------------------------
   // Handler privado de FCM foreground
   // ---------------------------------------------------------------------------
+
+  /// ¿El toque de esta notificación debe llevar a la pantalla de Notificaciones?
+  ///
+  /// **No**, si el push es de pago exitoso (`campania: "pago"`). Ese lleva a
+  /// Pagos Realizados, y lo atiende `EdoCtaPagadosBloc`. Sin este filtro este
+  /// BLoC se traga *cualquier* toque y el usuario acaba en la pantalla
+  /// equivocada — era el primer cambio que pedía `PLAN_PUSH_PAGO_EXITOSO.md`.
+  ///
+  /// El filtro es **solo para el toque**. En primer plano la notificación sí se
+  /// inserta en la lista y enciende el punto rojo, venga de donde venga: eso no
+  /// navega a ningún sitio, y el push de pago también tiene que quedar
+  /// registrado en Notificaciones.
+  bool _llevaASuPropiaPantalla(RemoteMessage message) {
+    return message.data['campania']?.toString() !=
+        EdoCtaPagadosBloc.campaniaPago;
+  }
 
   /// Convierte un [RemoteMessage] de FCM en un [NotificacionForegroundRecibidaEvent]
   /// y lo despacha al BLoC para actualizar la UI sin llamada de red.

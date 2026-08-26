@@ -3,6 +3,9 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banners_strip.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
@@ -12,6 +15,7 @@ import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/Notificacio
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/widgets/notificacion_badge_button.dart';
+import 'package:arjipagos/src/presentation/utils/RutaActualObserver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -21,7 +25,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Incluye información del usuario y lista de módulos disponibles.
 ///
 /// Detecta cuándo el usuario abrió la app desde una notificación de sistema
-/// (background o app terminada) y navega automáticamente a [NotificacionesPage].
+/// (background o app terminada) y navega a la pantalla que toque: Notificaciones
+/// para el push corriente, y **Pagos Realizados** para el de pago exitoso.
+///
+/// La navegación vive aquí y no en los BLoCs porque estos cuelgan de la raíz de
+/// la app y no tienen `Navigator`. Cada uno deja su `debeNavegar` en el estado y
+/// esta página lo recoge.
 class MenuPrincipalPage extends StatefulWidget {
   const MenuPrincipalPage({super.key});
 
@@ -40,24 +49,72 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       if (!mounted) {
         return;
       }
-      final bloc = context.read<NotificacionBloc>();
-      if (bloc.state.debeNavegar) {
-        bloc.add(const ResetDebeNavegarEvent());
+      final notificacionBloc = context.read<NotificacionBloc>();
+      if (notificacionBloc.state.debeNavegar) {
+        notificacionBloc.add(const ResetDebeNavegarEvent());
         Navigator.of(context).restorablePushNamed('notificaciones');
+        return;
       }
+
+      // Lo mismo para el push de pago exitoso, que lleva a Pagos Realizados.
+      // Un `return` arriba porque los dos no pueden darse a la vez: el push que
+      // abrió la app es uno solo, y cada BLoC ya filtra por `campania`.
+      _irAPagosRealizados(context);
     });
+  }
+
+  /// Abre Pagos Realizados si hay un push de pago esperando, con dos guardas.
+  ///
+  /// **No se navega encima de la pasarela de pago.** El push puede llegar con el
+  /// usuario todavía en el WebView del banco —el backend lo manda al confirmar
+  /// el cobro, no al salir de ahí—, y sacarlo de esa pantalla a media
+  /// transacción es lo último que hay que hacer. Es la misma regla que ya sigue
+  /// el cerrojo biométrico, y por eso se consulta el mismo `RutaActualObserver`.
+  ///
+  /// **Tampoco se apila una segunda copia** de la pantalla si ya está arriba:
+  /// el usuario acabaría teniendo que darle dos veces al atrás.
+  ///
+  /// En los dos casos la señal se apaga igual. Lo que **no** se apaga es el
+  /// alumno y el folio señalados: siguen en el estado, así que cuando el usuario
+  /// entre a Pagos Realizados por su cuenta, la lista se irá igualmente hasta su
+  /// pago. Y la recarga ya se hizo cuando llegó el push, así que lo verá al día.
+  void _irAPagosRealizados(BuildContext context, [EdoCtaPagadosState? _]) {
+    final bloc = context.read<EdoCtaPagadosBloc>();
+    if (!bloc.state.debeNavegar) {
+      return;
+    }
+    bloc.add(const EdoCtaPagadosNavegacionAtendidaEvent());
+
+    final String? rutaArriba = rutaActualObserver.rutaActual;
+    if (rutaArriba == RutaActualObserver.rutaPagoWebView ||
+        rutaArriba == 'edo_cta_pagados') {
+      return;
+    }
+    Navigator.of(context).restorablePushNamed('edo_cta_pagados');
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<NotificacionBloc, NotificacionState>(
-      // Caso app en background: el usuario toca la notificación mientras
-      // la app ya está corriendo; el BLoC transiciona debeNavegar a true.
-      listenWhen: (prev, curr) => curr.debeNavegar && !prev.debeNavegar,
-      listener: (context, state) {
-        context.read<NotificacionBloc>().add(const ResetDebeNavegarEvent());
-        Navigator.of(context).restorablePushNamed('notificaciones');
-      },
+    // `MultiBlocListener` y no dos `BlocListener` anidados: escuchar dos BLoCs
+    // no debe costar un nivel más de anidación.
+    return MultiBlocListener(
+      listeners: [
+        // Caso app en background: el usuario toca la notificación mientras
+        // la app ya está corriendo; el BLoC transiciona debeNavegar a true.
+        BlocListener<NotificacionBloc, NotificacionState>(
+          listenWhen: (prev, curr) => curr.debeNavegar && !prev.debeNavegar,
+          listener: (context, state) {
+            context.read<NotificacionBloc>().add(const ResetDebeNavegarEvent());
+            Navigator.of(context).restorablePushNamed('notificaciones');
+          },
+        ),
+        // Lo mismo para el push de pago exitoso: a Pagos Realizados. La lista ya
+        // viene recargada del servidor, porque el pago es de hace segundos.
+        BlocListener<EdoCtaPagadosBloc, EdoCtaPagadosState>(
+          listenWhen: (prev, curr) => curr.debeNavegar && !prev.debeNavegar,
+          listener: _irAPagosRealizados,
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text(AppStrings.menuPrincipalTitle),
