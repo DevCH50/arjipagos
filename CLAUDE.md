@@ -425,8 +425,15 @@ cobre en "Otros pagos" entra en la cuenta bancaria del emisor 1**, y Adquira no 
 porque para él la operación es válida.
 
 Está marcado con `esProvisional: true`, avisa por `AppLogger` en cada cobro y hay tests que lo
-recuerdan (`test/unit/configuracion_adquira_test.dart`). **NO publicar en tiendas sin
-sustituirlo por los datos del contrato 2.**
+recuerdan (`test/unit/configuracion_adquira_test.dart`).
+
+**Publicar así está AUTORIZADO por el cliente desde el 2026-08-26**, mientras su proveedor le
+entrega la cuenta del contrato 2. Es una decisión suya, con conocimiento de que el dinero de
+"Otros pagos" entra en la cuenta del emisor 1 y hay que reasignarlo a mano.
+
+No es permanente: en cuanto lleguen los datos reales, sustituir `endpoint` e `idExpress` en
+`ConfiguracionAdquira.ef2`, revisar el resto de parámetros, quitar `esProvisional` y borrar el
+grupo de tests "contrato 2 (PROVISIONAL)", que existe solo para no olvidarlo.
 
 ## Volver al login: NUNCA montar un segundo `MyApp`
 

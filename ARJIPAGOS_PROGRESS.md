@@ -13,8 +13,8 @@ _(ninguno)_
 
 ### Pendiente
 
-- 🔴 **"Otros pagos" (emisor fiscal 2) — TERMINADO y verificado, pero COBRA EN LA CUENTA
-  EQUIVOCADA. No publicar.**
+- 🟡 **"Otros pagos" (emisor fiscal 2) — TERMINADO y verificado. Publicable con los datos
+  de cobro del emisor 1, autorizado por el cliente el 2026-08-26.**
 
   Cada emisor fiscal es totalmente independiente: su propia pantalla, su propio carrito, su
   propia clave de almacén (`seleccion_pagos_ef1` / `_ef2`), su propia política de selección
@@ -36,9 +36,10 @@ _(ninguno)_
   `ConfiguracionAdquira.ef2` lleva hoy **una copia de los del emisor 1**, así que **todo lo que
   un usuario pague en "Otros pagos" entra en la cuenta bancaria del emisor 1**.
 
-  No es teórico: la pantalla tiene pagos reales y seleccionables. Está marcado con
-  `esProvisional: true`, avisa por `AppLogger` en cada cobro y hay tests que lo recuerdan
-  (`test/unit/configuracion_adquira_test.dart`). **Sustituirlo antes de cualquier release.**
+  **El cliente lo autorizó el 2026-08-26**: prefiere publicar y reasignar el dinero a mano
+  mientras su proveedor le entrega la cuenta del contrato 2. Queda marcado con
+  `esProvisional: true`, avisando por `AppLogger` en cada cobro, y con tests que lo recuerdan
+  (`test/unit/configuracion_adquira_test.dart`). **Sustituirlo en cuanto lleguen los datos.**
 
 - **Vigilar el aviso de versión en iPhone hasta que Apple publique.**
   `version_recomendada` se puso en **`1.0.27`** el 2026-08-25, con iOS todavía en revisión.
