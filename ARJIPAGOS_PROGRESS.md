@@ -13,10 +13,12 @@ _(ninguno)_
 
 ### Pendiente
 
-- **Backend — último cabo suelto de la 1.0.26+35:** subir `version_recomendada` de `1.0.25`
-  a `1.0.26` **una vez que las tiendas terminen de publicar**. Hoy queda por detrás del
-  binario. Adelantarlo avisaría de una versión que todavía no se puede descargar. Las dos
-  tiendas ya tienen el build 35 subido; ver "La 1.0.26+35 entregada a las dos tiendas"
+- **Backend — `version_recomendada` a `1.0.26`, y ni una más por ahora.** Sigue en `1.0.25`,
+  por detrás del binario. Ya se puede subir a **`1.0.26`** sin riesgo: esa versión está
+  publicada en las dos tiendas.
+  **No adelantarla a `1.0.27` todavía.** Android ya la tiene publicada, pero **iOS sigue en
+  revisión de Apple**. Ponerla en `1.0.27` avisaría a los usuarios de iPhone de una versión
+  que aún no pueden descargar. Cuando Apple publique, entonces sí
 - **Push de "pago exitoso" — falta comprobarlo con un push de verdad:** la mitad de la app
   está **hecha** (§6 de `PLAN_PUSH_PAGO_EXITOSO.md`; ver "La app ya atiende el push de pago
   exitoso"). Queda que el backend lo mande al confirmar el cobro con Adquira, y entonces
@@ -32,6 +34,15 @@ _(ninguno)_
 - **Verificación de número celular vía SMS (OTP):** el usuario escribe su número → backend envía SMS con código (Twilio/AWS SNS) → usuario ingresa OTP → backend confirma. Requiere endpoint en Laravel y pantalla de verificación en Flutter.
 
 ### Completado recientemente
+
+- **La 1.0.27+36 ya está publicada en Play Store (2026-08-25):**
+
+  El AAB subido y **publicado**: ya se descarga de la tienda. Android queda cerrado para esta
+  versión. Lleva el cerrojo biométrico, el arreglo de la sesión que arrastraba al usuario
+  anterior y la mitad de app del push de pago exitoso.
+
+  **iOS sigue en revisión de Apple.** En revisión ≠ publicado, así que ahora mismo las dos
+  tiendas van desacompasadas: Android en `1.0.27`, iOS todavía en `1.0.26`.
 
 - **Bloqueo biométrico verificado en iPhone (2026-08-25):** recorrido el checklist de
   `PLAN_FACE_ID.md` §7 en el iPhone 17 Pro Max sobre el build release. Con esto el **cerrojo**
