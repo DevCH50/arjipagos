@@ -31,7 +31,8 @@ void main() {
       createMockEdoCtaUseCases(getEstadosDeCuenta: mockGetEstadosDeCuenta),
       // Storage real sobre el SharedPref mockeado: así los tests del BLoC
       // también ejercitan la (de)serialización con ámbito de ciclo.
-      SeleccionPagosStorage(mockSharedPref),
+      SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+      emisorFiscalId: 1,
     );
   }
 
@@ -198,8 +199,15 @@ void main() {
     });
 
     test('cantidadPagosSeleccionados suma todos los ciclos', () {
-      const state = EdoCtaListState(
-        pagosSeleccionados: {
+      // Hacen falta los alumnos, no solo el mapa de selección: desde que los
+      // pagos se reparten por emisor fiscal hay que mirar cada pago para saber
+      // si es de esta pantalla. El mapa guarda junta la selección de los dos.
+      final state = EdoCtaListState(
+        alumnos: [
+          alumnoConPagosPorCiclo(1, {cicloA: [100, 101], cicloB: [300]}),
+          alumnoConPagosPorCiclo(2, {cicloA: [200]}),
+        ],
+        pagosSeleccionados: const {
           cicloA: {
             1: [100, 101],
             2: [200],

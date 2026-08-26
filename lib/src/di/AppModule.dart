@@ -3,7 +3,7 @@ import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
-import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/di/RegistroEmisores.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/local/TicketArchivoStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/VersionInstalada.dart';
@@ -74,12 +74,6 @@ import 'package:arjipagos/src/domain/useCases/notificaciones/GetNotificacionesUs
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarLeidaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/MarcarTodasLeidasUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
-import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart';
-import 'package:arjipagos/src/data/repository/PagoRepositoryImpl.dart';
-import 'package:arjipagos/src/domain/repository/PagoRepository.dart';
-import 'package:arjipagos/src/domain/useCases/pago/IniciarPagoUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart';
-import 'package:arjipagos/src/domain/useCases/pago/VerificarPagoUseCase.dart';
 import 'package:injectable/injectable.dart';
 
 @module
@@ -92,11 +86,30 @@ abstract class AppModule {
   @injectable
   SecureStorage get secureStorage => SecureStorage();
 
-  /// Persistencia de la selección de pagos, con ámbito de ciclo escolar.
-  /// Compartida por Estados de Cuenta y Carrito.
-  @injectable
-  SeleccionPagosStorage get seleccionPagosStorage =>
-      SeleccionPagosStorage(sharedPref);
+  /// Almacenes de selección de pagos: **uno por emisor fiscal**.
+  ///
+  /// Es un singleton porque los BLoCs que lo usan también lo son y comparten
+  /// instancia por emisor. Ver `RegistroEmisores`.
+  @lazySingleton
+  SeleccionPagosStoragePorEmisor get seleccionPagosStoragePorEmisor =>
+      SeleccionPagosStoragePorEmisor(sharedPref);
+
+  /// Listas de estados de cuenta: una instancia por emisor fiscal.
+  ///
+  /// `lazySingleton` porque estos BLoCs viven lo que la app —igual que cuando
+  /// colgaban de `blocProviders`— y su estado tiene que sobrevivir a entrar y
+  /// salir de la pantalla.
+  @lazySingleton
+  EdoCtaListBlocPorEmisor get edoCtaListBlocPorEmisor =>
+      EdoCtaListBlocPorEmisor(edoCtaUseCases, seleccionPagosStoragePorEmisor);
+
+  /// Carritos: una instancia por emisor fiscal.
+  @lazySingleton
+  CarritoBlocPorEmisor get carritoBlocPorEmisor => CarritoBlocPorEmisor(
+        authUseCases,
+        edoCtaUseCases,
+        seleccionPagosStoragePorEmisor,
+      );
 
   @injectable
   AuthService get authService => AuthService();
@@ -228,22 +241,6 @@ abstract class AppModule {
   @injectable
   FacturaUseCases get facturaUseCases =>
       FacturaUseCases(getFacturas: GetFacturasUseCase(facturaRepository));
-
-  // ============================================================================
-  // PAGOS
-  // ============================================================================
-
-  @injectable
-  PagoService get pagoService => PagoService();
-
-  @injectable
-  PagoRepository get pagoRepository => PagoRepositoryImpl(pagoService);
-
-  @injectable
-  PagoUseCases get pagoUseCases => PagoUseCases(
-        iniciarPago: IniciarPagoUseCase(pagoRepository),
-        verificarPago: VerificarPagoUseCase(pagoRepository),
-      );
 
   // ============================================================================
   // VERSIÓN DE LA APP (ACTUALIZACIÓN FORZADA)

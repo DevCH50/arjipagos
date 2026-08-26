@@ -25,6 +25,7 @@ void main() {
           'num_pago_activo': true,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
+          'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
         };
@@ -60,6 +61,7 @@ void main() {
           'num_pago_activo': false,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
+          'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
         };
@@ -152,6 +154,7 @@ void main() {
         final estado = EstadoDeCuenta.fromJson({
           'ciclo_id': 2024,
           'nivel_id': 3,
+          'emisorfiscal_id': 1,
           'estadoPago': 'Pendiente',
         });
 
@@ -214,6 +217,7 @@ void main() {
         expect(json['num_pago_activo'], isTrue);
         expect(json['acepta_pagos_diversos'], isTrue);
         expect(json['esta_disponible_en_internet'], isTrue);
+        expect(json['esta_disponible_en_la_app_movil'], isTrue);
         expect(json['factura_pdf'], equals(''));
         expect(json['factura_xml'], equals(''));
       });
@@ -237,6 +241,7 @@ void main() {
           'id': 1,
           'ciclo_id': 2024,
           'nivel_id': 1,
+          'emisorfiscal_id': 1,
           'descripcion_corta': 'Colegiatura Enero 2024',
           'total': 5000.0,
           'total_formatted': '\$5,000.00',
@@ -246,6 +251,7 @@ void main() {
           'num_pago_activo': true,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
+          'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
         };
@@ -264,6 +270,7 @@ void main() {
           'id': 2,
           'ciclo_id': 2024,
           'nivel_id': 1,
+          'emisorfiscal_id': 1,
           'descripcion_corta': 'Colegiatura Diciembre 2023',
           'total': 4500.0,
           'total_formatted': '\$4,500.00',
@@ -273,6 +280,7 @@ void main() {
           'num_pago_activo': false,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
+          'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
         };
@@ -296,6 +304,7 @@ void main() {
             id: 0,
             cicloId: 0,
             nivelId: 0,
+            emisorFiscalId: 1,
             descripcionCorta: descripcion,
             total: 0,
             totalFormatted: '',
@@ -305,6 +314,7 @@ void main() {
             numPagoActivo: false,
             aceptaPagosDiversos: false,
             estaDisponibleEnInternet: false,
+            estaDisponibleEnLaAppMovil: true,
             facturaPdf: '',
             facturaXml: '',
           );

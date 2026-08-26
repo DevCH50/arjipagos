@@ -55,6 +55,9 @@ class CarritoBody extends StatelessWidget {
           url: state.pagoData!['url'] as String,
           params: Map<String, String>.from(state.pagoData!['params']),
           token: state.pagoData!['token'] as String,
+          // Para que el WebView avise al carrito correcto y vuelva a la
+          // pantalla correcta al terminar.
+          emisorFiscalId: state.emisorFiscalActivo,
         ),
       );
     }

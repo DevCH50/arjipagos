@@ -13,6 +13,18 @@ class EdoCtaListInitialEvent extends EdoCtaListEvent {
   const EdoCtaListInitialEvent();
 }
 
+/// Llegó un push confirmando un pago **de este emisor fiscal**.
+///
+/// Lo manda el propio BLoC al reconocer un push de `campania: "pago"` cuyo
+/// `emisorfiscal_id` coincide con el suyo. El push de otro emisor no llega
+/// aquí: cada lista se queda con lo suyo y ninguna sabe de la otra.
+///
+/// Lo que provoca es releer los pagos sin pagar, que es justo lo que acaba de
+/// cambiar en el servidor: lo recién liquidado ya no debe seguir en la lista.
+class EdoCtaListPagoConfirmadoEvent extends EdoCtaListEvent {
+  const EdoCtaListPagoConfirmadoEvent();
+}
+
 /// Evento para refrescar la lista de estados de cuenta.
 class EdoCtaListRefreshEvent extends EdoCtaListEvent {
   const EdoCtaListRefreshEvent();

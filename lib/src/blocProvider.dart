@@ -1,5 +1,4 @@
 import 'package:arjipagos/injection.dart';
-import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
@@ -20,12 +19,8 @@ import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEven
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
-import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
-import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
-import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
-import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
@@ -74,11 +69,10 @@ List<BlocProvider> blocProviders = [
       locator<FcmService>(),
     )..add(const MenuPrincipalInitialEvent()),
   ),
-  BlocProvider<EdoCtaListBloc>(
-    create: (context) =>
-        EdoCtaListBloc(locator<EdoCtaUseCases>(), locator<SeleccionPagosStorage>())
-          ..add(const EdoCtaListInitialEvent()),
-  ),
+  // EdoCtaListBloc y CarritoBloc NO están aquí: hay una instancia por emisor
+  // fiscal y viven en `RegistroEmisores`, de donde las toma cada pantalla. Con
+  // una sola instancia compartida, vaciar un carrito o completar un pago
+  // alcanzaba al otro emisor.
   // El evento de carga NO se dispara aquí: lo manda la propia tirilla al
   // montarse, ya dentro del Menú Principal, para que los banners se pidan
   // siempre con la sesión iniciada y con el usuario correcto.
@@ -89,13 +83,6 @@ List<BlocProvider> blocProviders = [
     create: (context) =>
         EdoCtaPagadosBloc(locator<EdoCtaPagadosUseCases>())
           ..add(const EdoCtaPagadosInitialEvent()),
-  ),
-  BlocProvider<CarritoBloc>(
-    create: (context) => CarritoBloc(
-      seleccionStorage: locator<SeleccionPagosStorage>(),
-      authUseCases: locator<AuthUseCases>(),
-      edoCtaUseCases: locator<EdoCtaUseCases>(),
-    )..add(const CarritoInitialEvent()),
   ),
   BlocProvider<CambiarContrasenaBloc>(
     create: (context) =>

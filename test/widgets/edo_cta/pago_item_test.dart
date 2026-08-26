@@ -53,7 +53,8 @@ void main() {
 
     final bloc = EdoCtaListBloc(
       createMockEdoCtaUseCases(),
-      SeleccionPagosStorage(mockSharedPref),
+      SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+      emisorFiscalId: 1,
     );
     addTearDown(bloc.close);
 
@@ -122,7 +123,8 @@ void main() {
 
       final bloc = EdoCtaListBloc(
         createMockEdoCtaUseCases(),
-        SeleccionPagosStorage(mockSharedPref),
+        SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+        emisorFiscalId: 1,
       );
       addTearDown(bloc.close);
 

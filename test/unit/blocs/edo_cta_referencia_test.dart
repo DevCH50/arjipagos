@@ -41,6 +41,7 @@ EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta
       id: id,
       cicloId: cicloId,
       nivelId: 1,
+      emisorFiscalId: 1,
       descripcionCorta: 'Pago $id',
       total: 1000.0,
       totalFormatted: '\$1,000.00',
@@ -50,6 +51,7 @@ EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta
       numPagoActivo: true,
       aceptaPagosDiversos: false,
       estaDisponibleEnInternet: true,
+      estaDisponibleEnLaAppMovil: true,
       facturaPdf: '',
       facturaXml: '',
     );
@@ -111,7 +113,8 @@ void main() {
 
   EdoCtaListBloc createBloc() => EdoCtaListBloc(
         createMockEdoCtaUseCases(),
-        SeleccionPagosStorage(mockSharedPref),
+        SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+        emisorFiscalId: 1,
       );
 
   group(

@@ -1,4 +1,7 @@
+import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/di/RegistroEmisores.dart';
+import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -10,8 +13,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// Muestra los pagos pendientes agrupados por alumno.
 /// Permite seleccionar pagos para agregarlos al carrito.
+///
+/// La misma página sirve a las dos entradas del menú: "Pagos Pendientes" la
+/// monta con [emisorFiscalId] 1 y "Otros pagos" con el 2. Lo único que cambia
+/// es el título y qué pagos se enseñan; el resto del comportamiento —orden de
+/// selección, tope de la referencia, barra del total— es idéntico, y por eso
+/// no se duplica la pantalla.
 class EdoCtaPage extends StatefulWidget {
-  const EdoCtaPage({super.key});
+  /// Emisor fiscal cuyos pagos muestra esta instancia de la página.
+  final int emisorFiscalId;
+
+  /// Título de la barra superior. Cambia con el emisor porque las dos
+  /// pantallas son, para el usuario, dos sitios distintos.
+  final String titulo;
+
+  const EdoCtaPage({
+    super.key,
+    this.emisorFiscalId = kEmisorFiscalPredeterminado,
+    this.titulo = AppStrings.edoCtaTitle,
+  });
 
   @override
   State<EdoCtaPage> createState() => _EdoCtaPageState();
@@ -19,11 +39,31 @@ class EdoCtaPage extends StatefulWidget {
 
 class _EdoCtaPageState extends State<EdoCtaPage> {
   bool _didCheckReload = false;
+  EdoCtaListBloc? _bloc;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // El BLoC de este emisor vive en el registro y sobrevive a la pantalla:
+    // aquí solo se toma, no se crea.
+    _bloc ??= locator<EdoCtaListBlocPorEmisor>().de(widget.emisorFiscalId);
+    _cargarSiHaceFalta();
     _verificarRecarga();
+  }
+
+  /// Pide los datos la primera vez que se abre esta pantalla.
+  ///
+  /// Antes lo hacía `blocProviders` al crear el BLoC, pero ya no cuelga de la
+  /// raíz: hay uno por emisor y quien sabe cuál hace falta es su pantalla.
+  ///
+  /// Solo carga si el BLoC está vacío. Volver a entrar no vuelve a pedir nada
+  /// —los datos y la selección siguen ahí—; para releer del servidor está el
+  /// gesto de deslizar hacia abajo.
+  void _cargarSiHaceFalta() {
+    final EdoCtaListState estado = _bloc!.state;
+    if (estado.alumnos == null && !estado.isLoading) {
+      _bloc!.add(const EdoCtaListInitialEvent());
+    }
   }
 
   /// Verifica si viene con argumento reload=true (después de pago exitoso).
@@ -36,24 +76,29 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic> && args['reload'] == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<EdoCtaListBloc>().add(const EdoCtaListRefreshEvent());
+        _bloc!.add(const EdoCtaListRefreshEvent());
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: const EdoCtaBody(),
-      bottomNavigationBar: const TotalSeleccionadoBar(),
+    // `BlocProvider.value` para que los widgets de dentro sigan usando
+    // `context.read<EdoCtaListBloc>()` sin enterarse de que hay uno por emisor.
+    return BlocProvider<EdoCtaListBloc>.value(
+      value: _bloc!,
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: const EdoCtaBody(),
+        bottomNavigationBar: const TotalSeleccionadoBar(),
+      ),
     );
   }
 
   /// Construye el AppBar con botón de limpiar selección.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text(AppStrings.edoCtaTitle),
+      title: Text(widget.titulo),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.pop(context),

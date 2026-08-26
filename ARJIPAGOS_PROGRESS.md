@@ -13,6 +13,33 @@ _(ninguno)_
 
 ### Pendiente
 
+- 🔴 **"Otros pagos" (emisor fiscal 2) — TERMINADO y verificado, pero COBRA EN LA CUENTA
+  EQUIVOCADA. No publicar.**
+
+  Cada emisor fiscal es totalmente independiente: su propia pantalla, su propio carrito, su
+  propia clave de almacén (`seleccion_pagos_ef1` / `_ef2`), su propia política de selección
+  (`PoliticaEmisor`), su propia ruta y su propio contrato de Adquira. Las instancias viven en
+  `lib/src/di/RegistroEmisores.dart`, una por emisor; **añadir un EF3 es una entrada más en
+  `ConfiguracionAdquira`**, sin tocar pantallas ni BLoCs.
+
+  **Verificado en el Oppo el 2026-08-26** con `CATutorP641` (24 pagos EF1 · 5 EF2):
+  - Recargar, limpiar selección o vaciar el carrito en un emisor **no toca al otro**.
+    Comprobado leyendo `shared_prefs` del teléfono, no solo en pantalla.
+  - **Push real de pago recibido del backend** (`ticket_folio: T005970`, emisor 1): solo se
+    refrescó la lista del emisor 1 —una única petición a `estado-de-cuenta-sin-pagar`—, la
+    selección del emisor 2 quedó intacta y Pagos Realizados se comportó como siempre.
+    Era un push de prueba, sin cobro detrás, así que Pagos Realizados salió vacío: es correcto.
+  - La clave compartida antigua (`edo_cta_pagos_seleccionados`) se descarta al arrancar.
+
+  ⚠️ **Lo único que falta son los datos del contrato 2 de Adquira**: ruta del endpoint y valor
+  de `idexpress`, `financiamiento`, `moneda`, `tipo`, `tipoPago`, `plazos` y `mediospago`.
+  `ConfiguracionAdquira.ef2` lleva hoy **una copia de los del emisor 1**, así que **todo lo que
+  un usuario pague en "Otros pagos" entra en la cuenta bancaria del emisor 1**.
+
+  No es teórico: la pantalla tiene pagos reales y seleccionables. Está marcado con
+  `esProvisional: true`, avisa por `AppLogger` en cada cobro y hay tests que lo recuerdan
+  (`test/unit/configuracion_adquira_test.dart`). **Sustituirlo antes de cualquier release.**
+
 - **Vigilar el aviso de versión en iPhone hasta que Apple publique.**
   `version_recomendada` se puso en **`1.0.27`** el 2026-08-25, con iOS todavía en revisión.
   Consecuencia: un usuario de iPhone en la `1.0.26` ve el diálogo de versión nueva y el botón

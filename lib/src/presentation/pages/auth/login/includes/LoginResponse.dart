@@ -1,6 +1,7 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
+import 'package:arjipagos/src/di/RegistroEmisores.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
@@ -77,7 +78,6 @@ class LoginResponse extends StatelessWidget {
     final NavigatorState navigator = Navigator.of(context);
     final MenuPrincipalBloc menuBloc = context.read<MenuPrincipalBloc>();
     final HomeBloc homeBloc = context.read<HomeBloc>();
-    final EdoCtaListBloc edoCtaBloc = context.read<EdoCtaListBloc>();
     final EdoCtaPagadosBloc pagadosBloc = context.read<EdoCtaPagadosBloc>();
     final FacturaBloc facturaBloc = context.read<FacturaBloc>();
 
@@ -87,7 +87,10 @@ class LoginResponse extends StatelessWidget {
     // nuevo. `MenuPrincipalInitialEvent` registra además el token de FCM.
     menuBloc.add(const MenuPrincipalInitialEvent());
     homeBloc.add(const RefreshHomesList());
-    edoCtaBloc.add(const EdoCtaListRefreshEvent());
+    // Una recarga por emisor fiscal: cada uno tiene su lista y su almacén.
+    for (final EdoCtaListBloc bloc in locator<EdoCtaListBlocPorEmisor>().todos) {
+      bloc.add(const EdoCtaListRefreshEvent());
+    }
     pagadosBloc.add(const EdoCtaPagadosRefreshEvent());
     facturaBloc.add(const FacturaRefreshEvent());
 

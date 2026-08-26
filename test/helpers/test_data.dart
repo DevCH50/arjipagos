@@ -66,6 +66,7 @@ class TestEstadoDeCuenta {
         id: 1,
         cicloId: cicloActual,
         nivelId: 1,
+        emisorFiscalId: 1,
         descripcionCorta: 'Colegiatura Enero 2024',
         total: 5000.0,
         totalFormatted: '\$5,000.00',
@@ -75,6 +76,7 @@ class TestEstadoDeCuenta {
         numPagoActivo: true,
         aceptaPagosDiversos: true,
         estaDisponibleEnInternet: true,
+        estaDisponibleEnLaAppMovil: true,
         facturaPdf: '',
         facturaXml: '',
       );
@@ -83,6 +85,7 @@ class TestEstadoDeCuenta {
         id: 2,
         cicloId: cicloActual,
         nivelId: 1,
+        emisorFiscalId: 1,
         descripcionCorta: 'Colegiatura Diciembre 2023',
         total: 4500.0,
         totalFormatted: '\$4,500.00',
@@ -92,6 +95,7 @@ class TestEstadoDeCuenta {
         numPagoActivo: false,
         aceptaPagosDiversos: true,
         estaDisponibleEnInternet: true,
+        estaDisponibleEnLaAppMovil: true,
         facturaPdf: '',
         facturaXml: '',
       );
@@ -104,6 +108,7 @@ class TestEstadoDeCuenta {
         id: 10,
         cicloId: cicloAnterior,
         nivelId: 1,
+        emisorFiscalId: 1,
         descripcionCorta: 'Colegiatura Enero 2023',
         total: 4000.0,
         totalFormatted: '\$4,000.00',
@@ -113,6 +118,7 @@ class TestEstadoDeCuenta {
         numPagoActivo: true,
         aceptaPagosDiversos: true,
         estaDisponibleEnInternet: true,
+        estaDisponibleEnLaAppMovil: true,
         facturaPdf: '',
         facturaXml: '',
       );
@@ -189,6 +195,7 @@ class TestAlumno {
             'id': 1,
             'ciclo_id': TestEstadoDeCuenta.cicloActual,
             'nivel_id': 1,
+            'emisorfiscal_id': 1,
             'descripcion_corta': 'Colegiatura Enero 2024',
             'total': 5000.0,
             'total_formatted': '\$5,000.00',
@@ -198,6 +205,7 @@ class TestAlumno {
             'num_pago_activo': true,
             'acepta_pagos_diversos': true,
             'esta_disponible_en_internet': true,
+            'esta_disponible_en_la_app_movil': true,
             'factura_pdf': '',
             'factura_xml': '',
           },
@@ -205,6 +213,7 @@ class TestAlumno {
             'id': 2,
             'ciclo_id': TestEstadoDeCuenta.cicloActual,
             'nivel_id': 1,
+            'emisorfiscal_id': 1,
             'descripcion_corta': 'Colegiatura Diciembre 2023',
             'total': 4500.0,
             'total_formatted': '\$4,500.00',
@@ -214,6 +223,7 @@ class TestAlumno {
             'num_pago_activo': false,
             'acepta_pagos_diversos': true,
             'esta_disponible_en_internet': true,
+            'esta_disponible_en_la_app_movil': true,
             'factura_pdf': '',
             'factura_xml': '',
           },
@@ -256,12 +266,14 @@ class TestPagoRealizado {
         'id': 3403,
         'ciclo_id': 12,
         'nivel_id': 2,
+        'emisorfiscal_id': 1,
         'descripcion_corta': 'COLEGIATURA PRIMARIA Mar 26',
         'total': 9770,
         'total_formatted': '9,770.00',
         'fecha_vencimiento': '10-03-2026',
         'acepta_pagos_diversos': true,
         'esta_disponible_en_internet': true,
+        'esta_disponible_en_la_app_movil': true,
         'estadoPago': 'Pagado',
         'num_pago': 7,
         'num_pago_activo': true,
@@ -278,12 +290,14 @@ class TestPagoRealizado {
         'id': 15173,
         'ciclo_id': 14,
         'nivel_id': 4,
+        'emisorfiscal_id': 1,
         'descripcion_corta': 'REINSCRIPCION SECUNDARIA  26 / 27  ',
         'total': 14250,
         'total_formatted': '14,250.00',
         'fecha_vencimiento': null,
         'acepta_pagos_diversos': false,
         'esta_disponible_en_internet': true,
+        'esta_disponible_en_la_app_movil': true,
         'estadoPago': 'Pagado',
         'num_pago': 1,
         'num_pago_activo': true,
@@ -486,4 +500,46 @@ class TestBanner {
         'message': 'OK',
         'banners': <Map<String, dynamic>>[],
       };
+}
+
+/// Construye un [Alumno] con pagos repartidos por ciclo, para los tests que
+/// necesitan que la selección case con datos reales de pago.
+///
+/// Desde que los pagos se reparten por emisor fiscal, ni la barra del total ni
+/// el carrito pueden calcularse solo con el mapa `{ciclo: {alumno: [pagoId]}}`:
+/// ese mapa guarda junta la selección de los dos emisores, así que hay que
+/// mirar cada pago para saber cuál pertenece a la pantalla que se está viendo.
+Alumno alumnoConPagosPorCiclo(
+  int alumnoId,
+  Map<int, List<int>> pagosPorCiclo, {
+  int emisorFiscalId = 1,
+  double total = 1000.0,
+}) {
+  final pagos = <EstadoDeCuenta>[];
+  pagosPorCiclo.forEach((cicloId, ids) {
+    for (final id in ids) {
+      pagos.add(
+        EstadoDeCuenta(
+          id: id,
+          cicloId: cicloId,
+          nivelId: 1,
+          emisorFiscalId: emisorFiscalId,
+          descripcionCorta: 'Pago $id',
+          total: total,
+          totalFormatted: '\$1,000.00',
+          fechaVencimiento: '2026-12-31',
+          estadoPago: EstadoPago.pendiente,
+          numPago: 1,
+          numPagoActivo: true,
+          aceptaPagosDiversos: false,
+          estaDisponibleEnInternet: true,
+          estaDisponibleEnLaAppMovil: true,
+          facturaPdf: '',
+          facturaXml: '',
+        ),
+      );
+    }
+  });
+
+  return TestAlumno.activo.conEstadoDeCuenta(pagos)..alumnoId = alumnoId;
 }

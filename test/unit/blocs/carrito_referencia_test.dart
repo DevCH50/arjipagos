@@ -37,9 +37,34 @@ import '../../helpers/test_data.dart';
 /// referencia no depende del ciclo, pero la selección sí se agrupa por él.
 const int _kCiclo = 2024;
 
-/// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos (10001, …).
-Alumno _alumnoConPagos(int cantidadPagos) => Alumno(
-      alumnoId: 1,
+/// Crea un pago de prueba del emisor fiscal indicado.
+EstadoDeCuenta _pago({
+  required int id,
+  required int cicloId,
+  int emisorFiscalId = 1,
+}) =>
+    EstadoDeCuenta(
+      id: id,
+      cicloId: cicloId,
+      nivelId: 1,
+      emisorFiscalId: emisorFiscalId,
+      descripcionCorta: 'Pago $id',
+      total: 1000.0,
+      totalFormatted: '\$1,000.00',
+      fechaVencimiento: '2026-12-31',
+      estadoPago: EstadoPago.pendiente,
+      numPago: 1,
+      numPagoActivo: true,
+      aceptaPagosDiversos: false,
+      estaDisponibleEnInternet: true,
+      estaDisponibleEnLaAppMovil: true,
+      facturaPdf: '',
+      facturaXml: '',
+    );
+
+/// Alumno de prueba sin pagos. Se le cuelgan con `conEstadoDeCuenta`.
+Alumno _alumnoBase(int alumnoId) => Alumno(
+      alumnoId: alumnoId,
       familiaId: 1,
       familia: 'Familia Test',
       alumno: 'Test Alumno',
@@ -54,26 +79,49 @@ Alumno _alumnoConPagos(int cantidadPagos) => Alumno(
       grupoId: 1,
       grupo: '1ro A',
       urlPhoto: '',
-      estadoDeCuenta: List.generate(
+      estadoDeCuenta: const [],
+    );
+
+/// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos (10001, …).
+Alumno _alumnoConPagos(int cantidadPagos) => _alumnoBase(1).conEstadoDeCuenta(
+      List.generate(
         cantidadPagos,
-        (i) => EstadoDeCuenta(
-          id: 10001 + i,
-          cicloId: _kCiclo,
-          nivelId: 1,
-          descripcionCorta: 'Pago ${10001 + i}',
-          total: 1000.0,
-          totalFormatted: '\$1,000.00',
-          fechaVencimiento: '2026-12-31',
-          estadoPago: EstadoPago.pendiente,
-          numPago: i + 1,
-          numPagoActivo: true,
-          aceptaPagosDiversos: false,
-          estaDisponibleEnInternet: true,
-          facturaPdf: '',
-          facturaXml: '',
-        ),
+        (i) => _pago(id: 10001 + i, cicloId: _kCiclo),
       ),
     );
+
+/// Construye un [CarritoState] con la selección indicada y los alumnos a los
+/// que pertenecen esos pagos.
+///
+/// Desde que los pagos se reparten por emisor fiscal, el carrito necesita los
+/// datos del pago para saber cuál es suyo: total y referencia ya no se pueden
+/// calcular solo con el mapa de selección, porque ese mapa guarda junta la
+/// selección de los dos emisores.
+CarritoState _estadoCon(
+  Map<int, Map<int, List<int>>> seleccion, {
+  int emisorFiscalId = 1,
+}) {
+  final porAlumno = <int, List<EstadoDeCuenta>>{};
+  seleccion.forEach((cicloId, mapaAlumnos) {
+    mapaAlumnos.forEach((alumnoId, ids) {
+      porAlumno.putIfAbsent(alumnoId, () => <EstadoDeCuenta>[]).addAll(
+            ids.map((id) => _pago(
+                  id: id,
+                  cicloId: cicloId,
+                  emisorFiscalId: emisorFiscalId,
+                )),
+          );
+    });
+  });
+
+  return CarritoState(
+    alumnos: porAlumno.entries
+        .map((e) => _alumnoBase(e.key).conEstadoDeCuenta(e.value))
+        .toList(),
+    pagosSeleccionados: seleccion,
+    emisorFiscalActivo: emisorFiscalId,
+  );
+}
 
 /// Construye un [EstadosDeCuentaResponse] con el alumno indicado.
 EstadosDeCuentaResponse _response(Alumno alumno) => EstadosDeCuentaResponse(
@@ -107,8 +155,8 @@ void main() {
       'es true cuando la referencia tiene ≤ ${AppConstants.maxLongitudReferencia} chars '
       '(5 IDs de 5 dígitos = 29 chars)',
       () {
-        const state = CarritoState(
-          pagosSeleccionados: {
+        final state = _estadoCon(
+          {
             _kCiclo: {
               1: [10001, 10002, 10003, 10004, 10005],
             },
@@ -124,8 +172,8 @@ void main() {
       'es false cuando la referencia excede ${AppConstants.maxLongitudReferencia} chars '
       '(6 IDs de 5 dígitos = 35 chars)',
       () {
-        const state = CarritoState(
-          pagosSeleccionados: {
+        final state = _estadoCon(
+          {
             _kCiclo: {
               1: [10001, 10002, 10003, 10004, 10005, 10006],
             },
@@ -140,8 +188,8 @@ void main() {
     test(
       'es true para un único pago de IDs largos',
       () {
-        const state = CarritoState(
-          pagosSeleccionados: {
+        final state = _estadoCon(
+          {
             _kCiclo: {1: [99999999]},
           },
         );
@@ -158,8 +206,8 @@ void main() {
     });
 
     test('calcula la longitud de la referencia correctamente', () {
-      const state = CarritoState(
-        pagosSeleccionados: {
+      final state = _estadoCon(
+        {
           _kCiclo: {
             1: [100, 200, 300],
           },
@@ -171,8 +219,8 @@ void main() {
     });
 
     test('coincide con referenciaPago.length', () {
-      const state = CarritoState(
-        pagosSeleccionados: {
+      final state = _estadoCon(
+        {
           _kCiclo: {
             1: [10001, 10002],
             2: [20001],
@@ -201,11 +249,12 @@ void main() {
     });
 
     CarritoBloc createBloc() => CarritoBloc(
-          seleccionStorage: SeleccionPagosStorage(mockSharedPref),
+          seleccionStorage: SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
           authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
           edoCtaUseCases: createMockEdoCtaUseCases(
             getEstadosDeCuenta: mockGetEstadosDeCuenta,
           ),
+          emisorFiscalId: 1,
         );
 
     // -------------------------------------------------------------------------
@@ -216,8 +265,8 @@ void main() {
         'bloquea el pago y emite error cuando la referencia excede el límite '
         '(6 IDs de 5 dígitos = 35 chars > ${AppConstants.maxLongitudReferencia})',
         build: () => createBloc(),
-        seed: () => const CarritoState(
-          pagosSeleccionados: {
+        seed: () => _estadoCon(
+          {
             _kCiclo: {
               1: [10001, 10002, 10003, 10004, 10005, 10006],
             },
@@ -241,8 +290,8 @@ void main() {
               .thenAnswer((_) async => TestAuthResponse.valid);
           return createBloc();
         },
-        seed: () => const CarritoState(
-          pagosSeleccionados: {
+        seed: () => _estadoCon(
+          {
             _kCiclo: {
               1: [10001, 10002, 10003, 10004, 10005],
             },
@@ -267,8 +316,8 @@ void main() {
       blocTest<CarritoBloc, CarritoState>(
         'el pago bloqueado no emite isProcesandoPago = true',
         build: () => createBloc(),
-        seed: () => const CarritoState(
-          pagosSeleccionados: {
+        seed: () => _estadoCon(
+          {
             _kCiclo: {
               1: [10001, 10002, 10003, 10004, 10005, 10006],
             },
@@ -291,10 +340,15 @@ void main() {
         'emite advertencia defensiva cuando la referencia cargada del storage '
         'excede el límite (6 IDs = 35 chars)',
         build: () {
-          // El storage tiene 6 IDs de 5 dígitos → referencia de 35 chars
+          // El storage tiene 6 IDs de 5 dígitos → referencia de 35 chars.
+          // En formato con ciclo, que es el que usa la app: el ciclo debe
+          // coincidir con el de los pagos del alumno, porque desde que hay dos
+          // emisores la referencia se arma recorriendo los pagos y no el mapa.
           when(() => mockSharedPref.readMap(any())).thenAnswer(
             (_) async => {
-              '1': [10001, 10002, 10003, 10004, 10005, 10006],
+              '$_kCiclo': {
+                '1': [10001, 10002, 10003, 10004, 10005, 10006],
+              },
             },
           );
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
@@ -326,7 +380,9 @@ void main() {
         build: () {
           when(() => mockSharedPref.readMap(any())).thenAnswer(
             (_) async => {
-              '1': [10001, 10002, 10003, 10004, 10005],
+              '$_kCiclo': {
+                '1': [10001, 10002, 10003, 10004, 10005],
+              },
             },
           );
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(

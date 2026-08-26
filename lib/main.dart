@@ -1,3 +1,6 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/blocProvider.dart';
 import 'package:arjipagos/src/core/theme/arji/arji_theme.dart';
@@ -70,6 +73,15 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(handleFcmBackgroundMessage);
 
   await configureDependencies();
+
+  // Descarta la selección compartida que dejó la versión anterior, de cuando
+  // todos los emisores fiscales guardaban en la misma clave. No se reparte
+  // entre los emisores nuevos porque aquí no se sabe de cuál es cada pago, y
+  // meterla entera en uno pondría pagos ajenos en su carrito.
+  await SeleccionPagosStorage.descartarSeleccionCompartidaAntigua(
+    locator<SharedPref>(),
+  );
+
   runApp(const MyApp());
 
   // Configurar permisos y handlers de FCM después de que la UI esté lista.
@@ -133,6 +145,12 @@ class MyApp extends StatelessWidget {
           'menu_principal': (BuildContext context) => const MenuPrincipalPage(),
           'splash': (BuildContext context) => const SplashPage(),
           'edo_cta': (BuildContext context) => const EdoCtaPage(),
+          // Misma página, otro emisor fiscal: otro contrato de Adquira, otra
+          // cuenta bancaria y, por tanto, otro carrito.
+          'edo_cta_otros': (BuildContext context) => const EdoCtaPage(
+                emisorFiscalId: 2,
+                titulo: AppStrings.menuOtrosPagos,
+              ),
           'edo_cta_pagados': (BuildContext context) =>
               const EdoCtaPagadosPage(),
           'ticket': (BuildContext context) => const TicketPage(),

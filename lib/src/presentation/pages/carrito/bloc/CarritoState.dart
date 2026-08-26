@@ -1,4 +1,5 @@
-import 'package:arjipagos/src/core/constants/app_constants.dart';
+import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
+import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:equatable/equatable.dart';
@@ -32,6 +33,15 @@ class CarritoState extends Equatable {
   /// Mensaje de éxito.
   final String? mensajeExito;
 
+  /// Emisor fiscal del carrito que se está viendo.
+  ///
+  /// Cada emisor tiene su propio carrito porque cada uno se cobra por un
+  /// contrato distinto de Adquira y contra otra cuenta bancaria. La selección
+  /// se guarda junta —los IDs de pago son únicos, así que no hace falta
+  /// separarla en disco—, y es este campo el que decide qué parte de ella
+  /// pertenece a este carrito.
+  final int emisorFiscalActivo;
+
   const CarritoState({
     this.alumnos,
     this.pagosSeleccionados = const {},
@@ -41,6 +51,7 @@ class CarritoState extends Equatable {
     this.pagoData,
     this.pagoExitoso = false,
     this.mensajeExito,
+    this.emisorFiscalActivo = kEmisorFiscalPredeterminado,
   });
 
   /// Crea una copia del estado con los cambios especificados.
@@ -53,6 +64,7 @@ class CarritoState extends Equatable {
     Map<String, dynamic>? pagoData,
     bool? pagoExitoso,
     String? mensajeExito,
+    int? emisorFiscalActivo,
     bool clearError = false,
     bool clearPagoData = false,
   }) {
@@ -65,6 +77,7 @@ class CarritoState extends Equatable {
       pagoData: clearPagoData ? null : (pagoData ?? this.pagoData),
       pagoExitoso: pagoExitoso ?? this.pagoExitoso,
       mensajeExito: mensajeExito ?? this.mensajeExito,
+      emisorFiscalActivo: emisorFiscalActivo ?? this.emisorFiscalActivo,
     );
   }
 
@@ -73,7 +86,22 @@ class CarritoState extends Equatable {
     return pagosSeleccionados[cicloId]?[alumnoId] ?? const [];
   }
 
-  /// Calcula el total a pagar de todos los pagos seleccionados, de todos los ciclos.
+  /// Reglas del emisor de este carrito: formato y tope de la referencia.
+  PoliticaEmisor get _politica =>
+      ConfiguracionAdquira.para(emisorFiscalActivo).politica;
+
+  /// Tope de referencia que admite la pasarela de este emisor. Lo usan los
+  /// mensajes de aviso, que deben citar el límite real y no el de otro.
+  int get maxLongitudReferencia => _politica.maxLongitudReferencia;
+
+  /// `true` si el pago pertenece a este carrito: está seleccionado y es del
+  /// emisor fiscal que se está viendo.
+  bool _enEsteCarrito(Alumno alumno, EstadoDeCuenta pago) =>
+      pago.emisorFiscalId == emisorFiscalActivo &&
+      pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id);
+
+  /// Calcula el total a pagar de los pagos seleccionados de este emisor, de
+  /// todos los ciclos.
   double get totalAPagar {
     if (alumnos == null) {
       return 0.0;
@@ -82,7 +110,7 @@ class CarritoState extends Equatable {
     double total = 0.0;
     for (final alumno in alumnos!) {
       for (final pago in alumno.estadoDeCuenta) {
-        if (pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id)) {
+        if (_enEsteCarrito(alumno, pago)) {
           total += pago.total;
         }
       }
@@ -90,13 +118,24 @@ class CarritoState extends Equatable {
     return total;
   }
 
-  /// Obtiene la cantidad de pagos seleccionados en todos los ciclos.
+  /// Cantidad de pagos de **este** carrito, en todos los ciclos.
+  ///
+  /// No vale contar `pagosSeleccionados` a secas: ese mapa guarda junta la
+  /// selección de los dos emisores, y este carrito solo cobra la de uno.
   int get cantidadPagos {
-    return pagosSeleccionados.values.fold(
-      0,
-      (sum, alumnos) =>
-          sum + alumnos.values.fold(0, (s, pagos) => s + pagos.length),
-    );
+    if (alumnos == null) {
+      return 0;
+    }
+
+    int total = 0;
+    for (final alumno in alumnos!) {
+      for (final pago in alumno.estadoDeCuenta) {
+        if (_enEsteCarrito(alumno, pago)) {
+          total++;
+        }
+      }
+    }
+    return total;
   }
 
   /// Obtiene los items del carrito agrupados por alumno.
@@ -111,8 +150,7 @@ class CarritoState extends Equatable {
     final items = <CarritoItem>[];
     for (final alumno in alumnos!) {
       final pagos = alumno.estadoDeCuenta
-          .where((pago) =>
-              pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id))
+          .where((pago) => _enEsteCarrito(alumno, pago))
           .toList();
 
       if (pagos.isNotEmpty) {
@@ -125,13 +163,20 @@ class CarritoState extends Equatable {
   /// Genera la referencia para el pago (IDs separados por D).
   /// Ejemplo: "5358D5359D5360"
   String get referenciaPago {
+    // Solo los pagos de este emisor: cada carrito se cobra en su propia
+    // transacción, y por tanto lleva su propia referencia. Meter aquí los del
+    // otro emisor mandaría a Adquira IDs que ese cobro no incluye.
     final allIds = <int>[];
-    for (final alumnos in pagosSeleccionados.values) {
-      for (final pagosIds in alumnos.values) {
-        allIds.addAll(pagosIds);
+    if (alumnos != null) {
+      for (final alumno in alumnos!) {
+        for (final pago in alumno.estadoDeCuenta) {
+          if (_enEsteCarrito(alumno, pago)) {
+            allIds.add(pago.id);
+          }
+        }
       }
     }
-    return AppConstants.generarReferencia(allIds);
+    return _politica.generarReferencia(allIds);
   }
 
   /// Longitud actual de la referencia de pago.
@@ -143,7 +188,7 @@ class CarritoState extends Equatable {
   /// reducir la cantidad de pagos seleccionados.
   bool get referenciaValida =>
       referenciaPago.isEmpty ||
-      referenciaPago.length <= AppConstants.maxLongitudReferencia;
+      _politica.referenciaDentroDelLimite(referenciaPago);
 
   @override
   List<Object?> get props => [

@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/formato_monto.dart';
+import 'package:arjipagos/src/presentation/pages/carrito/carrito_args.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -129,7 +130,16 @@ class TotalSeleccionadoBar extends StatelessWidget {
   /// proceso durante el pago, el usuario vuelve a Pagos Pendientes con su
   /// selección intacta —vive en `SeleccionPagosStorage`, no en la pila—.
   Future<void> _navegarAlCarrito(BuildContext context) async {
-    await Navigator.pushNamed(context, 'carrito');
+    // El carrito hereda el emisor de la pantalla desde la que se abre: es lo
+    // que decide qué renglones enseña y por qué contrato los cobra.
+    final emisorFiscalId =
+        context.read<EdoCtaListBloc>().state.emisorFiscalActivo;
+
+    await Navigator.pushNamed(
+      context,
+      'carrito',
+      arguments: CarritoArgs(emisorFiscalId: emisorFiscalId),
+    );
     if (context.mounted) {
       context.read<EdoCtaListBloc>().add(
         const EdoCtaRecargarSeleccionEvent(),

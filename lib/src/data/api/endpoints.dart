@@ -55,9 +55,11 @@ abstract class Endpoints {
   // PAGOS
   // ============================================================================
 
-  /// URL externa de Adquira México para procesar pagos
-  static const String pagoAdquira =
-      'https://www.adquiramexico.com.mx:443/mExpress/pago/avanzado';
+  // La URL de Adquira NO vive aquí: hay una por emisor fiscal, y va siempre
+  // acompañada de los parámetros de su contrato (`idexpress` sobre todo). Una
+  // constante suelta invitaría a mandar el pago con el endpoint de un emisor y
+  // los parámetros de otro, que Adquira acepta sin rechistar cobrando en la
+  // cuenta equivocada. Ver `ConfiguracionAdquira`.
 
   /// Webhook de retorno después del pago
   static const String pagoUrlRetorno =

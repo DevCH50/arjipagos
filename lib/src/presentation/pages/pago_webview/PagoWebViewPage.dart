@@ -6,13 +6,14 @@ import 'dart:typed_data';
 
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
-import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
+import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
+import 'package:arjipagos/src/di/RegistroEmisores.dart';
+import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/pago_webview_args.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/webview_scripts.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // Re-exportar PagoWebViewArgs para mantener compatibilidad
@@ -33,6 +34,20 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
   bool _initialized = false;
   bool _pagoProcessed = false;
   PagoWebViewArgs? _currentArgs;
+
+  /// Emisor fiscal que se está cobrando, tomado de los argumentos de la ruta.
+  ///
+  /// Si faltara —no debería—, se asume el predeterminado antes que dejar el
+  /// pago sin nadie a quien avisar del resultado.
+  int get _emisorFiscalId =>
+      _currentArgs?.emisorFiscalId ?? kEmisorFiscalPredeterminado;
+
+  /// Carrito del emisor que se está cobrando.
+  ///
+  /// Va por el registro y no por `context.read`: hay un carrito por emisor y
+  /// esta pantalla tiene que avisar exactamente al suyo.
+  CarritoBloc get _carritoDelEmisor =>
+      locator<CarritoBlocPorEmisor>().de(_emisorFiscalId);
 
   @override
   void initState() {
@@ -127,13 +142,13 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
 
     _pagoProcessed = true;
     if (result.success) {
-      context.read<CarritoBloc>().add(const CarritoPagoExitosoEvent());
+      _carritoDelEmisor.add(const CarritoPagoExitosoEvent());
       // Suma el pago a la cuenta de la política de reseñas antes de mostrar el
       // diálogo, para que al cerrarlo el contador ya esté al día.
       locator<ResenaUseCases>().registrarPagoExitoso.run();
       _mostrarDialogoExito();
     } else {
-      context.read<CarritoBloc>().add(CarritoPagoFallidoEvent(result.message));
+      _carritoDelEmisor.add(CarritoPagoFallidoEvent(result.message));
       _mostrarDialogoError(result.message);
     }
   }
@@ -142,8 +157,14 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     PagoDialogs.mostrarExito(
       context: context,
       onAceptar: () {
-        context.read<EdoCtaListBloc>().add(const EdoCtaListRefreshEvent());
-        Navigator.of(context).popUntil((route) => route.settings.name == 'edo_cta');
+        // Solo se recarga la lista del emisor cobrado. El otro no se entera:
+        // su selección y su carrito quedan intactos.
+        locator<EdoCtaListBlocPorEmisor>()
+            .de(_emisorFiscalId)
+            .add(const EdoCtaListRefreshEvent());
+        // Y se vuelve a SU pantalla, no a la del otro emisor.
+        final String ruta = ConfiguracionAdquira.para(_emisorFiscalId).ruta;
+        Navigator.of(context).popUntil((route) => route.settings.name == ruta);
         _invitarACalificar();
       },
     );
@@ -176,7 +197,7 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     PagoDialogs.confirmarCancelar(
       context: context,
       onCancelar: () {
-        context.read<CarritoBloc>().add(const CarritoCancelarPagoEvent());
+        _carritoDelEmisor.add(const CarritoCancelarPagoEvent());
         Navigator.pop(context);
       },
     );

@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/test_data.dart';
+
 class MockEdoCtaListBloc extends MockBloc<EdoCtaListEvent, EdoCtaListState>
     implements EdoCtaListBloc {}
 
@@ -35,11 +37,14 @@ void main() {
     required int cantidad,
     Brightness brillo = Brightness.light,
   }) async {
+    // La barra cuenta los pagos del emisor que se está viendo, así que el
+    // estado necesita los alumnos: con solo el mapa de selección no se puede
+    // saber de qué emisor es cada pago.
+    final ids = List<int>.generate(cantidad, (i) => i + 1);
     final estado = EdoCtaListState(
+      alumnos: [alumnoConPagosPorCiclo(10, {1: ids})],
       pagosSeleccionados: {
-        1: {
-          10: List<int>.generate(cantidad, (i) => i + 1),
-        },
+        1: {10: ids},
       },
     );
 

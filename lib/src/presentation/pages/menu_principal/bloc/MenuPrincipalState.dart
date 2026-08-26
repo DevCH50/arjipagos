@@ -83,6 +83,12 @@ class MenuPrincipalState extends Equatable {
       ruta: 'edo_cta',
     ),
     const MenuItem(
+      id: 'otros_pagos',
+      titulo: AppStrings.menuOtrosPagos,
+      icono: Icons.receipt,
+      ruta: 'edo_cta_otros',
+    ),
+    const MenuItem(
       id: 'pagos_realizados',
       titulo: AppStrings.menuPagosRealizados,
       icono: Icons.check_circle_outline,

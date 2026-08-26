@@ -362,6 +362,72 @@ fallo silencioso, sin crash. Hay test guardián:
 `ios/Runner/Info.plist` **debe** llevar `NSFaceIDUsageDescription`: sin esa clave iOS no da un
 error, **mata el proceso** en cuanto se invoca Face ID.
 
+## Emisores fiscales: cada uno es una app aparte, y no se pueden mezclar
+
+**Un cobro de Adquira entra en UNA cuenta bancaria.** Cada `emisorfiscal_id` es un contrato
+distinto con el proveedor, con su propia cuenta. De ahí sale toda la regla: **los emisores son
+totalmente independientes y ninguno sabe que existe el otro.**
+
+El backend manda `emisorfiscal_id` **dentro de cada pago** de `estado_de_cuenta[]` (no en la
+raíz de la respuesta, donde estuvo al principio). `EstadoDeCuenta.emisorFiscalId` lo lee
+tolerando texto, número y ausencia; si falta cae en `kEmisorFiscalPredeterminado` (1), que es
+como se comportaba la app cuando había un solo contrato.
+
+### Todo lo que va por emisor
+
+| Qué | Dónde |
+| --- | --- |
+| Endpoint y parámetros de Adquira (`idexpress`…) | `ConfiguracionAdquira` |
+| Reglas de selección y referencia | `PoliticaEmisor` |
+| Clave del almacén de selección | `seleccion_pagos_ef1`, `_ef2`, … |
+| Instancia de `EdoCtaListBloc` y `CarritoBloc` | `lib/src/di/RegistroEmisores.dart` |
+| Ruta y título de su pantalla | `ConfiguracionAdquira.ruta` / `.titulo` |
+
+**Añadir un EF3 es una entrada más en `ConfiguracionAdquira` y su ruta en `main.dart`.** No hay
+que tocar pantallas, widgets ni BLoCs: el registro instancia uno por cada emisor conocido.
+
+### Lo que NO se puede volver a hacer
+
+1. **Ni una clave de almacén compartida.** Hasta el 2026-08-26 los dos emisores escribían en
+   `edo_cta_pagos_seleccionados`. Consecuencia: recargar una lista, limpiar la selección,
+   vaciar un carrito **o completar un pago** borraba también la selección del otro emisor. El
+   del pago era el peor: liquidabas en uno y perdías el carrito preparado en el otro. Esa clave
+   se descarta al arrancar (`descartarSeleccionCompartidaAntigua`); no repartirla es
+   deliberado, porque aquí no se sabe de qué emisor es cada pago guardado.
+
+2. **`EdoCtaListBloc` y `CarritoBloc` NO van en `blocProviders`.** Hay una instancia por emisor
+   y viven en el registro; cada pantalla toma la suya con `BlocProvider.value`, así que los
+   widgets de dentro siguen usando `context.read<...>()` sin enterarse. El cierre de sesión las
+   vacía **todas** recorriendo `.todos`, y `LoginResponse` las recarga todas — el contrato de la
+   sección anterior sigue en pie, pero por registro y no por `context.read`.
+   Al sacarlos de `blocProviders` se perdió el `..add(EdoCtaListInitialEvent())` que los
+   arrancaba: por eso la carga inicial la dispara ahora `EdoCtaPage`, y solo si su BLoC está
+   vacío.
+
+3. **El ámbito de emisor va junto al de ciclo, siempre.** La respuesta del servidor trae los
+   pagos de todos los emisores juntos, así que cualquier recorrido de `alumno.estadoDeCuenta`
+   tiene que filtrar por emisor además de por ciclo. Sin eso: el orden ascendente pedía marcar
+   antes pagos de la otra pantalla, el arrastre al deseleccionar vaciaba el carrito ajeno, y el
+   tope de la referencia contaba pagos que ese cobro no incluye.
+
+4. **El push de pago solo refresca su emisor.** Llega con `campania: "pago"`,
+   `accion: "pago_exitoso"` y `emisorfiscal_id` (texto, como todo en FCM). Cada `EdoCtaListBloc`
+   lo escucha y **descarta el que no es suyo**. `EdoCtaPagadosBloc` es otra historia: se
+   refresca con cualquier pago, porque muestra todos. Probado con un push real el 2026-08-26.
+
+5. **Pagos Realizados no se toca.** No tiene `emisorfiscal_id` ni le hace falta.
+
+### ⚠️ El contrato 2 lleva datos prestados del 1
+
+`ConfiguracionAdquira.ef2` usa hoy el `endpoint` y el `idExpress` del emisor 1, puestos a
+propósito para poder montar la pantalla mientras llegan los reales. **Con eso, todo lo que se
+cobre en "Otros pagos" entra en la cuenta bancaria del emisor 1**, y Adquira no da ningún error
+porque para él la operación es válida.
+
+Está marcado con `esProvisional: true`, avisa por `AppLogger` en cada cobro y hay tests que lo
+recuerdan (`test/unit/configuracion_adquira_test.dart`). **NO publicar en tiendas sin
+sustituirlo por los datos del contrato 2.**
+
 ## Volver al login: NUNCA montar un segundo `MyApp`
 
 **`MyApp` solo se instancia en el `runApp` de `lib/main.dart`.** Para volver al login —cierre

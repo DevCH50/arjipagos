@@ -11,13 +11,16 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/mocks.dart';
 
+/// Clave de prueba: cada emisor fiscal tiene la suya.
+const String kClaveTest = 'seleccion_pagos_ef1';
+
 void main() {
   late MockSharedPref mockSharedPref;
   late SeleccionPagosStorage storage;
 
   setUp(() {
     mockSharedPref = MockSharedPref();
-    storage = SeleccionPagosStorage(mockSharedPref);
+    storage = SeleccionPagosStorage(mockSharedPref, claveSeleccion: kClaveTest);
     when(() => mockSharedPref.save(any(), any())).thenAnswer((_) async {});
   });
 
@@ -54,19 +57,60 @@ void main() {
       });
     });
 
-    test('migra el formato plano anterior bajo el ciclo desconocido', () async {
-      // Formato viejo: {alumnoId: [pagoId]}, sin noción de ciclo.
+    test('ignora el formato plano anterior en vez de migrarlo', () async {
+      // Formato viejo: {alumnoId: [pagoId]}, sin noción de ciclo ni de emisor.
+      //
+      // Ya no se migra: esa selección se guardaba compartida entre todos los
+      // emisores fiscales y aquí no hay forma de saber de cuál es cada pago
+      // —haría falta la respuesta del servidor—. Adoptarla entera pondría
+      // pagos de un contrato en el carrito de otro, que es justo lo que se
+      // quiere evitar. La clave vieja se borra al arrancar; ver
+      // `descartarSeleccionCompartidaAntigua`.
       when(() => mockSharedPref.readMap(any())).thenAnswer((_) async => {
             '5': [5358, 5359],
             '7': [6001],
           });
 
+      expect(await storage.cargar(), isEmpty);
+    });
+
+    test('cada emisor lee y escribe SOLO su propia clave', () async {
+      // Es lo que impide que vaciar un carrito, recargar una lista o completar
+      // un pago alcance al otro emisor.
+      final ef2 = SeleccionPagosStorage(
+        mockSharedPref,
+        claveSeleccion: 'seleccion_pagos_ef2',
+      );
+
+      when(() => mockSharedPref.readMap('seleccion_pagos_ef1'))
+          .thenAnswer((_) async => {
+                '2024': {
+                  '5': [111],
+                },
+              });
+      when(() => mockSharedPref.readMap('seleccion_pagos_ef2'))
+          .thenAnswer((_) async => {
+                '2024': {
+                  '5': [222],
+                },
+              });
+
       expect(await storage.cargar(), {
-        kCicloDesconocido: {
-          5: [5358, 5359],
-          7: [6001],
+        2024: {
+          5: [111],
         },
       });
+      expect(await ef2.cargar(), {
+        2024: {
+          5: [222],
+        },
+      });
+
+      // Vaciar el de un emisor solo escribe en su clave.
+      when(() => mockSharedPref.save(any(), any())).thenAnswer((_) async {});
+      await ef2.guardar({});
+      verify(() => mockSharedPref.save('seleccion_pagos_ef2', {})).called(1);
+      verifyNever(() => mockSharedPref.save('seleccion_pagos_ef1', any()));
     });
 
     test('descarta entradas con claves o valores inesperados', () async {
@@ -103,7 +147,7 @@ void main() {
         },
       });
 
-      verify(() => mockSharedPref.save(kSeleccionPagosKey, {
+      verify(() => mockSharedPref.save(kClaveTest, {
             '2024': {
               '5': [5358, 5359],
             },
@@ -119,7 +163,7 @@ void main() {
         2023: {}, // ciclo sin alumnos
       });
 
-      verify(() => mockSharedPref.save(kSeleccionPagosKey, {
+      verify(() => mockSharedPref.save(kClaveTest, {
             '2024': {
               '5': [5358],
             },

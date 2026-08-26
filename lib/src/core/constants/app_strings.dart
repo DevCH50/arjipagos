@@ -101,6 +101,10 @@ class AppStrings {
   static const String menuMiCuenta = 'Mi cuenta';
   static const String menuSinAlumnos = 'Sin alumnos';
   static const String menuPagosPendientes = 'Pagos Pendientes';
+
+  /// Pagos del emisor fiscal 2. Van por un contrato distinto de Adquira y a
+  /// otra cuenta bancaria, por eso tienen pantalla y carrito propios.
+  static const String menuOtrosPagos = 'Otros pagos';
   static const String menuPagosRealizados = 'Pagos Realizados';
   static const String menuFacturas = 'Facturas';
 
@@ -174,6 +178,7 @@ class AppStrings {
   static const String carritoReferenciaExcede =
       'La referencia de pago excede el límite permitido por la pasarela.\n\n'
       'Regresa a Estados de Cuenta y reduce la cantidad de pagos seleccionados.';
+
 
   // ============================================================================
   // PAGO WEBVIEW

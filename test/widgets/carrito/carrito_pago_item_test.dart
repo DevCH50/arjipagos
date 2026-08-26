@@ -91,6 +91,7 @@ void main() {
         id: 3,
         cicloId: TestEstadoDeCuenta.cicloActual,
         nivelId: 1,
+        emisorFiscalId: 1,
         descripcionCorta: 'Colegiatura Septiembre 2024 con recargo por mora',
         total: 1234567.89,
         totalFormatted: '\$1,234,567.89',
@@ -100,6 +101,7 @@ void main() {
         numPagoActivo: true,
         aceptaPagosDiversos: true,
         estaDisponibleEnInternet: true,
+        estaDisponibleEnLaAppMovil: true,
         facturaPdf: '',
         facturaXml: '',
       );

@@ -36,11 +36,12 @@ void main() {
     return CarritoBloc(
       // Storage real sobre el SharedPref mockeado: los tests del BLoC también
       // ejercitan la (de)serialización con ámbito de ciclo.
-      seleccionStorage: SeleccionPagosStorage(mockSharedPref),
+      seleccionStorage: SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
       authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
       edoCtaUseCases: createMockEdoCtaUseCases(
         getEstadosDeCuenta: mockGetEstadosDeCuenta,
       ),
+      emisorFiscalId: 1,
     );
   }
 

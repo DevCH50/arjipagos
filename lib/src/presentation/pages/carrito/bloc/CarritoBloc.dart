@@ -1,6 +1,7 @@
-import 'package:arjipagos/src/core/constants/app_constants.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
+import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
@@ -20,14 +21,21 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
   final AuthUseCases _authUseCases;
   final EdoCtaUseCases _edoCtaUseCases;
 
+  /// Emisor fiscal de este carrito.
+  ///
+  /// Parte de su identidad, no un estado que cambie: hay un carrito por emisor
+  /// y ninguno sabe que existen los demás.
+  final int emisorFiscalId;
+
   CarritoBloc({
     required SeleccionPagosStorage seleccionStorage,
     required AuthUseCases authUseCases,
     required EdoCtaUseCases edoCtaUseCases,
+    required this.emisorFiscalId,
   })  : _seleccionStorage = seleccionStorage,
         _authUseCases = authUseCases,
         _edoCtaUseCases = edoCtaUseCases,
-        super(const CarritoState()) {
+        super(CarritoState(emisorFiscalActivo: emisorFiscalId)) {
     on<CarritoInitialEvent>(_onInitial);
     on<CarritoQuitarPagoEvent>(_onQuitarPago);
     on<CarritoLimpiarEvent>(_onLimpiar);
@@ -74,7 +82,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         if (!estadoCargado.referenciaValida) {
           AppLogger.warning(
             'Referencia excede límite al cargar carrito — "${estadoCargado.referenciaPago}" '
-            '(${estadoCargado.longitudReferencia}/${AppConstants.maxLongitudReferencia} chars)',
+            '(${estadoCargado.longitudReferencia}/${estadoCargado.maxLongitudReferencia} chars)',
             tag: 'Carrito',
           );
           emit(estadoCargado.copyWith(
@@ -88,9 +96,11 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         ));
       }
     } catch (e) {
+      AppLogger.error('Error inesperado cargando el carrito',
+          error: e, tag: 'Carrito');
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: e.toString(),
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }
@@ -177,7 +187,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     if (!state.referenciaValida) {
       AppLogger.warning(
         'Referencia excede límite al intentar pagar — "${state.referenciaPago}" '
-        '(${state.longitudReferencia}/${AppConstants.maxLongitudReferencia} chars)',
+        '(${state.longitudReferencia}/${state.maxLongitudReferencia} chars)',
         tag: 'Carrito',
       );
       emit(state.copyWith(errorMessage: AppStrings.carritoReferenciaExcede));
@@ -198,6 +208,28 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         return;
       }
 
+      // Cada carrito cobra por el contrato de su emisor fiscal. El importe, la
+      // referencia y los renglones que se ven ya vienen acotados a él.
+      final ConfiguracionAdquira configuracion =
+          ConfiguracionAdquira.para(emisorFiscalId);
+
+      if (!ConfiguracionAdquira.conoce(emisorFiscalId)) {
+        AppLogger.warning(
+          'Emisor fiscal $emisorFiscalId desconocido en esta versión: se cobra '
+          'con ${configuracion.descripcion}',
+          tag: 'Carrito',
+        );
+      }
+
+      if (configuracion.esProvisional) {
+        AppLogger.warning(
+          'CONFIGURACIÓN PROVISIONAL — ${configuracion.descripcion} está usando '
+          'los datos de otro contrato (idexpress ${configuracion.idExpress}): '
+          'el cobro entra en la cuenta bancaria equivocada',
+          tag: 'Carrito',
+        );
+      }
+
       // Construir el request de pago
       final pagoRequest = PagoRequest(
         token: authResponse.accessToken,
@@ -205,10 +237,19 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         importe: state.totalAPagar,
         urlRetorno: Endpoints.pagoUrlRetorno,
         referencia: state.referenciaPago,
+        emisorFiscalId: emisorFiscalId,
+        idExpress: configuracion.idExpress,
+        financiamiento: configuracion.financiamiento,
+        moneda: configuracion.moneda,
+        tipo: configuracion.tipo,
+        tipoPago: configuracion.tipoPago,
+        plazos: configuracion.plazos,
+        mediosPago: configuracion.mediosPago,
       );
 
       AppLogger.debug(
-        'Pago — ref: ${pagoRequest.referencia} | importe: ${pagoRequest.importe} | userId: ${pagoRequest.userId}',
+        'Pago — ref: ${pagoRequest.referencia} | importe: ${pagoRequest.importe} '
+        '| userId: ${pagoRequest.userId} | ${configuracion.descripcion}',
         tag: 'Carrito',
       );
 
@@ -216,15 +257,16 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
       emit(state.copyWith(
         isProcesandoPago: false,
         pagoData: {
-          'url': Endpoints.pagoAdquira,
+          'url': configuracion.endpoint,
           'params': pagoRequest.toMap(),
           'token': pagoRequest.token,
         },
       ));
     } catch (e) {
+      AppLogger.error('Error al iniciar el pago', error: e, tag: 'Carrito');
       emit(state.copyWith(
         isProcesandoPago: false,
-        errorMessage: e.toString(),
+        errorMessage: mensajeErrorRed(e),
       ));
     }
   }

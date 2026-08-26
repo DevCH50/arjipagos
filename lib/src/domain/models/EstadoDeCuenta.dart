@@ -5,6 +5,30 @@
 /// String asignado a un campo `int` reventaría el parseo del estado de cuenta
 /// completo con un `TypeError`. El ciclo no llega tipado de forma confiable
 /// (ver `EstadosDeCuentaResponse.fromJson`, que hace `.toString()`).
+/// Emisor fiscal que se asume cuando el backend no manda `emisorfiscal_id`.
+///
+/// Vive en el dominio —y no en `ConfiguracionAdquira`, que lo reexporta— para
+/// que la capa de datos dependa del dominio y no al revés.
+///
+/// Es 1 a propósito: antes de partir los pagos por emisor todo se cobraba con
+/// la configuración del emisor 1, así que un backend que todavía no manda el
+/// campo se sigue comportando exactamente igual que antes.
+const int kEmisorFiscalPredeterminado = 1;
+
+/// Lee `emisorfiscal_id` tolerando que el backend aún no lo mande.
+///
+/// No vale `_parseIntSeguro` a secas: devuelve `0` cuando falta la clave, y un
+/// `0` no es ningún emisor real —dejaría el pago fuera de las dos pantallas y
+/// sin forma de cobrarse—. Ausente o ilegible se traduce a
+/// [kEmisorFiscalPredeterminado].
+int _parseEmisorFiscal(dynamic valor) {
+    if (valor == null) {
+        return kEmisorFiscalPredeterminado;
+    }
+    final int emisor = _parseIntSeguro(valor);
+    return emisor == 0 ? kEmisorFiscalPredeterminado : emisor;
+}
+
 int _parseIntSeguro(dynamic valor) {
     if (valor is int) {
         return valor;
@@ -29,6 +53,18 @@ class EstadoDeCuenta {
 
     /// Nivel educativo del pago. Informativo: no interviene en la selección.
     int nivelId;
+
+    /// Emisor fiscal que cobra este pago.
+    ///
+    /// Decide **dos cosas a la vez**: en qué pantalla aparece el renglón
+    /// —"Pagos Pendientes" el 1, "Otros pagos" el 2— y con qué contrato de
+    /// Adquira se cobra, porque cada emisor tiene su propio endpoint y su
+    /// propia cuenta bancaria (ver `ConfiguracionAdquira`).
+    ///
+    /// De ahí que un carrito **nunca** pueda mezclar emisores: sería una sola
+    /// transacción hacia dos cuentas distintas.
+    int emisorFiscalId;
+
     String descripcionCorta;
     double total;
     String totalFormatted;
@@ -38,6 +74,7 @@ class EstadoDeCuenta {
     bool numPagoActivo;
     bool aceptaPagosDiversos;
     bool estaDisponibleEnInternet;
+    bool estaDisponibleEnLaAppMovil;
     String facturaPdf;
     String facturaXml;
 
@@ -57,6 +94,7 @@ class EstadoDeCuenta {
         required this.id,
         required this.cicloId,
         required this.nivelId,
+        required this.emisorFiscalId,
         required this.descripcionCorta,
         required this.total,
         required this.totalFormatted,
@@ -66,6 +104,7 @@ class EstadoDeCuenta {
         required this.numPagoActivo,
         required this.aceptaPagosDiversos,
         required this.estaDisponibleEnInternet,
+        required this.estaDisponibleEnLaAppMovil,
         required this.facturaPdf,
         required this.facturaXml,
         // Opcionales: solo existen en la respuesta de pagos realizados, así que
@@ -129,6 +168,7 @@ class EstadoDeCuenta {
         id: _parseIntSeguro(json['id']),
         cicloId: _parseIntSeguro(json['ciclo_id']),
         nivelId: _parseIntSeguro(json['nivel_id']),
+        emisorFiscalId: _parseEmisorFiscal(json['emisorfiscal_id']),
         descripcionCorta: json['descripcion_corta']?.toString() ?? '',
         total: (json['total'] ?? 0).toDouble(),
         totalFormatted: json['total_formatted']?.toString() ?? '',
@@ -138,6 +178,7 @@ class EstadoDeCuenta {
         numPagoActivo: json['num_pago_activo'] ?? false,
         aceptaPagosDiversos: json['acepta_pagos_diversos'] ?? true,
         estaDisponibleEnInternet: json['esta_disponible_en_internet'] ?? true,
+        estaDisponibleEnLaAppMovil: json['esta_disponible_en_la_app_movil'] ?? true,
         facturaPdf: json['factura_pdf']?.toString() ?? '',
         facturaXml: json['factura_xml']?.toString() ?? '',
         fechaDePago: json['fecha_de_pago']?.toString() ?? '',
@@ -149,6 +190,7 @@ class EstadoDeCuenta {
         'id': id,
         'ciclo_id': cicloId,
         'nivel_id': nivelId,
+        'emisorfiscal_id': emisorFiscalId,
         'descripcion_corta': descripcionCorta,
         'total': total,
         'total_formatted': totalFormatted,
@@ -158,6 +200,7 @@ class EstadoDeCuenta {
         'num_pago_activo': numPagoActivo,
         'acepta_pagos_diversos': aceptaPagosDiversos,
         'esta_disponible_en_internet': estaDisponibleEnInternet,
+        'esta_disponible_en_la_app_movil': estaDisponibleEnLaAppMovil,
         'factura_pdf': facturaPdf,
         'factura_xml': facturaXml,
         // Campos exclusivos de los pagos realizados. El endpoint de pagos

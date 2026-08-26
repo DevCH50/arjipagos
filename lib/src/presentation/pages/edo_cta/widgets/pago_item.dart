@@ -7,6 +7,7 @@ import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.da
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
 import 'package:arjipagos/src/presentation/widgets/ConceptoEscalonado.dart';
 import 'package:arjipagos/src/presentation/widgets/FilaAdaptable.dart';
+import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -277,6 +278,12 @@ class PagoItem extends StatelessWidget {
           .where((e) => e.cicloId == pago.cicloId)
           .map((e) => e.id)
           .toList();
+      // Si el emisor no exige orden, no hay nada que bloquear.
+      if (!ConfiguracionAdquira.para(state.emisorFiscalActivo)
+          .politica
+          .exigeOrdenAscendente) {
+        return true;
+      }
       return state.puedeSelecionarPago(
         pago.cicloId,
         alumno.alumnoId,

@@ -37,6 +37,30 @@ class Alumno {
     required this.estadoDeCuenta,
   });
 
+  /// El mismo alumno pero con otra lista de pagos.
+  ///
+  /// Lo usan las pantallas que muestran un subconjunto —hoy, los pagos de un
+  /// solo emisor fiscal— para no repintar con la lista completa ni tener que
+  /// mutar el modelo que vino del servidor.
+  Alumno conEstadoDeCuenta(List<EstadoDeCuenta> pagos) => Alumno(
+    alumnoId: alumnoId,
+    familiaId: familiaId,
+    familia: familia,
+    alumno: alumno,
+    apPaterno: apPaterno,
+    apMaterno: apMaterno,
+    nombre: nombre,
+    becaSep: becaSep,
+    becaArji: becaArji,
+    becaBach: becaBach,
+    becaSp: becaSp,
+    esBaja: esBaja,
+    grupoId: grupoId,
+    grupo: grupo,
+    urlPhoto: urlPhoto,
+    estadoDeCuenta: pagos,
+  );
+
   factory Alumno.fromJson(Map<String, dynamic> json) => Alumno(
     alumnoId: json['alumno_id'] ?? 0,
     familiaId: json['familia_id'] ?? 0,

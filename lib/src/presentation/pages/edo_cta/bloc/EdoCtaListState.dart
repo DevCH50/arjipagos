@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
+import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 
 /// Estado del BLoC de estados de cuenta.
 ///
@@ -27,21 +28,57 @@ class EdoCtaListState extends Equatable {
   /// Los IDs de pagos están ordenados de menor a mayor.
   final Map<int, Map<int, List<int>>> pagosSeleccionados;
 
+  /// Emisor fiscal de esta lista.
+  ///
+  /// El servidor manda de una vez los pagos de todos los emisores; cada BLoC
+  /// se queda con los suyos y descarta el resto. No cambia nunca durante la
+  /// vida del BLoC: hay una instancia por emisor.
+  final int emisorFiscalActivo;
+
   const EdoCtaListState({
     this.alumnos,
     this.response,
     this.isLoading = false,
     this.errorMessage,
     this.pagosSeleccionados = const {},
+    this.emisorFiscalActivo = kEmisorFiscalPredeterminado,
   });
 
-  /// Estado inicial vacío.
-  factory EdoCtaListState.initial() => const EdoCtaListState();
+  /// Estado inicial vacío para [emisorFiscalId].
+  factory EdoCtaListState.initial(int emisorFiscalId) =>
+      EdoCtaListState(emisorFiscalActivo: emisorFiscalId);
 
   /// Pagos seleccionados de un alumno dentro de un ciclo concreto.
   List<int> pagosDe(int cicloId, int alumnoId) {
     return pagosSeleccionados[cicloId]?[alumnoId] ?? const [];
   }
+
+  /// Los alumnos, pero con solo los pagos del emisor que se está mostrando.
+  ///
+  /// Un alumno que no tenga ningún pago de ese emisor desaparece de la lista:
+  /// enseñar su tarjeta vacía haría pensar que no debe nada, cuando lo que
+  /// pasa es que lo suyo está en la otra pantalla.
+  List<Alumno>? get alumnosDelEmisor {
+    if (alumnos == null) {
+      return null;
+    }
+
+    final resultado = <Alumno>[];
+    for (final alumno in alumnos!) {
+      final pagos = alumno.estadoDeCuenta
+          .where((pago) => pago.emisorFiscalId == emisorFiscalActivo)
+          .toList();
+      if (pagos.isNotEmpty) {
+        resultado.add(alumno.conEstadoDeCuenta(pagos));
+      }
+    }
+    return resultado;
+  }
+
+  /// `true` si un pago cuenta para la pantalla actual: es del emisor que se
+  /// está mostrando y el colegio lo tiene publicado para pagarse por internet.
+  bool _cuentaEnPantalla(EstadoDeCuenta pago) =>
+      pago.emisorFiscalId == emisorFiscalActivo && pago.estaDisponibleEnInternet;
 
   /// Calcula el total de todos los pagos seleccionados, de todos los ciclos.
   /// Solo considera pagos que estén disponibles en internet.
@@ -53,9 +90,9 @@ class EdoCtaListState extends Equatable {
     double total = 0.0;
     for (final alumno in alumnos!) {
       for (final pago in alumno.estadoDeCuenta) {
-        // Solo contar si está disponible en internet y está seleccionado
-        // dentro de su propio ciclo.
-        if (pago.estaDisponibleEnInternet &&
+        // Solo contar si cuenta en esta pantalla —emisor activo y publicado en
+        // internet— y está seleccionado dentro de su propio ciclo.
+        if (_cuentaEnPantalla(pago) &&
             pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id)) {
           total += pago.total;
         }
@@ -64,12 +101,24 @@ class EdoCtaListState extends Equatable {
     return total;
   }
 
-  /// Cuenta el total de pagos seleccionados en todos los ciclos.
+  /// Cuenta los pagos seleccionados en todos los ciclos **de esta pantalla**.
+  ///
+  /// No se puede contar recorriendo `pagosSeleccionados` a secas: ese mapa
+  /// guarda la selección de los dos emisores junta, así que estando en "Otros
+  /// pagos" sumaría también lo elegido en "Pagos Pendientes" y la barra del
+  /// total enseñaría un importe que esta pantalla no va a cobrar.
   int get cantidadPagosSeleccionados {
+    if (alumnos == null) {
+      return 0;
+    }
+
     int total = 0;
-    for (final alumnos in pagosSeleccionados.values) {
-      for (final pagos in alumnos.values) {
-        total += pagos.length;
+    for (final alumno in alumnos!) {
+      for (final pago in alumno.estadoDeCuenta) {
+        if (_cuentaEnPantalla(pago) &&
+            pagosDe(pago.cicloId, alumno.alumnoId).contains(pago.id)) {
+          total++;
+        }
       }
     }
     return total;
@@ -117,6 +166,7 @@ class EdoCtaListState extends Equatable {
     bool? isLoading,
     String? errorMessage,
     Map<int, Map<int, List<int>>>? pagosSeleccionados,
+    int? emisorFiscalActivo,
   }) {
     return EdoCtaListState(
       alumnos: alumnos ?? this.alumnos,
@@ -124,6 +174,7 @@ class EdoCtaListState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       pagosSeleccionados: pagosSeleccionados ?? this.pagosSeleccionados,
+      emisorFiscalActivo: emisorFiscalActivo ?? this.emisorFiscalActivo,
     );
   }
 
@@ -134,5 +185,6 @@ class EdoCtaListState extends Equatable {
         isLoading,
         errorMessage,
         pagosSeleccionados,
+        emisorFiscalActivo,
       ];
 }

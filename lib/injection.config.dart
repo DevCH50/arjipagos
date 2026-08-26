@@ -18,8 +18,6 @@ import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart'
     as _i518;
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart'
     as _i260;
-import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart'
-    as _i394;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart' as _i64;
 import 'package:arjipagos/src/data/dataSource/local/TicketArchivoStorage.dart'
     as _i543;
@@ -39,13 +37,12 @@ import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart'
     as _i167;
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart'
     as _i955;
-import 'package:arjipagos/src/data/dataSource/remote/services/PagoService.dart'
-    as _i425;
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart'
     as _i965;
 import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dart'
     as _i7;
 import 'package:arjipagos/src/di/AppModule.dart' as _i21;
+import 'package:arjipagos/src/di/RegistroEmisores.dart' as _i844;
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart' as _i1009;
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart' as _i374;
 import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart'
@@ -58,7 +55,6 @@ import 'package:arjipagos/src/domain/repository/FacturaRepository.dart'
 import 'package:arjipagos/src/domain/repository/HomeRepository.dart' as _i123;
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
-import 'package:arjipagos/src/domain/repository/PagoRepository.dart' as _i946;
 import 'package:arjipagos/src/domain/repository/ResenaRepository.dart' as _i434;
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart' as _i522;
 import 'package:arjipagos/src/domain/repository/VersionRepository.dart'
@@ -78,7 +74,6 @@ import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart'
     as _i504;
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart'
     as _i274;
-import 'package:arjipagos/src/domain/useCases/pago/PagoUseCases.dart' as _i604;
 import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart'
     as _i131;
 import 'package:arjipagos/src/domain/useCases/ticket/TicketUseCases.dart'
@@ -98,9 +93,6 @@ extension GetItInjectableX on _i174.GetIt {
     final appModule = _$AppModule();
     gh.factory<_i64.SharedPref>(() => appModule.sharedPref);
     gh.factory<_i260.SecureStorage>(() => appModule.secureStorage);
-    gh.factory<_i394.SeleccionPagosStorage>(
-      () => appModule.seleccionPagosStorage,
-    );
     gh.factory<_i424.AuthService>(() => appModule.authService);
     gh.factory<_i1009.AuthRepository>(() => appModule.authRepository);
     gh.factory<_i887.AuthUseCases>(() => appModule.authUseCases);
@@ -139,9 +131,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i908.FacturaService>(() => appModule.facturaService);
     gh.factory<_i1073.FacturaRepository>(() => appModule.facturaRepository);
     gh.factory<_i504.FacturaUseCases>(() => appModule.facturaUseCases);
-    gh.factory<_i425.PagoService>(() => appModule.pagoService);
-    gh.factory<_i946.PagoRepository>(() => appModule.pagoRepository);
-    gh.factory<_i604.PagoUseCases>(() => appModule.pagoUseCases);
     gh.factory<_i7.VersionService>(() => appModule.versionService);
     gh.factory<_i943.VersionRepository>(() => appModule.versionRepository);
     gh.factory<_i922.VersionUseCases>(() => appModule.versionUseCases);
@@ -155,6 +144,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i241.BiometriaStorage>(() => appModule.biometriaStorage);
     gh.factory<_i510.BiometriaRepository>(() => appModule.biometriaRepository);
     gh.factory<_i275.BiometriaUseCases>(() => appModule.biometriaUseCases);
+    gh.lazySingleton<_i844.SeleccionPagosStoragePorEmisor>(
+      () => appModule.seleccionPagosStoragePorEmisor,
+    );
+    gh.lazySingleton<_i844.EdoCtaListBlocPorEmisor>(
+      () => appModule.edoCtaListBlocPorEmisor,
+    );
+    gh.lazySingleton<_i844.CarritoBlocPorEmisor>(
+      () => appModule.carritoBlocPorEmisor,
+    );
     return this;
   }
 }

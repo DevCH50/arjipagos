@@ -125,11 +125,14 @@ void main() {
       final items = MenuPrincipalState.defaultMenuItems;
 
       // Assert
-      expect(items, hasLength(4));
+      // 'otros_pagos' son los pagos del emisor fiscal 2: van por otro contrato
+      // de Adquira y a otra cuenta bancaria, así que tienen su propia entrada.
+      expect(items, hasLength(5));
       expect(
         items.map((i) => i.id),
         containsAll([
           'pagos_pendientes',
+          'otros_pagos',
           'pagos_realizados',
           'facturas',
           kMenuCalificarAppId,
@@ -147,6 +150,7 @@ void main() {
       // Assert: los pagos pendientes conservan la ruta original y los
       // realizados estrenan la suya, sin pisarse entre sí.
       expect(rutasPorId['pagos_pendientes'], equals('edo_cta'));
+      expect(rutasPorId['otros_pagos'], equals('edo_cta_otros'));
       expect(rutasPorId['pagos_realizados'], equals('edo_cta_pagados'));
       expect(rutasPorId['facturas'], equals('facturas'));
     });

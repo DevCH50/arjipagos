@@ -3,11 +3,24 @@ import 'package:arjipagos/src/core/constants/app_constants.dart';
 /// Modelo que representa los datos necesarios para procesar un pago.
 ///
 /// Contiene todos los parámetros requeridos por Adquira México.
+///
+/// **Ningún parámetro de comercio tiene valor por defecto, y es deliberado.**
+/// Hasta que los pagos se partieron por emisor fiscal, esta clase traía
+/// cableados los del emisor 1 (`idExpress: '928'`, `mediosPago: '111000'`…).
+/// Con dos contratos y dos cuentas bancarias, un default es una trampa: quien
+/// construyera un `PagoRequest` sin pensar cobraría en la cuenta del emisor 1
+/// sin que nada fallara ni avisara. Ahora hay que decir explícitamente de qué
+/// contrato es, y lo normal es tomarlos de `ConfiguracionAdquira.para(...)`.
 class PagoRequest {
   final String token;
   final int userId;
   final double importe;
   final String urlRetorno;
+
+  /// Emisor fiscal cuyo contrato se está usando. Solo viaja a los registros:
+  /// Adquira identifica el comercio por [idExpress], no por este campo.
+  final int emisorFiscalId;
+
   final String idExpress;
   final String financiamiento;
   final String moneda;
@@ -22,13 +35,14 @@ class PagoRequest {
     required this.userId,
     required this.importe,
     required this.urlRetorno,
-    this.idExpress = '928',
-    this.financiamiento = '0',
-    this.moneda = 'MXN',
-    this.tipo = '1',
-    this.tipoPago = '1',
-    this.plazos = '',
-    this.mediosPago = '111000',
+    required this.emisorFiscalId,
+    required this.idExpress,
+    required this.financiamiento,
+    required this.moneda,
+    required this.tipo,
+    required this.tipoPago,
+    required this.plazos,
+    required this.mediosPago,
     required this.referencia,
   });
 

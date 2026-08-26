@@ -30,13 +30,16 @@ class EdoCtaBody extends StatelessWidget {
           );
         }
 
-        if (state.alumnos == null || state.alumnos!.isEmpty) {
+        // `alumnosDelEmisor` ya trae solo los pagos del emisor que muestra
+        // esta pantalla, y descarta a los alumnos que no tienen ninguno.
+        final alumnos = state.alumnosDelEmisor;
+        if (alumnos == null || alumnos.isEmpty) {
           return const EdoCtaEmptyWidget();
         }
 
         return RefreshIndicator(
           onRefresh: () async => _recargarDatos(context),
-          child: AlumnosList(alumnos: state.alumnos!),
+          child: AlumnosList(alumnos: alumnos),
         );
       },
     );
