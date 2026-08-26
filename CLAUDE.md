@@ -128,9 +128,18 @@ flutter build apk --release
 flutter build appbundle --release
 ```
 
-**Después de los builds, instalar en dispositivo:**
+**Después de los builds: PREGUNTAR antes de instalar en el dispositivo.**
+
+El Oppo es el teléfono de diario de Carlos, no un banco de pruebas. Y la instalación no es
+inocua: el release y el debug tienen firmas distintas, así que hay que **desinstalar primero**
+—lo que borra la sesión y los datos de la app—. Pasó el 2026-08-25 con la 1.0.27+36.
+
+Para verificar en dispositivo, usar el build de `flutter run` (debug). El release solo se
+instala si Carlos lo pide:
 
 ```bash
+# Solo cuando lo pida. Requiere desinstalar antes: las firmas no coinciden.
+adb uninstall mx.moriah.arjipagos
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
