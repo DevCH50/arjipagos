@@ -36,6 +36,33 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Release 1.0.27+36 generado — APK y AAB (2026-08-25):**
+
+  **No se subió la versión**: `pubspec.yaml` ya estaba en 1.0.27+36 sin publicar,
+  y la regla dice usar la pendiente en vez de crear otra. En tiendas sigue la
+  1.0.26+35.
+
+  Comprobado antes de construir: `ApiConfig.isProduction = true`, permiso
+  `INTERNET`, `USE_BIOMETRIC` y `POST_NOTIFICATIONS` en el manifiesto, y
+  `NSFaceIDUsageDescription` en el `Info.plist`. `flutter analyze` limpio y
+  **888 tests** en verde.
+
+  | Salida | Tamaño |
+  | --- | --- |
+  | `build/app/outputs/flutter-apk/app-release.apk` | 65,5 MB |
+  | `build/app/outputs/bundle/release/app-release.aab` | 64,1 MB |
+
+  Verificado en el Oppo (CPH2639, Android 15) sobre el build **release**, que es
+  AOT y se comporta distinto al debug: arranque, permiso de notificaciones,
+  login y cajón con la familia correcta. Antes, sobre el debug, se recorrieron
+  Estados de Cuenta, Pagos Realizados, Facturas y Notificaciones, en tema claro y
+  oscuro, más un ciclo completo de cierre y apertura de sesión con dos usuarios
+  distintos.
+
+  **iOS no se pudo verificar aquí**: esta es la máquina Linux. Todo lo que se
+  tocó en estas dos entregas es Dart, sin canales de plataforma nuevos, pero el
+  Archive y la prueba en iPhone siguen pendientes en la Mac.
+
 - **La app ya atiende el push de pago exitoso (2026-08-25):**
 
   Es la §6 de `PLAN_PUSH_PAGO_EXITOSO.md` —la mitad que toca a la app—. El
