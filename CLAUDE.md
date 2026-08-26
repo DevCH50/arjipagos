@@ -270,6 +270,7 @@ recorrer todos los módulos de la app:
 | `Gesture: System gesture gate timed out` | UIKit cierra el reconocedor de gestos de borde cuando vence el plazo sin que el gesto se complete. Sale al navegar con gestos |
 | `RTIInputSystemClient ... dismissAutoFillPanel ... requires a valid sessionID` | iOS intenta cerrar el panel de autorrelleno cuando ya no hay sesión de texto activa. Es constante en Flutter porque el engine gestiona su propio `TextInput` y UIKit no se entera. Sale una línea por cada teclado que se cierra |
 | `Snapshotting a view (UIKeyboardImpl) that is not in a visible window` | UIKit fotografía su propio teclado para la animación de salida cuando ya lo quitó de pantalla. Clase de UIKit, no del proyecto |
+| `The variant selector cell index number could not be found` | UIKit construyendo las celdas de variantes del teclado (los tonos de piel y variantes de presentación de emoji). Sale en tandas, una línea por celda. Comprobado el 2026-08-25: el símbolo no aparece en `lib/`, `ios/Runner/` ni en los Pods — no sale del proyecto |
 
 **Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
 

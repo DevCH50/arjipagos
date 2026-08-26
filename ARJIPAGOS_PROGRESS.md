@@ -36,6 +36,13 @@ _(ninguno)_
 
 ### Completado recientemente
 
+- **Archive iOS de la 1.0.27+36 en la Mac (2026-08-25):** limpieza obligatoria completa
+  (`flutter clean` → `pub get` → `pod install` → `build_ios.sh`), blindajes verificados
+  (2630, `.iOS("15.0")`, `isProduction = true`, iconos sin huérfanos), 888 tests en verde y
+  ejecución correcta en el iPhone 17 Pro Max. **Archive sin incidencias**, subido a App Store
+  Connect y **enviado a revisión el 2026-08-25**: en espera de Apple. En revisión ≠ publicado.
+  Ver "Sesión 2026-08-25".
+
 - **Release 1.0.27+36 generado — APK y AAB (2026-08-25):**
 
   **No se subió la versión**: `pubspec.yaml` ya estaba en 1.0.27+36 sin publicar,
@@ -3720,3 +3727,63 @@ pero conviene subirla a `1.0.26` cuando esta se publique.
 - `MenuPrincipalBloc._onLogout` / `MenuPrincipalLogout` y `HomeLogoutEvent` son **código
   muerto** en producción: solo los despachan los tests, y duplican lo que ya hace el drawer.
   No se borran sin preguntar
+
+## Sesión 2026-08-25 — Limpieza iOS y Archive de la 1.0.27+36 en la Mac
+
+**Todo esto ocurrió en la Mac. Aquí no se toca Android.**
+
+Se traen los 4 commits que la Linux había subido (`475ba87`…`667d8b3`): la 1.0.26+35 ya en las
+dos tiendas, el cerrojo biométrico, el push de pago exitoso y el release 1.0.27+36 de Android.
+`git pull` fue fast-forward limpio, sin nada local que pisar.
+
+**Limpieza obligatoria, la secuencia entera.**
+
+```bash
+flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh
+```
+
+`pod install` aplicó sus dos blindajes del `post_install`: el script de dSYM de `objective_c` y
+`LastUpgradeCheck = 2630`. El build salió a **26,7 MB** (`build/ios/iphoneos/Runner.app`).
+
+**Verificado antes del Archive:**
+
+| Qué | Estado |
+| --- | --- |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | 2630 |
+| `Package.swift` (SPM efímero) | `.iOS("15.0")` — regenerado y corregido por `pod install` |
+| `LaunchAction` / `ArchiveAction` | ambos `Release` |
+| `ApiConfig.isProduction` | `true` |
+| `NSFaceIDUsageDescription` | presente |
+| `AppIcon.appiconset` | 25 entradas / 21 PNG, 0 huérfanos y 0 fantasmas |
+| `injection.config.dart` | ya trae la biometría; **no** hizo falta `build_runner` |
+| `git status` | limpio: el build no ensucia nada versionado |
+| `flutter test` | **888 pasan** |
+
+`flutter_secure_storage` se quedó en **10.3.1**. La 11.0.0 sigue bloqueada por AGP/API 37 — ver
+la sección de dependencias bloqueadas en `CLAUDE.md`.
+
+**Ejecución en el iPhone 17 Pro Max y Archive.** La app corrió bien desde Xcode (botón Run, que
+usa `LaunchAction = Release`, o sea build AOT autónomo). El **Archive terminó sin incidencias**.
+
+**Un mensaje de consola nuevo, y no es un fallo:**
+
+```
+The variant selector cell index number could not be found.
+```
+
+Sale en tandas, una línea por celda. Es UIKit construyendo las celdas de variantes del teclado
+(tonos de piel y variantes de presentación de emoji). Comprobado que el símbolo **no aparece en
+`lib/`, `ios/Runner/` ni en los Pods**: no sale del proyecto. Queda añadido a la tabla de ruido
+normal de `CLAUDE.md`. El resto de la consola fue el ruido de siempre: swizzling de
+FIRMessaging, `focusItemsInRect:`, Impeller/Metal, `Reading from public effective user settings`
+y `System gesture gate timed out`.
+
+**Pendiente de esta sesión.**
+
+- **Esperar la revisión de Apple.** Archive subido y ficha enviada a revisión el 2026-08-25.
+  Mientras esté "en espera de revisión" la versión **no** está publicada.
+- **Play Console:** el APK y el AAB de esta misma 1.0.27+36 están generados y verificados en el
+  Oppo, pero la subida se hace en la Linux y **no** está confirmada.
+- **El checklist del cerrojo biométrico en iOS (`PLAN_FACE_ID.md` §7) sigue sin darse por
+  recorrido entero.** La app funciona, pero no está confirmado el caso que solo se da en iOS:
+  denegar el permiso de Face ID la primera vez.
