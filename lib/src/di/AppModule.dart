@@ -1,3 +1,5 @@
+import 'package:arjipagos/src/data/dataSource/local/AutenticadorBiometrico.dart';
+import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
@@ -17,6 +19,7 @@ import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dar
 import 'package:arjipagos/src/data/repository/AuthRepositoryImpl.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/AuthService.dart';
 import 'package:arjipagos/src/data/repository/BannerRepositoryImpl.dart';
+import 'package:arjipagos/src/data/repository/BiometriaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaPagadosRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/FacturaRepositoryImpl.dart';
@@ -27,6 +30,7 @@ import 'package:arjipagos/src/data/repository/ResenaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/VersionRepositoryImpl.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
+import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
@@ -46,6 +50,10 @@ import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.da
 import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/biometria/AutenticarBiometriaUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/biometria/BiometriaUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/biometria/CambiarBloqueoBiometricoUseCase.dart';
+import 'package:arjipagos/src/domain/useCases/biometria/ConsultarBiometriaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/banners/GetBannersUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -279,5 +287,29 @@ abstract class AppModule {
         registrarPagoExitoso: RegistrarPagoExitosoUseCase(resenaRepository),
         solicitarResena: SolicitarResenaUseCase(resenaRepository),
         abrirFichaTienda: AbrirFichaTiendaUseCase(resenaRepository),
+      );
+
+  // ============================================================================
+  // BLOQUEO BIOMÉTRICO (Face ID / Touch ID / huella)
+  // ============================================================================
+
+  /// Canal nativo de `local_auth`, aislado para poder mockearlo en tests.
+  @injectable
+  AutenticadorBiometrico get autenticadorBiometrico => AutenticadorBiometrico();
+
+  /// La preferencia va en SecureStorage y NO en SharedPref: `logout()` hace
+  /// `sharedPref.clear()` y la borraría en cada cierre de sesión.
+  @injectable
+  BiometriaStorage get biometriaStorage => BiometriaStorage(secureStorage);
+
+  @injectable
+  BiometriaRepository get biometriaRepository =>
+      BiometriaRepositoryImpl(autenticadorBiometrico, biometriaStorage);
+
+  @injectable
+  BiometriaUseCases get biometriaUseCases => BiometriaUseCases(
+        consultar: ConsultarBiometriaUseCase(biometriaRepository),
+        autenticar: AutenticarBiometriaUseCase(biometriaRepository),
+        cambiarBloqueo: CambiarBloqueoBiometricoUseCase(biometriaRepository),
       );
 }

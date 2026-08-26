@@ -6,6 +6,7 @@ library;
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
+import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart';
 import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
@@ -63,6 +64,12 @@ class MockResenaRepository extends Mock implements ResenaRepository {}
 
 /// Mock del servicio de Firebase Cloud Messaging.
 class MockFcmService extends Mock implements FcmService {}
+
+/// Mock del repositorio del bloqueo biométrico.
+///
+/// Se mockea el repositorio y no `AutenticadorBiometrico`: la frontera del
+/// dominio está aquí, y así los tests no dependen de `local_auth`.
+class MockBiometriaRepository extends Mock implements BiometriaRepository {}
 
 // ============================================================================
 // MOCKS DE USE CASES

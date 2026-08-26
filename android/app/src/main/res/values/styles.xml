@@ -18,8 +18,33 @@
          Flutter UI initializes, as well as behind your Flutter UI while its
          running.
 
-         This Theme is only used starting with V2 of Flutter's Android embedding. -->
-    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+         This Theme is only used starting with V2 of Flutter's Android embedding.
+
+         OJO CON EL PADRE: es AppCompat, no `@android:style/Theme.Light.NoTitleBar`.
+         No es un capricho de estilo — sin AppCompat la app CRASHEA al pedir la
+         huella en los aparatos afectados.
+
+         `androidx.biometric` tiene dos caminos. En los aparatos modernos el
+         diálogo lo pinta el sistema y el tema da igual. Pero cuando
+         `BiometricFragment.isUsingFingerprintDialog()` da true, el diálogo lo
+         dibuja la propia librería con `androidx.appcompat.app.AlertDialog$Builder`,
+         y ese constructor lanza "You need to use a Theme.AppCompat theme (or
+         descendant) with this activity" si el tema no desciende de AppCompat.
+         Comprobado leyendo el bytecode de biometric-1.1.0.
+
+         Ese camino se toma cuando:
+           - SDK_INT < 28  — y el minSdk de este proyecto es 24; o
+           - SDK_INT == 28 y el aparato no declara el sensor de huella.
+
+         Solo se toca NormalTheme, que es el que la actividad lleva puesto
+         mientras corre la app (lo aplica el meta-data
+         `io.flutter.embedding.android.NormalTheme` del manifest). `LaunchTheme`
+         se queda como estaba: es el del splash y ahí viven los ajustes de
+         edge-to-edge.
+
+         Los `values-v31/` tampoco se tocan: cubren API 31+, donde este camino no
+         se toma, y son los que mandan en el edge-to-edge de Android 12+. -->
+    <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>

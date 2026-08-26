@@ -2,7 +2,7 @@ package mx.moriah.arjipagos
 
 import android.content.Intent
 import android.os.Bundle
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
 /**
  * Actividad única que hospeda el motor de Flutter.
@@ -25,8 +25,21 @@ import io.flutter.embedding.android.FlutterActivity
  * La guarda descarta esa instancia nueva y deja viva la que ya tiene el estado
  * del usuario. Protege toda la app, no solo el ticket: el compartir de Facturas
  * y el WebView de pago tienen la misma exposición.
+ *
+ * ## Por qué `FlutterFragmentActivity` y no `FlutterActivity`
+ *
+ * El bloqueo biométrico (`local_auth`) muestra un `BiometricPrompt` de
+ * androidx, y ese componente **exige una `FragmentActivity`** para poder
+ * adjuntar su fragmento de diálogo. Con `FlutterActivity` a secas, la llamada
+ * revienta en tiempo de ejecución.
+ *
+ * El cambio es solo la clase base: `isTaskRoot`, `intent` y el
+ * `launchMode="singleTop"` del manifest se comportan exactamente igual, así que
+ * la guarda de arriba sigue intacta. Aun así **hay que volver a probarla a mano**
+ * después de tocar este archivo: abrir un ticket, aceptar el diálogo "Abrir con",
+ * volver por el icono del launcher y comprobar que el atrás no cierra la app.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Se llama siempre primero: omitirlo lanza SuperNotCalledException.

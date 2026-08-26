@@ -25,9 +25,8 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
   MenuPrincipalBloc(this.authUseCases, this.edoCtaUseCases, this.fcmService)
       : super(const MenuPrincipalState()) {
     on<MenuPrincipalInitialEvent>(_onInitialEvent);
-    on<MenuPrincipalRegistrarFcm>(_onRegistrarFcm);
     on<MenuItemSelected>(_onMenuItemSelected);
-    on<MenuPrincipalLogout>(_onLogout);
+    on<MenuPrincipalLimpiarSesion>(_onLimpiarSesion);
 
     // Escucha renovaciones automáticas de token FCM para mantener el backend
     // sincronizado cuando Firebase rota el token (reinstalación, Play Services, etc.).
@@ -110,15 +109,6 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
     emit(state.copyWith(selectedItemId: null));
   }
 
-  /// Maneja el registro del token FCM tras login exitoso.
-  /// Recibe el accessToken directamente para evitar condición de carrera.
-  Future<void> _onRegistrarFcm(
-    MenuPrincipalRegistrarFcm event,
-    Emitter<MenuPrincipalState> emit,
-  ) async {
-    _registrarTokenFcm(event.accessToken);
-  }
-
   /// Registra el token FCM del dispositivo en el backend de forma silenciosa.
   ///
   /// Se llama sin `await` para no bloquear la carga del menú.
@@ -141,16 +131,16 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
     });
   }
 
-  /// Maneja el cierre de sesión.
+  /// Devuelve el BLoC a su estado inicial al cerrar sesión.
   ///
-  /// Primero elimina el token FCM del backend (antes de limpiar la sesión
-  /// local para que el Bearer token aún sea válido), luego ejecuta el logout.
-  Future<void> _onLogout(
-    MenuPrincipalLogout event,
+  /// Se emite un estado nuevo entero, no un `copyWith`: el `copyWith` de
+  /// [MenuPrincipalState] nunca vacía un campo (`familia ?? this.familia`), de
+  /// modo que arrastraría al usuario anterior. Ver [MenuPrincipalLimpiarSesion].
+  void _onLimpiarSesion(
+    MenuPrincipalLimpiarSesion event,
     Emitter<MenuPrincipalState> emit,
-  ) async {
-    await _eliminarTokenFcm();
-    await authUseCases.logout.run();
+  ) {
+    emit(const MenuPrincipalState());
   }
 
   /// Re-registra el token FCM en el backend cuando Firebase lo rota
@@ -172,30 +162,5 @@ class MenuPrincipalBloc extends Bloc<MenuPrincipalEvent, MenuPrincipalState> {
         AppLogger.warning('No se pudo actualizar token FCM renovado: $e', tag: 'FCM');
       }
     });
-  }
-
-  /// Elimina el token FCM del backend de forma silenciosa antes del logout.
-  ///
-  /// Se necesita el auth token antes de que la sesión sea limpiada localmente,
-  /// por eso se obtiene aquí y no después de llamar a logout.
-  Future<void> _eliminarTokenFcm() async {
-    try {
-      final authResponse = await authUseCases.getUserSession.run();
-      if (authResponse == null) {
-        return;
-      }
-
-      final String? fcmToken = await fcmService.obtenerToken();
-      if (fcmToken == null) {
-        return;
-      }
-
-      await fcmService.eliminarToken(
-        authToken: authResponse.accessToken,
-        fcmToken: fcmToken,
-      );
-    } catch (e) {
-      AppLogger.warning('No se pudo eliminar token FCM en logout: $e', tag: 'FCM');
-    }
   }
 }

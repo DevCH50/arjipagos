@@ -7,14 +7,44 @@ import 'package:flutter/material.dart';
 ///
 /// A diferencia de los pendientes, aquí no se filtra por
 /// `estaDisponibleEnInternet`: el pago ya ocurrió y debe poder consultarse
-/// aunque en su momento no se ofreciera en línea. El orden es del más reciente
-/// al más antiguo, que es como el usuario espera ver un historial.
+/// aunque en su momento no se ofreciera en línea.
+///
+/// ## El orden es el del backend. NO se reordena aquí.
+///
+/// El backend devuelve los pagos descendentes por `fecha_de_pago`, del más
+/// reciente al más antiguo, que es como se espera ver un historial. Esta lista
+/// los pinta **en el orden en que llegan** y no le añade criterio propio.
+///
+/// **Hubo aquí un `..sort((a, b) => b.id.compareTo(a.id))` y estaba mal.**
+/// Ordenar por `id` da el mismo resultado que ordenar por fecha solo mientras
+/// los ids se emitan en el mismo orden que los pagos, y eso no se cumple:
+/// las reinscripciones viven en un rango de ids muy alto (15036) y las
+/// colegiaturas en uno bajo (3418), sin relación con cuándo se pagó cada una.
+///
+/// Caso real capturado el 2026-08-25 en la cuenta CATutorM974, alumna LEAH:
+///
+/// | orden del backend | id | fecha de pago |
+/// | --- | --- | --- |
+/// | 1 | 3418 | 25-08-2026 11:39 |
+/// | 2 | 15036 | 24-08-2026 17:28 |
+///
+/// Al ordenar por `id` descendente, el 15036 subía al primer puesto y la app
+/// mostraba **el pago del 24 por encima del pago del 25**. El historial salía
+/// desordenado sin que nada fallara.
+///
+/// Si algún día el orden se ve mal, el sitio donde mirar es el backend —no
+/// este archivo—: la app se limita a respetar lo que recibe. Hay test guardián
+/// en `test/unit/blocs/pagos_realizados_orden_test.dart`.
 class PagosRealizadosList extends StatelessWidget {
   final List<EstadoDeCuenta> pagos;
+
+  /// Folio del ticket recién pagado, si se llegó desde un push de pago exitoso.
+  final String? folioDestacado;
 
   const PagosRealizadosList({
     super.key,
     required this.pagos,
+    this.folioDestacado,
   });
 
   @override
@@ -23,13 +53,13 @@ class PagosRealizadosList extends StatelessWidget {
       return _buildMensajeVacio(context);
     }
 
-    final pagosOrdenados = List<EstadoDeCuenta>.from(pagos)
-      ..sort((a, b) => b.id.compareTo(a.id));
-
     return Column(
       children: [
         const Divider(height: 1),
-        ...pagosOrdenados.map((pago) => PagoRealizadoItem(pago: pago)),
+        ...pagos.map((pago) => PagoRealizadoItem(
+              pago: pago,
+              folioDestacado: folioDestacado,
+            )),
       ],
     );
   }

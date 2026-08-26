@@ -26,6 +26,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     on<EdoCtaTogglePagoEvent>(_onTogglePago);
     on<EdoCtaLimpiarSeleccionEvent>(_onLimpiarSeleccion);
     on<EdoCtaRecargarSeleccionEvent>(_onRecargarSeleccion);
+    on<EdoCtaListLimpiarSesionEvent>(_onLimpiarSesion);
   }
 
   /// Carga inicial de estados de cuenta y pagos seleccionados guardados.
@@ -39,6 +40,18 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       emit(state.copyWith(pagosSeleccionados: pagosGuardados));
     }
     await _cargarEstadosDeCuenta(emit);
+  }
+
+  /// Devuelve el BLoC a su estado inicial al cerrar sesión.
+  ///
+  /// Se emite el estado inicial entero y no un `copyWith`: este último nunca
+  /// vacía `alumnos` ni `response`, así que arrastraría los datos del usuario
+  /// que se va. Ver [EdoCtaListLimpiarSesionEvent].
+  void _onLimpiarSesion(
+    EdoCtaListLimpiarSesionEvent event,
+    Emitter<EdoCtaListState> emit,
+  ) {
+    emit(EdoCtaListState.initial());
   }
 
   /// Refresca la lista de estados de cuenta.

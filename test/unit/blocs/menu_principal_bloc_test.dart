@@ -389,23 +389,19 @@ void main() {
     });
 
     // ========================================================================
-    // MenuPrincipalLogout
+    // MenuPrincipalLimpiarSesion
     // ========================================================================
 
-    group('MenuPrincipalLogout', () {
+    group('MenuPrincipalLimpiarSesion', () {
       blocTest<MenuPrincipalBloc, MenuPrincipalState>(
-        'llama al caso de uso de logout',
-        setUp: () {
-          // getUserSession devuelve null → _eliminarTokenFcm termina temprano sin error
-          when(() => mockGetUserSession.run()).thenAnswer((_) async => null);
-          when(() => mockLogout.run()).thenAnswer((_) async => true);
-        },
+        'vacía la familia del usuario anterior, que el copyWith no puede borrar',
         build: () => createBloc(),
-        act: (bloc) => bloc.add(const MenuPrincipalLogout()),
-        expect: () => [],
-        verify: (_) {
-          verify(() => mockLogout.run()).called(1);
-        },
+        seed: () => const MenuPrincipalState(
+          nombreUsuario: 'USUARIO ANTERIOR',
+          familia: 'FAMILIA ANTERIOR',
+        ),
+        act: (bloc) => bloc.add(const MenuPrincipalLimpiarSesion()),
+        expect: () => [const MenuPrincipalState()],
       );
     });
   });

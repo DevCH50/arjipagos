@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.transparent,
           body: Stack(
             children: [
-              LoginResponse(bloc),
+              const LoginResponse(),
               SafeArea(
                 child: SingleChildScrollView(
                   controller: _scrollController,

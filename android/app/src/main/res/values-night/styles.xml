@@ -15,8 +15,13 @@
          Flutter UI initializes, as well as behind your Flutter UI while its
          running.
 
-         This Theme is only used starting with V2 of Flutter's Android embedding. -->
-    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+         This Theme is only used starting with V2 of Flutter's Android embedding.
+
+         El padre es AppCompat y NO `@android:style/Theme.Black.NoTitleBar`.
+         Ver la explicación completa en values/styles.xml: `androidx.biometric`
+         construye su diálogo con `androidx.appcompat.app.AlertDialog$Builder`,
+         que revienta si el tema de la actividad no desciende de AppCompat. -->
+    <style name="NormalTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>

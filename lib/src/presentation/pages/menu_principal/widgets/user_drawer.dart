@@ -1,7 +1,5 @@
-import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
-import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
-import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
+import 'package:arjipagos/src/presentation/pages/biometria/widgets/InterruptorBiometria.dart';
 import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
@@ -9,6 +7,7 @@ import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/copyable
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/drawer_footer.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/drawer_header.dart' show UserDrawerHeader;
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/section_header.dart';
+import 'package:arjipagos/src/presentation/utils/CierreDeSesion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -51,26 +50,19 @@ class UserDrawer extends StatelessWidget {
     // Mostrar preloader mientras se cierra la sesión.
     _mostrarCargando(navigator);
 
-    final authUseCases = locator<AuthUseCases>();
-    final fcmService = locator<FcmService>();
-
-    // Obtener sesión ANTES de limpiarla (el token se necesita para el DELETE de FCM).
-    final authResponse = await authUseCases.getUserSession.run();
-
-    // Eliminar token FCM del backend ANTES de limpiar la sesión local.
-    // El authToken debe ser válido en el momento del DELETE — por eso se awaita aquí.
-    if (authResponse != null) {
-      final fcmToken = await fcmService.obtenerToken();
-      if (fcmToken != null) {
-        await fcmService.eliminarToken(
-          authToken: authResponse.accessToken,
-          fcmToken: fcmToken,
-        );
-      }
-    }
-
-    // Limpiar sesión local (AWAITED — crítico antes de navegar).
-    await authUseCases.logout.run();
+    // Da de baja el token FCM contra el backend y limpia la sesión local, en
+    // ese orden y esperando cada paso. Vive en `CierreDeSesion` porque el
+    // cerrojo biométrico necesita exactamente lo mismo para su "Entrar con mi
+    // contraseña", y dos copias de esto acabarían separándose.
+    // Se pasa `navigator.context` y no el del drawer: el del drawer ya cruzó
+    // un await (el diálogo de confirmación) y puede haber dejado de valer. El
+    // del Navigator raíz cuelga por debajo del `MultiBlocProvider` de `MyApp`,
+    // que es lo que `cerrarSesionCompleta` necesita para vaciar los BLoCs.
+    // El analizador no distingue el contexto de un `NavigatorState`, que sigue
+    // siendo válido después de un await mientras el Navigator exista — y si no
+    // existiera, no habría a dónde navegar después.
+    // ignore: use_build_context_synchronously
+    await cerrarSesionCompleta(navigator.context);
 
     // Navegar usando el NavigatorState pre-capturado (el contexto del drawer
     // ya no es válido después del await, pero NavigatorState sí lo es).
@@ -156,6 +148,10 @@ class UserDrawer extends StatelessWidget {
                       const Divider(),
                       // Sección: Cuenta
                       const SectionHeader(title: AppStrings.drawerMiCuenta),
+                      // Bloqueo biométrico. Va aquí, antes de cambiar la
+                      // contraseña, porque es lo que protege el acceso a la app;
+                      // el resto de la sección son trámites de la cuenta.
+                      const InterruptorBiometria(),
                       ListTile(
                         leading: Icon(
                           Icons.lock_reset,

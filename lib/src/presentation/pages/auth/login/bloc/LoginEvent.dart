@@ -1,4 +1,3 @@
-import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/presentation/utils/BlocForItem.dart';
 import 'package:equatable/equatable.dart';
 
@@ -34,13 +33,6 @@ class LoginSubmitted extends LoginEvent {
   const LoginSubmitted();
 }
 
-
-class LoginSaveUserSession extends LoginEvent {
-  final AuthResponse authResponse;
-  const LoginSaveUserSession({required this.authResponse});
-  @override
-  List<Object?> get props => [authResponse];
-}
 
 class CheckSession extends LoginEvent {
   const CheckSession();

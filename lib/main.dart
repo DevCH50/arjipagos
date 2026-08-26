@@ -20,7 +20,9 @@ import 'package:arjipagos/src/presentation/pages/facturas/FacturasPage.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/NotificacionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/splash/SplashPage.dart';
 import 'package:arjipagos/src/presentation/utils/AppNavigatorKey.dart';
+import 'package:arjipagos/src/presentation/utils/RutaActualObserver.dart';
 import 'package:arjipagos/src/presentation/widgets/ActualizacionObserver.dart';
+import 'package:arjipagos/src/presentation/widgets/CerrojoBiometrico.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show MultiBlocProvider;
@@ -94,15 +96,23 @@ class MyApp extends StatelessWidget {
         // `builder` se inserta por encima del Navigator y su contexto no sirve
         // para `showDialog`.
         navigatorKey: appNavigatorKey,
+        // Sigue qué ruta está arriba. Lo consulta el cerrojo biométrico para no
+        // bloquear encima de una pasarela de pago en curso.
+        navigatorObservers: [rutaActualObserver],
         builder: (context, child) {
           // Preservar el tamaño de fuente del sistema (accesibilidad)
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: MediaQuery.of(context).textScaler,
             ),
-            // Vigila que la versión instalada no haya quedado obsoleta. Envuelve
-            // toda la app para que el bloqueo aparezca sobre cualquier pantalla.
-            child: ActualizacionObserver(child: child!),
+            // El cerrojo va POR FUERA del observador de versión, de modo que
+            // tape también su diálogo: primero identifícate, luego hablamos de
+            // actualizar. Ambos viven en el `builder` y no en el Navigator,
+            // así que ninguno toca la pila de rutas.
+            child: CerrojoBiometrico(
+              // Vigila que la versión instalada no haya quedado obsoleta.
+              child: ActualizacionObserver(child: child!),
+            ),
           );
         },
         debugShowCheckedModeBanner: false,

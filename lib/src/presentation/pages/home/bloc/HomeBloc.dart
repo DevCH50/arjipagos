@@ -3,7 +3,6 @@ import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
-import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
 
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
@@ -12,24 +11,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// BLoC que gestiona el estado de la página Home.
 ///
-/// Maneja la carga de alumnos, refresco de lista y cierre de sesión.
+/// Maneja la carga de alumnos y el refresco de la lista.
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeUseCases homeUseCases;
-  AuthUseCases authUseCases;
 
-  HomeBloc(this.homeUseCases, this.authUseCases)
-      : super(HomeState.initial()) {
+  HomeBloc(this.homeUseCases) : super(HomeState.initial()) {
     on<GetHomesList>(_onGetHomesList);
     on<RefreshHomesList>(_onGetHomesList);
-    on<HomeLogoutEvent>(_onLogout);
+    on<HomeLimpiarSesionEvent>(_onLimpiarSesion);
   }
 
-  /// Maneja el evento de cierre de sesión.
-  Future<void> _onLogout(
-    HomeLogoutEvent event,
+  /// Devuelve el BLoC a su estado inicial al cerrar sesión.
+  void _onLimpiarSesion(
+    HomeLimpiarSesionEvent event,
     Emitter<HomeState> emit,
-  ) async {
-    await authUseCases.logout.run();
+  ) {
+    emit(HomeState.initial());
   }
 
   /// Carga la lista de alumnos desde el servidor.

@@ -494,4 +494,62 @@ class AppStrings {
 
   static const String actualizacionErrorAbrirTienda =
       'No se pudo abrir la tienda de aplicaciones. Búscanos como ArjiPagos.';
+
+  // ============================================================================
+  // BLOQUEO BIOMÉTRICO (Face ID / Touch ID / huella)
+  // ============================================================================
+
+  /// Nombres del método de desbloqueo. "Face ID" y "Touch ID" son marcas de
+  /// Apple y solo se usan en iOS; en Android se nombra el gesto, no la marca.
+  static const String biometriaFaceId = 'Face ID';
+  static const String biometriaTouchId = 'Touch ID';
+  static const String biometriaRostro = 'reconocimiento facial';
+  static const String biometriaHuella = 'huella digital';
+  static const String biometriaGenerica = 'desbloqueo biométrico';
+  static const String biometriaCredencial = 'código del dispositivo';
+
+  /// Textos del diálogo nativo del sistema.
+  static const String biometriaTituloNativo = 'Desbloquear Arjí Pagos';
+  static const String biometriaMotivoDesbloqueo =
+      'Confirma tu identidad para ver tus pagos';
+  static const String biometriaCancelar = 'Cancelar';
+
+  /// Pantalla del cerrojo.
+  static const String biometriaAppBloqueada = 'Arjí Pagos está bloqueada';
+  static const String biometriaToqueParaEntrar = 'Toca para desbloquear';
+  static const String biometriaDesbloquear = 'Desbloquear';
+  static const String biometriaUsarContrasena = 'Entrar con mi contraseña';
+
+  /// Interruptor del drawer.
+  static const String biometriaTituloAjuste = 'Bloqueo al abrir la app';
+  static const String biometriaSubtituloActivado =
+      'Se pide tu identidad al volver a la aplicación';
+  static const String biometriaSubtituloDesactivado =
+      'La aplicación se abre sin pedir nada';
+  static const String biometriaNoDisponibleEnAparato =
+      'Este dispositivo no tiene bloqueo de pantalla configurado';
+
+  /// Confirmación al activar.
+  static const String biometriaActivadoTitulo = 'Bloqueo activado';
+  static const String biometriaActivadoMensaje =
+      'A partir de ahora se te pedirá confirmar tu identidad al volver a la '
+      'aplicación. Puedes desactivarlo cuando quieras desde el menú.';
+
+  /// Avisos de fallo. Ninguno muestra el detalle técnico: eso va a AppLogger.
+  static const String biometriaErrorTitulo = 'No se pudo desbloquear';
+  static const String biometriaBloqueoTemporal =
+      'Demasiados intentos. Espera unos segundos y vuelve a intentarlo.';
+  static const String biometriaBloqueoPermanente =
+      'El sensor quedó bloqueado. Desbloquea tu dispositivo con tu código y '
+      'vuelve a intentarlo.';
+  static const String biometriaErrorGenerico =
+      'No fue posible confirmar tu identidad. Puedes entrar con tu contraseña.';
+
+  /// Se apaga solo cuando el aparato deja de admitir biometría, para no dejar
+  /// al usuario encerrado fuera de su propia aplicación.
+  static const String biometriaDesactivadoSoloTitulo = 'Bloqueo desactivado';
+  static const String biometriaDesactivadoSoloMensaje =
+      'Ya no hay huella, rostro ni código configurados en este dispositivo, '
+      'así que se desactivó el bloqueo. Puedes volver a activarlo desde el '
+      'menú cuando lo configures.';
 }

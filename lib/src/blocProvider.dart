@@ -5,6 +5,7 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
+import 'package:arjipagos/src/domain/useCases/biometria/BiometriaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/facturas/FacturaUseCases.dart';
@@ -12,6 +13,7 @@ import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCase
 import 'package:arjipagos/src/domain/useCases/version/VersionUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/actualizacion/bloc/ActualizacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
+import 'package:arjipagos/src/presentation/pages/biometria/bloc/BiometriaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
@@ -44,6 +46,15 @@ List<BlocProvider> blocProviders = [
       locator<SharedPref>(),
     ),
   ),
+  // El cerrojo biométrico tampoco se dispara aquí: lo arranca
+  // `CerrojoBiometrico` tras el primer frame, por el mismo motivo que la
+  // comprobación de versión — hasta entonces no hay árbol donde pintarlo.
+  BlocProvider<BiometriaBloc>(
+    create: (context) => BiometriaBloc(
+      locator<BiometriaUseCases>(),
+      locator<AuthUseCases>(),
+    ),
+  ),
   BlocProvider<LoginBloc>(
     create: (context) =>
         LoginBloc(locator<AuthUseCases>())..add(const LoginInitialEvent()),
@@ -54,8 +65,7 @@ List<BlocProvider> blocProviders = [
   ),
   BlocProvider<HomeBloc>(
     create: (context) =>
-        HomeBloc(locator<HomeUseCases>(), locator<AuthUseCases>())
-          ..add(const GetHomesList()),
+        HomeBloc(locator<HomeUseCases>())..add(const GetHomesList()),
   ),
   BlocProvider<MenuPrincipalBloc>(
     create: (context) => MenuPrincipalBloc(

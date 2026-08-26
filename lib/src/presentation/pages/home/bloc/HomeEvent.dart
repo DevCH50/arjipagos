@@ -15,6 +15,11 @@ class RefreshHomesList extends HomeEvent {
   const RefreshHomesList();
 }
 
-class HomeLogoutEvent extends HomeEvent {
-  const HomeLogoutEvent();
+/// Devuelve el BLoC a su estado inicial al cerrar sesión.
+///
+/// No cierra la sesión (eso es de `cerrarSesionCompleta`): solo descarta los
+/// alumnos del usuario que se va, que de otro modo seguirían en memoria porque
+/// este BLoC vive en la raíz de la app.
+class HomeLimpiarSesionEvent extends HomeEvent {
+  const HomeLimpiarSesionEvent();
 }

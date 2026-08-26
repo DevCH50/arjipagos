@@ -45,3 +45,12 @@ class EdoCtaLimpiarSeleccionEvent extends EdoCtaListEvent {
 class EdoCtaRecargarSeleccionEvent extends EdoCtaListEvent {
   const EdoCtaRecargarSeleccionEvent();
 }
+
+/// Devuelve el BLoC a su estado inicial al cerrar sesión.
+///
+/// Distinto de [EdoCtaLimpiarSeleccionEvent], que solo desmarca los pagos: esto
+/// tira además los alumnos y la respuesta del servidor, que son del usuario que
+/// se va. Este BLoC vive en la raíz de la app y sobrevive al cierre de sesión.
+class EdoCtaListLimpiarSesionEvent extends EdoCtaListEvent {
+  const EdoCtaListLimpiarSesionEvent();
+}

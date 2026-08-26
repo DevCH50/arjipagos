@@ -4,6 +4,13 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
+    <!-- Bloqueo biométrico de la app (local_auth / BiometricPrompt).
+         Es un permiso de INSTALACIÓN, no de tiempo de ejecución: no genera
+         ningún diálogo al usuario ni hay que pedirlo desde Dart.
+         NO añadir USE_FINGERPRINT: está obsoleto desde API 28 y Play Store lo
+         señala. USE_BIOMETRIC lo cubre, incluidos los lectores de huella. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+
     <!-- Permisos para notificaciones push (requerido en Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Permite recibir notificaciones al reiniciar el dispositivo -->

@@ -23,19 +23,16 @@ class MenuItemSelected extends MenuPrincipalEvent {
   List<Object?> get props => [itemId];
 }
 
-/// Evento para registrar el token FCM tras un login exitoso.
-/// Recibe el accessToken directamente para evitar condición de carrera
-/// con el guardado asíncrono de sesión en storage.
-class MenuPrincipalRegistrarFcm extends MenuPrincipalEvent {
-  final String accessToken;
-
-  const MenuPrincipalRegistrarFcm({required this.accessToken});
-
-  @override
-  List<Object?> get props => [accessToken];
-}
-
-/// Evento para cerrar sesión desde el menú principal.
-class MenuPrincipalLogout extends MenuPrincipalEvent {
-  const MenuPrincipalLogout();
+/// Devuelve el BLoC a su estado inicial al cerrar sesión.
+///
+/// NO cierra la sesión: de eso se encarga `cerrarSesionCompleta`, que es quien
+/// da de baja el token de FCM y limpia el almacenamiento. Aquí solo se tira lo
+/// que quedó en memoria del usuario que se va.
+///
+/// Hace falta porque este BLoC vive en `blocProviders`, en la raíz de la app, y
+/// sobrevive al cierre de sesión. Sin esto, el `copyWith` —que nunca vacía un
+/// campo, `familia ?? this.familia`— dejaba la familia del usuario anterior en
+/// pantalla si la recarga del siguiente tardaba o fallaba.
+class MenuPrincipalLimpiarSesion extends MenuPrincipalEvent {
+  const MenuPrincipalLimpiarSesion();
 }

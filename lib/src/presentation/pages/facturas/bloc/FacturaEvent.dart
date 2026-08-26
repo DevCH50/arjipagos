@@ -17,3 +17,11 @@ class FacturaInicialEvent extends FacturaEvent {
 class FacturaRefreshEvent extends FacturaEvent {
   const FacturaRefreshEvent();
 }
+
+/// Devuelve el BLoC a su estado inicial al cerrar sesión.
+///
+/// Este BLoC vive en la raíz de la app y sobrevive al cierre de sesión, así que
+/// sin esto las facturas del usuario anterior siguen en memoria.
+class FacturaLimpiarSesionEvent extends FacturaEvent {
+  const FacturaLimpiarSesionEvent();
+}

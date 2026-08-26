@@ -21,7 +21,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<PasswordChanged>(_onPasswordChanged);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LoginFormReset>(_onLoginFormReset);
-    on<LoginSaveUserSession>(_onLoginSaveUserSession);
     on<CheckSession>(_onCheckSession);
     on<RecuperarContrasenaSubmitted>(_onRecuperarContrasenaSubmitted);
     on<RecuperarContrasenaReset>(_onRecuperarContrasenaReset);
@@ -49,14 +48,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         formKey: formKey,
       ));
     }
-  }
-
-  /// Guarda la sesión del usuario en almacenamiento local.
-  Future<void> _onLoginSaveUserSession(
-    LoginSaveUserSession event,
-    Emitter<LoginState> emit,
-  ) async {
-    await authUseCases.saveUserSession.run(event.authResponse);
   }
 
   /// Resetea el formulario de login.

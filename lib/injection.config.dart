@@ -9,6 +9,10 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:arjipagos/src/data/dataSource/local/AutenticadorBiometrico.dart'
+    as _i1069;
+import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart'
+    as _i241;
 import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart' as _i667;
 import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart'
     as _i518;
@@ -44,6 +48,8 @@ import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dar
 import 'package:arjipagos/src/di/AppModule.dart' as _i21;
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart' as _i1009;
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart' as _i374;
+import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart'
+    as _i510;
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart'
     as _i645;
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart' as _i57;
@@ -62,6 +68,8 @@ import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart'
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart' as _i887;
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart'
     as _i557;
+import 'package:arjipagos/src/domain/useCases/biometria/BiometriaUseCases.dart'
+    as _i275;
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart'
     as _i1053;
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart'
@@ -141,6 +149,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i667.ResenaNativa>(() => appModule.resenaNativa);
     gh.factory<_i434.ResenaRepository>(() => appModule.resenaRepository);
     gh.factory<_i131.ResenaUseCases>(() => appModule.resenaUseCases);
+    gh.factory<_i1069.AutenticadorBiometrico>(
+      () => appModule.autenticadorBiometrico,
+    );
+    gh.factory<_i241.BiometriaStorage>(() => appModule.biometriaStorage);
+    gh.factory<_i510.BiometriaRepository>(() => appModule.biometriaRepository);
+    gh.factory<_i275.BiometriaUseCases>(() => appModule.biometriaUseCases);
     return this;
   }
 }

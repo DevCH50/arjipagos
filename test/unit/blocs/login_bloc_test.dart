@@ -227,24 +227,6 @@ void main() {
       );
     });
 
-    group('LoginSaveUserSession', () {
-      blocTest<LoginBloc, LoginState>(
-        'debe llamar a saveUserSession con el AuthResponse correcto',
-        setUp: () {
-          when(
-            () => mockSaveUserSessionUseCase.run(any()),
-          ).thenAnswer((_) async {});
-        },
-        build: () => loginBloc,
-        act: (bloc) => bloc.add(
-          LoginSaveUserSession(authResponse: TestAuthResponse.valid),
-        ),
-        verify: (_) {
-          verify(() => mockSaveUserSessionUseCase.run(any())).called(1);
-        },
-      );
-    });
-
     group('RecuperarContrasenaSubmitted', () {
       blocTest<LoginBloc, LoginState>(
         'debe emitir Loading y luego Success cuando la solicitud es exitosa',

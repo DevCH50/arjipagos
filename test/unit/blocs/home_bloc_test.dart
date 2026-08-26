@@ -2,7 +2,6 @@
 library;
 
 import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
-import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
 import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
@@ -17,34 +16,13 @@ import '../../helpers/test_data.dart';
 void main() {
   late HomeBloc homeBloc;
   late MockGetAlumnosUseCase mockGetAlumnosUseCase;
-  late MockLogoutUseCase mockLogoutUseCase;
-  late MockLoginUseCase mockLoginUseCase;
-  late MockSaveUserSessionUseCase mockSaveUserSessionUseCase;
-  late MockGetUserSessionUseCase mockGetUserSessionUseCase;
   late HomeUseCases homeUseCases;
-  late AuthUseCases authUseCases;
-  late MockRegisterUseCase mockRegisterUseCase;
 
   setUp(() {
     mockGetAlumnosUseCase = MockGetAlumnosUseCase();
-    mockLogoutUseCase = MockLogoutUseCase();
-    mockLoginUseCase = MockLoginUseCase();
-    mockSaveUserSessionUseCase = MockSaveUserSessionUseCase();
-    mockGetUserSessionUseCase = MockGetUserSessionUseCase();
-    mockRegisterUseCase = MockRegisterUseCase();
-
     homeUseCases = HomeUseCases(getAlumnos: mockGetAlumnosUseCase);
-    authUseCases = AuthUseCases(
-      login: mockLoginUseCase,
-      saveUserSession: mockSaveUserSessionUseCase,
-      getUserSession: mockGetUserSessionUseCase,
-      logout: mockLogoutUseCase,
-      register: mockRegisterUseCase,
-      cambiarContrasena: MockCambiarContrasenaUseCase(),
-      recuperarContrasena: MockRecuperarContrasenaUseCase(),
-    );
 
-    homeBloc = HomeBloc(homeUseCases, authUseCases);
+    homeBloc = HomeBloc(homeUseCases);
   });
 
   tearDown(() {
@@ -169,17 +147,15 @@ void main() {
       );
     });
 
-    group('HomeLogoutEvent', () {
+    group('HomeLimpiarSesionEvent', () {
       blocTest<HomeBloc, HomeState>(
-        'debe llamar al logout use case',
-        setUp: () {
-          when(() => mockLogoutUseCase.run()).thenAnswer((_) async => true);
-        },
+        'devuelve el estado inicial, sin los alumnos del usuario anterior',
         build: () => homeBloc,
-        act: (bloc) => bloc.add(const HomeLogoutEvent()),
-        verify: (_) {
-          verify(() => mockLogoutUseCase.run()).called(1);
-        },
+        seed: () => HomeState.initial().copyWith(
+          errorMessage: 'Error del usuario anterior',
+        ),
+        act: (bloc) => bloc.add(const HomeLimpiarSesionEvent()),
+        expect: () => [HomeState.initial()],
       );
     });
 

@@ -76,6 +76,12 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<!-- OBLIGATORIA para el bloqueo biométrico (local_auth).
+	     Sin esta clave iOS NO muestra un error: mata el proceso en cuanto se
+	     invoca Face ID. No es opcional aunque el aparato solo tenga Touch ID.
+	     Touch ID no necesita clave propia; esta cubre ambos. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Arjí Pagos usa Face ID para desbloquear la aplicación y proteger la información de tus pagos si alguien más toma tu teléfono.</string>
 	<!-- url_launcher: esquemas permitidos para abrir URLs externas en iOS -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

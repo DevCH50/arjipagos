@@ -19,6 +19,7 @@ class FacturaBloc extends Bloc<FacturaEvent, FacturaState> {
   FacturaBloc(this.facturaUseCases) : super(FacturaState.initial()) {
     on<FacturaInicialEvent>(_onInicial);
     on<FacturaRefreshEvent>(_onRefresh);
+    on<FacturaLimpiarSesionEvent>(_onLimpiarSesion);
   }
 
   /// Carga inicial de facturas.
@@ -66,5 +67,16 @@ class FacturaBloc extends Bloc<FacturaEvent, FacturaState> {
         errorMessage: mensajeErrorRed(e),
       ));
     }
+  }
+
+  /// Devuelve el BLoC a su estado inicial al cerrar sesión.
+  ///
+  /// Estado inicial entero y no un `copyWith`: este último nunca vacía la lista,
+  /// así que arrastraría las facturas del usuario que se va.
+  void _onLimpiarSesion(
+    FacturaLimpiarSesionEvent event,
+    Emitter<FacturaState> emit,
+  ) {
+    emit(FacturaState.initial());
   }
 }
