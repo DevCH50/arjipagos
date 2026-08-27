@@ -132,8 +132,21 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
             ? systemTitle
             : 'ArjiPagos';
 
+    // Identificador real de la fila `usermobile_message` que el backend creó
+    // para este aviso. Lo manda en `data.usermessage_id` —como texto, que es lo
+    // único que FCM transporta— en TODOS los envíos visibles, incluidos los de
+    // prueba: `enviarAlUsuario()` es el único camino que escribe historial.
+    //
+    // Hasta el 2026-08-27 aquí se ponía `id: 0` y se tiraba el identificador.
+    // Consecuencia: al abrir la notificación, el detalle pedía marcar como
+    // leída la número 0, el servidor la rechazaba y el usuario recibía un
+    // diálogo de error mientras el contador se quedaba clavado. Le pasaba a
+    // cualquier aviso que llegara con la app abierta.
+    final idMensaje =
+        int.tryParse(message.data['usermessage_id']?.toString() ?? '') ?? 0;
+
     final notificacion = Notificacion(
-      id: 0, // Sin ID real; se actualiza al abrir la pantalla de notificaciones
+      id: idMensaje,
       userId: 0,
       titulo: titulo,
       mensaje: dataBody.isNotEmpty ? dataBody : systemBody,
@@ -289,6 +302,28 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
     MarcarLeidaEvent event,
     Emitter<NotificacionState> emit,
   ) async {
+    // Sin identificador válido no hay nada que marcar, ni aquí ni en el
+    // servidor. Se sale en silencio: la notificación se reconcilia en la
+    // siguiente carga de la lista.
+    //
+    // Solo debería ocurrir si un push llegara sin `usermessage_id`, es decir si
+    // alguien mandara un aviso visible sin pasar por `enviarAlUsuario()` —el
+    // único camino del backend que escribe historial—. Se contempla porque el
+    // precio de no hacerlo es alto: `POST /notificaciones/0/leer` devuelve
+    // error y el usuario se comía un `AlertDialog` por abrir una notificación.
+    // Ese era el fallo que se arrastraba cuando aquí llegaba siempre un 0.
+    //
+    // Tampoco se marca en local: sin identificador no hay manera de distinguir
+    // una notificación de otra, y emparejar por `id == 0` marcaría de golpe
+    // todas las que estuvieran en ese caso.
+    if (event.id <= 0) {
+      AppLogger.warning(
+        'Notificación sin usermessage_id: no se puede marcar como leída',
+        tag: 'Notificacion',
+      );
+      return;
+    }
+
     try {
       final resultado = await notificacionUseCases.marcarLeida.run(event.id);
 

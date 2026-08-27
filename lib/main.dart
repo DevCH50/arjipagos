@@ -5,6 +5,7 @@ import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/blocProvider.dart';
 import 'package:arjipagos/src/core/theme/arji/arji_theme.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
+import 'package:arjipagos/src/data/api/ConfianzaTls.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -59,6 +60,15 @@ void main() async {
       systemNavigationBarContrastEnforced: false,
     ),
   );
+
+  // Reforzar la confianza TLS ANTES de cualquier trabajo de red.
+  //
+  // Va aquí arriba y no más abajo porque `Firebase.initializeApp()` ya habla
+  // con la red: instalar el `HttpOverrides` después dejaría fuera justo a las
+  // primeras peticiones. Añade la raíz ISRG Root X1 a las del sistema —no las
+  // sustituye—, para los aparatos cuyo almacén de confianza no la trae.
+  // Ver `ConfianzaTls` para el detalle de por qué hizo falta.
+  await ConfianzaTls.instalar();
 
   // Inicializar Firebase (requerido para FCM)
   try {

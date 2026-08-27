@@ -1,4 +1,5 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/dataSource/local/BadgeIconoApp.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
@@ -36,6 +37,19 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
 
     // Disparar la carga inicial de notificaciones.
     context.read<NotificacionBloc>().add(const NotificacionInicialEvent());
+
+    // El usuario ya está viendo sus notificaciones: se apagan los dos avisos.
+    //
+    // Se hace aquí, y no solo en el `onPressed` de la campana, porque a esta
+    // pantalla se llega también sin tocarla: al abrir la app desde un push, el
+    // BLoC enciende `hayNueva` y navega solo. Por ese camino nadie apagaba el
+    // punto rojo y se quedaba encendido para siempre — y si el aviso llegaba
+    // después de la carga inicial, ni siquiera lo apagaba la recarga.
+    context.read<NotificacionBloc>().add(const ResetNuevaNotificacionEvent());
+
+    // El globo del icono lo enciende iOS con el `aps.badge` que manda el
+    // backend; bajarlo es cosa de la app y hasta ahora no lo hacía nadie.
+    BadgeIconoApp.limpiar();
   }
 
   @override
@@ -99,6 +113,9 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
                   context.read<NotificacionBloc>().add(
                         const MarcarTodasLeidasEvent(),
                       );
+                  // Si no queda nada por leer, el icono no debe seguir
+                  // marcado.
+                  BadgeIconoApp.limpiar();
                 },
               );
             }

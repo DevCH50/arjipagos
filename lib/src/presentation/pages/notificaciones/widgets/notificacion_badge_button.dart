@@ -12,10 +12,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// Comportamiento visual:
 /// - Sin notificaciones: campana outline simple.
-/// - Con no leídas: campana sólida [Icons.notifications].
-/// - Nueva notificación en foreground ([hayNueva]): punto rojo pulsante en la
-///   esquina inferior derecha + icono sólido [Icons.notifications_active].
-///   El pulso se detiene en cuanto el usuario toca la campana.
+/// - Con no leídas: campana sólida [Icons.notifications] **y punto rojo**.
+/// - Nueva notificación recién llegada ([hayNueva]): además, el punto **pulsa**
+///   y el icono pasa a [Icons.notifications_active].
+///
+/// El punto sale de `noLeidas > 0`, que es el estado real, y no de [hayNueva].
+/// Hasta el 2026-08-27 dependía solo de [hayNueva] y el indicador mentía por
+/// los dos lados: no aparecía con avisos pendientes de días atrás, y se
+/// quedaba encendido cuando nadie lo apagaba. [hayNueva] gobierna ahora
+/// únicamente la animación, que es para lo que sirve: llamar la atención sobre
+/// algo que **acaba** de llegar.
 class NotificacionBadgeButton extends StatefulWidget {
   const NotificacionBadgeButton({super.key});
 
@@ -83,8 +89,10 @@ class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
         // 1. Ícono base (sin badge numérico).
         Widget result = iconButton;
 
-        // 2. Punto rojo pulsante (bottom-right) cuando hay nueva notificación.
-        if (state.hayNueva) {
+        // 2. Punto rojo mientras quede algo sin leer. Solo pulsa si el aviso
+        //    acaba de llegar; si no, se queda quieto para no distraer con algo
+        //    que el usuario ya sabe que tiene pendiente.
+        if (state.noLeidas > 0 || state.hayNueva) {
           result = Stack(
             clipBehavior: Clip.none,
             children: [
@@ -95,7 +103,11 @@ class _NotificacionBadgeButtonState extends State<NotificacionBadgeButton>
                 child: AnimatedBuilder(
                   animation: _pulseAnim,
                   builder: (context2, child) => Transform.scale(
-                    scale: _pulseAnim.value,
+                    // Sin pulso, tamaño natural. No vale usar el valor de la
+                    // animación: al parar, el controlador vuelve a `begin`
+                    // (0.55) y el punto se quedaría encogido a poco más de la
+                    // mitad.
+                    scale: state.hayNueva ? _pulseAnim.value : 1.0,
                     child: Container(
                       width: 10,
                       height: 10,

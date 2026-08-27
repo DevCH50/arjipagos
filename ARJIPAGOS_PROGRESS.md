@@ -3853,3 +3853,100 @@ y `System gesture gate timed out`.
   Queda un detalle de documentación, no de código: el §7.5 pide **anotar qué
   `LocalAuthExceptionCode` llega al denegar el permiso de Face ID la primera vez**, y ese dato
   sigue sin escribirse.
+
+---
+
+## 2026-08-27 — TLS en móviles antiguos, badge de iOS y notificaciones marcables
+
+Tres arreglos de la app, **verificados en el Oppo con push reales**. El detalle
+técnico está en `PLAN_NOTIFICACIONES_Y_TLS.md`; aquí queda el resumen.
+
+Las otras tres peticiones de la misma tanda (comando artisan de envío
+personalizado, recordatorios de «Próximos Vencimientos» configurables y módulo
+web de envío a usuarios seleccionados) son del panel web y se dejaron como
+encargo en `/home/carlos/Projects/Laravel/ArjiApp/ENCARGO_NOTIFICACIONES.md`.
+**En ArjiApp no se tocó ni una línea de código.**
+
+### 1. «No se pudo establecer una conexión segura» — no era de la app
+
+Varios usuarios no podían ni entrar. El servidor cerraba su cadena en **Sectigo
+Public Server Authentication Root R46** (de 2021), que no está en el almacén de
+confianza de Android ≤13. El cliente de Dart valida contra el almacén **del
+sistema** y no completa la cadena por AIA fetching como sí hacen los navegadores
+—de ahí el «en la web se ve bien, en el móvil no»—. `mensajeErrorRed()` hacía su
+trabajo correctamente; el fallo estaba por debajo.
+
+**Servidor (ya aplicado, fuera de este repo):** ahora sirve Let's Encrypt, con la
+cadena terminando en **ISRG Root X1**, presente en Android desde la 7.1.1 (2016).
+
+**App:** `lib/src/data/api/ConfianzaTls.dart` empaqueta ISRG Root X1 y la **añade**
+a las autoridades del sistema vía `HttpOverrides.global`, instalado en `main.dart`
+antes de `Firebase.initializeApp()`. Sigue haciendo falta porque el `minSdk` es
+**24 (Android 7.0)** y la raíz llegó en la **7.1.1**.
+
+- **No es pinning:** `withTrustedRoots: true` conserva las del sistema. Si cambian
+  de autoridad, la app sigue funcionando sin publicar versión.
+- Va por `HttpOverrides` porque **ningún servicio crea su propio `http.Client`**:
+  todos usan las funciones de nivel superior de `package:http`. Cubre los quince
+  y pico servicios sin tocar ninguno. Los tests con `runWithClient` no se afectan.
+
+### 2. El círculo rojo que no se quitaba — eran dos cosas
+
+**Dentro de la app:** el punto salía solo de `hayNueva`, que únicamente se apagaba
+al **tocar la campana**. Al abrir la app desde un push se encendía y se navegaba
+solo a Notificaciones, donde nadie lo apagaba: se quedaba puesto para siempre.
+Ahora `NotificacionesPage` lo apaga al montarse, y el punto se deriva de
+`noLeidas > 0` — el estado real. `hayNueva` solo gobierna la animación.
+
+**El globo del icono (iOS):** iOS lo enciende con el `aps.badge` del payload y
+**bajarlo es cosa de la app**, que no lo hacía. `BadgeIconoApp` habla por
+`MethodChannel` con el canal nuevo de `AppDelegate.swift`. Sin dependencias: los
+paquetes al uso llevan años sin mantenimiento.
+
+> Falta el arreglo de fondo, que es del backend: manda `'badge' => 1` **fijo**, así
+> que el globo dirá 1 aunque haya siete. Está en el §B del encargo.
+
+### 3. Notificaciones que no se podían marcar como leídas
+
+Las recibidas con la app **abierta** se construían con `id: 0`, tirando el
+`usermessage_id` que el backend ya mandaba. Al abrirlas pedían
+`POST /notificaciones/0/leer`, el servidor las rechazaba y **saltaba un diálogo de
+error** mientras el contador se quedaba clavado. Afectaba a cualquier aviso en
+primer plano, los de prueba incluidos.
+
+Ahora se lee el identificador real. Con un id inválido no se llama al servidor
+**ni se marca en local**: sin identificador no hay forma de distinguir una
+notificación de otra, y emparejar por `id == 0` las marcaría todas de golpe.
+
+**`refrescarTirillaEnSilencio()` manda push sin crear fila, y está bien así:** es
+`data-only` con `apns-push-type: background`, una orden para el cliente y no un
+mensaje. Que no aparezca en la bandeja es lo correcto. **No tocar.**
+
+### Verificación en dispositivo (Oppo, Android 16, cuenta `CATutorP641`)
+
+```
+[TLS] Confianza TLS reforzada con ISRG Root X1
+usermessage_id: 1276                    ← antes se tiraba
+Notificaciones no leídas: 1
+Notificación 1276 marcada como leída    ← el id REAL, no un 0
+Notificaciones no leídas: 0
+```
+
+Por pantalla: el punto rojo se enciende con el push y se apaga al abrir
+Notificaciones (dos ciclos), el detalle abre sin diálogo de error, todas las
+peticiones HTTPS en 200 y **cero `[ERROR]`** en todo el recorrido.
+
+**Suite completa: 924 tests en verde**, `flutter analyze` sin incidencias. Once
+tests nuevos: `confianza_tls_test.dart` (5) y `notificacion_marcar_leida_test.dart`
+(6). El de TLS hace un **handshake real** contra el servidor con
+`withTrustedRoots: false` —lleva la etiqueta `red`, excluible con
+`--exclude-tags red`—: es lo único que demuestra que el arreglo sirve.
+
+De limpieza: fuera `badges: ^3.1.2`, que no se importaba en ningún archivo.
+
+### Pendiente
+
+- **El globo del icono de iOS no se pudo verificar:** Android no lo pinta, así que
+  el `MethodChannel` solo se comprueba en un iPhone. **Queda para la Mac.**
+- **No se subió versión ni se hizo release:** la 1.0.28+37 sigue en revisión en las
+  dos tiendas. Publicar esto pediría una 1.0.29+38, y esa la decide Carlos.

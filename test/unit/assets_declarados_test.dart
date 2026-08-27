@@ -20,9 +20,11 @@ void main() {
   ///
   /// - `logo_arji.png`: SplashPage y LogoRedondoUno (login).
   /// - `background_shopping.jpg`: fondo de Login y Registro (BackgroundImage).
+  /// - `isrg_root_x1.pem`: raíz que `ConfianzaTls` añade a las del sistema.
   const assetsEnUso = <String>[
     'assets/arji/logo_arji.png',
     'assets/img/background_shopping.jpg',
+    'assets/certs/isrg_root_x1.pem',
   ];
 
   group('Assets declarados en pubspec', () {

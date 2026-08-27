@@ -63,8 +63,6 @@ dependencies:
   # Render de HTML enriquecido en NotificacionesPage
   flutter_widget_from_html_core: ^0.17.2
 
-  # Badge para el contador de notificaciones no leídas
-  badges: ^3.1.2
   share_plus: ^13.1.0
   path_provider: ^2.1.5
 
@@ -211,6 +209,10 @@ flutter:
   assets:
     - assets/img/background_shopping.jpg
     - assets/arji/logo_arji.png
+    # Raíz ISRG Root X1, que se AÑADE a las autoridades del sistema (ver
+    # `ConfianzaTls`). Hace falta porque el `minSdk` es 24 (Android 7.0) y esa
+    # raíz llegó al almacén de Android en la 7.1.1.
+    - assets/certs/isrg_root_x1.pem
 
   # To add assets to your application, add an assets section, like this:
   # assets:

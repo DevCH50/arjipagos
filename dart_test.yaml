@@ -1,0 +1,14 @@
+# Configuración de la suite de pruebas.
+#
+# Solo declara las etiquetas que se usan, para que `flutter test` no avise de
+# «A tag was used that wasn't specified in dart_test.yaml».
+
+tags:
+  # Pruebas que salen a Internet de verdad. Hoy solo la de `ConfianzaTls`, que
+  # comprueba contra arjipagos.moriah.mx que la raíz empaquetada valida la
+  # cadena real del servidor — es lo único que demuestra que el arreglo del
+  # handshake funciona, y por eso no se sustituye por un doble de pruebas.
+  #
+  # Para correr la suite sin red: flutter test --exclude-tags red
+  red:
+    description: Requiere conexión a Internet.
