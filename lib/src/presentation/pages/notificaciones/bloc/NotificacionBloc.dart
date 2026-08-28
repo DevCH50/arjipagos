@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/core/utils/html_utils.dart';
+import 'package:arjipagos/src/data/dataSource/local/BadgeIconoApp.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/domain/useCases/notificaciones/NotificacionUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
@@ -33,13 +34,21 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
   /// Suscripción al stream de notificaciones tocadas desde background.
   StreamSubscription<RemoteMessage>? _fcmBackgroundTapSub;
 
+  /// Cómo se traslada el conteo de no leídas al globo del icono.
+  ///
+  /// Por defecto es [BadgeIconoApp.fijar]. Se inyecta en las pruebas porque el
+  /// original habla por un `MethodChannel` que solo existe en iOS.
+  final Future<void> Function(int) _sincronizarBadge;
+
   NotificacionBloc(
     this.notificacionUseCases, {
     // Parámetros opcionales para facilitar el testing sin Firebase real.
     Stream<RemoteMessage>? fcmForegroundStream,
     Stream<RemoteMessage>? fcmBackgroundTapStream,
     Future<RemoteMessage?> Function()? getInitialMessage,
-  }) : super(const NotificacionState()) {
+    Future<void> Function(int)? sincronizarBadge,
+  })  : _sincronizarBadge = sincronizarBadge ?? BadgeIconoApp.fijar,
+        super(const NotificacionState()) {
     on<NotificacionInicialEvent>(_onNotificacionInicialEvent);
     on<CargarMasNotificacionesEvent>(_onCargarMasNotificaciones);
     on<MarcarLeidaEvent>(_onMarcarLeida);
@@ -71,6 +80,28 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
         add(const NotificacionAbiertaDesdeBackgroundEvent());
       }
     });
+  }
+
+  /// Mantiene el globo del icono de iOS igual al conteo de no leídas.
+  ///
+  /// Va aquí, y no en cada `emit`, **a propósito**: `noLeidas` se toca desde
+  /// siete sitios distintos —carga inicial, marcar una, marcar todas, refrescar
+  /// el contador, push en primer plano, apertura desde background— y repartir la
+  /// llamada por todos ellos garantiza que el próximo que se añada se olvide.
+  /// `onChange` los cubre todos con un solo punto.
+  ///
+  /// Se compara antes de llamar porque la mayoría de los cambios de estado
+  /// —`isLoading`, `hayNueva`, la paginación— no tocan el conteo, y no hay que
+  /// molestar al canal nativo por ellos.
+  @override
+  void onChange(Change<NotificacionState> cambio) {
+    super.onChange(cambio);
+
+    if (cambio.currentState.noLeidas != cambio.nextState.noLeidas) {
+      // Sin `await`: el globo del icono es un adorno, y `onChange` es síncrono.
+      // `BadgeIconoApp.fijar` nunca lanza, así que no hay futuro que vigilar.
+      _sincronizarBadge(cambio.nextState.noLeidas);
+    }
   }
 
   @override

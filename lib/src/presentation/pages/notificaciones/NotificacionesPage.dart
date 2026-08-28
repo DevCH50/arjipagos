@@ -1,5 +1,4 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
-import 'package:arjipagos/src/data/dataSource/local/BadgeIconoApp.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
@@ -47,9 +46,10 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
     // después de la carga inicial, ni siquiera lo apagaba la recarga.
     context.read<NotificacionBloc>().add(const ResetNuevaNotificacionEvent());
 
-    // El globo del icono lo enciende iOS con el `aps.badge` que manda el
-    // backend; bajarlo es cosa de la app y hasta ahora no lo hacía nadie.
-    BadgeIconoApp.limpiar();
+    // El globo del icono NO se toca aquí. Lo lleva `NotificacionBloc.onChange`,
+    // que lo deja siempre en el conteo real de no leídas. Apagarlo por el mero
+    // hecho de abrir esta pantalla era mentira: quien se asomaba a la lista sin
+    // leer nada dejaba el icono a cero con avisos todavía pendientes.
   }
 
   @override
@@ -110,12 +110,11 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
                 icon: const Icon(Icons.done_all),
                 tooltip: AppStrings.notificacionesMarcarLeidas,
                 onPressed: () {
+                  // El globo del icono baja solo: al quedar el conteo en cero,
+                  // `NotificacionBloc.onChange` lo apaga.
                   context.read<NotificacionBloc>().add(
                         const MarcarTodasLeidasEvent(),
                       );
-                  // Si no queda nada por leer, el icono no debe seguir
-                  // marcado.
-                  BadgeIconoApp.limpiar();
                 },
               );
             }

@@ -109,17 +109,36 @@ nota porque el sistema no pinta ese contador por su cuenta — de ahí que solo 
 viera en iPhone.
 
 **Arreglo:** `lib/src/data/dataSource/local/BadgeIconoApp.dart` (nuevo) habla
-por `MethodChannel` con el canal registrado en `ios/Runner/AppDelegate.swift`,
-que pone el contador a cero (`setBadgeCount` en iOS 16+, con
-`applicationIconBadgeNumber` de respaldo). Se llama al abrir Notificaciones y al
-marcar todas como leídas.
+por `MethodChannel` con el canal registrado en `ios/Runner/AppDelegate.swift`
+(`setBadgeCount` en iOS 16+, con `applicationIconBadgeNumber` de respaldo).
 
 Sin dependencias nuevas: los paquetes al uso llevan años sin mantenimiento y
 esto son unas pocas líneas de Swift.
 
-> ⚠️ **Falta el arreglo de fondo, que es del backend:** hoy manda `'badge' => 1`
-> fijo, así que el globo dirá 1 aunque haya siete sin leer. Está en el §B del
-> encargo de ArjiApp.
+### El globo lleva el conteo real (2026-08-28)
+
+La primera versión solo sabía **apagarlo**, y lo hacía desde la pantalla:
+`BadgeIconoApp.limpiar()` en el `initState` de `NotificacionesPage` y en el botón
+de marcar todas. Dos fallos:
+
+1. **Mentía.** Asomarse a la lista sin leer nada dejaba el icono a cero mientras
+   el servidor seguía contando avisos pendientes.
+2. **Era fácil de olvidar.** `noLeidas` cambia desde siete sitios del BLoC y solo
+   dos pasaban por la pantalla.
+
+Ahora lo lleva **`NotificacionBloc.onChange`**, que espeja `noLeidas` en el globo
+pase lo que pase, y `limpiar()` desapareció por quedarse sin uso. Se compara el
+conteo antes de llamar: los cambios de estado que no lo tocan —`isLoading`,
+`hayNueva`, la paginación— no molestan al canal nativo.
+
+La sincronización se **inyecta** en el constructor (`sincronizarBadge`), como ya
+se hacía con los streams de FCM, porque el original solo funciona en iOS.
+
+El backend ya manda el conteo real en APNs (`'badge' => $sinLeer`, §B del encargo
+de ArjiApp), así que las dos mitades coinciden.
+
+> Sigue **sin verificar en un iPhone**: Android no pinta ese contador, así que el
+> `MethodChannel` solo se comprueba en dispositivo iOS. Pendiente para la Mac.
 
 ---
 
@@ -172,18 +191,20 @@ de `lib/`.
 | Archivo | Qué |
 | --- | --- |
 | `lib/src/data/api/ConfianzaTls.dart` | **Nuevo.** Añade ISRG Root X1 a la confianza |
-| `lib/src/data/dataSource/local/BadgeIconoApp.dart` | **Nuevo.** Apaga el globo del icono en iOS |
+| `lib/src/data/dataSource/local/BadgeIconoApp.dart` | **Nuevo.** Pone el globo del icono de iOS en el conteo real |
 | `assets/certs/isrg_root_x1.pem` | **Nuevo.** La raíz empaquetada |
 | `ios/Runner/AppDelegate.swift` | Canal nativo del badge |
 | `lib/main.dart` | Instala el `HttpOverrides` antes de Firebase |
-| `NotificacionBloc.dart` | Lee `usermessage_id`; guarda del id inválido |
-| `NotificacionesPage.dart` | Apaga `hayNueva` y el badge al abrirse |
+| `NotificacionBloc.dart` | Lee `usermessage_id`; guarda del id inválido; `onChange` espeja el conteo en el badge |
+| `NotificacionesPage.dart` | Apaga `hayNueva` al abrirse. Ya **no** toca el badge |
 | `notificacion_badge_button.dart` | El punto sale de `noLeidas`, no de `hayNueva` |
 | `dart_test.yaml` | **Nuevo.** Declara la etiqueta `red` |
 
-**Tests nuevos:** `test/unit/confianza_tls_test.dart` (5) y
-`test/unit/blocs/notificacion_marcar_leida_test.dart` (6). Suite completa: **924
-en verde**, `flutter analyze` sin incidencias.
+**Tests nuevos:** `test/unit/confianza_tls_test.dart` (5),
+`test/unit/blocs/notificacion_marcar_leida_test.dart` (6),
+`test/unit/badge_icono_app_test.dart` (4) y
+`test/unit/blocs/notificacion_badge_sincroniza_test.dart` (6). Suite completa:
+**934 en verde**, `flutter analyze` sin incidencias.
 
 El test de TLS incluye un handshake **real** contra `arjipagos.moriah.mx` con
 `withTrustedRoots: false`: si la cadena del servidor no se pudiera validar solo

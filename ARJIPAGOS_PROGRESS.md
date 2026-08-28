@@ -11,6 +11,37 @@
 
 _(ninguno)_
 
+### Sesión 2026-08-28 (Linux) — El globo del icono de iOS lleva el conteo real
+
+Última pieza que tocaba al lado Flutter de la tanda de notificaciones. El badge ya
+sabía apagarse, pero **solo** sabía eso, y lo hacía desde `NotificacionesPage`:
+`BadgeIconoApp.limpiar()` en el `initState` y en el botón de marcar todas.
+
+Dos fallos. **Mentía**: asomarse a la lista sin leer nada dejaba el icono a cero con
+avisos aún pendientes en el servidor. Y **era fácil de olvidar**: `noLeidas` cambia
+desde siete sitios del BLoC, y solo dos pasaban por la pantalla.
+
+Ahora lo lleva **`NotificacionBloc.onChange`**, un único punto que espeja `noLeidas`
+en el globo pase lo que pase, comparando antes para no molestar al canal nativo con
+los cambios que no tocan el conteo (`isLoading`, `hayNueva`, la paginación). La
+sincronización se inyecta en el constructor (`sincronizarBadge`), igual que ya se
+hacía con los streams de FCM, porque el original solo funciona en iOS.
+
+`BadgeIconoApp.limpiar()` se eliminó al quedarse sin uso, y con él el import de
+`BadgeIconoApp` en la página: la presentación ya no toca el icono.
+
+Encaja con el §B del backend, que desde el 2026-08-27 manda el conteo real en APNs
+(`'badge' => $sinLeer`) en vez del `1` fijo. Las dos mitades coinciden.
+
+**10 tests nuevos** — `test/unit/badge_icono_app_test.dart` (contrato del canal
+nativo: nombre, método, saneo del negativo y silencio fuera de iOS) y
+`test/unit/blocs/notificacion_badge_sincroniza_test.dart` (que marcar UNA leída deje
+el resto encendido, que marcar todas sí lo apague, y que no dispare de más).
+**Suite: 934 en verde**, `flutter analyze` sin incidencias.
+
+**Sigue sin verificar en un iPhone.** Android no pinta ese contador, así que el
+`MethodChannel` solo se comprueba en dispositivo iOS — pendiente para la Mac.
+
 ### Sesión 2026-08-26 (Mac) — 1.0.28+37 verificada en el iPhone 17 Pro Max
 
 `git pull` de los 5 commits de la Linux (separación por emisor fiscal, 1.0.27+36 ya

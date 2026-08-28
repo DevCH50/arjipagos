@@ -2,15 +2,25 @@ import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart';
 
-/// Apaga el globo rojo que iOS pinta sobre el icono de la app.
+/// Mantiene el globo rojo que iOS pinta sobre el icono de la app igual al
+/// número real de notificaciones sin leer.
 ///
 /// ## Por qué hace falta
 ///
 /// El backend manda `aps.badge` en el payload de APNs, así que iOS pinta el
-/// globo en cuanto llega un aviso. **Bajarlo es responsabilidad de la app**, y
-/// hasta el 2026-08-27 nadie lo hacía: el globo se quedaba encendido para
-/// siempre aunque el usuario ya hubiera leído todo. En Android no se nota
+/// globo en cuanto llega un aviso. **Ajustarlo después es responsabilidad de la
+/// app**, y hasta el 2026-08-27 nadie lo hacía: el globo se quedaba encendido
+/// para siempre aunque el usuario ya hubiera leído todo. En Android no se nota
 /// porque el sistema no pinta ese contador por su cuenta.
+///
+/// ## Por qué el conteo real y no un simple apagado
+///
+/// La primera versión solo sabía apagarlo, y lo hacía al abrir la pantalla de
+/// Notificaciones. Eso mentía en cuanto quedaba algo pendiente: bastaba con
+/// asomarse a la lista sin leer nada para dejar el icono a cero mientras el
+/// servidor seguía contando avisos sin leer. Ahora el globo espeja
+/// `NotificacionState.noLeidas`, que es el mismo número que pinta el punto rojo
+/// de dentro de la app.
 ///
 /// ## Por qué un canal nativo y no un paquete
 ///
@@ -28,20 +38,17 @@ class BadgeIconoApp {
   static const MethodChannel _canal =
       MethodChannel('mx.moriah.arjipagos/badge');
 
-  /// Pone a cero el contador del icono.
+  /// Fija el contador del icono en [cantidad]; con cero, iOS lo quita.
   ///
-  /// Se llama cuando el usuario ya ha visto sus notificaciones: al abrir la
-  /// pantalla de Notificaciones y al marcarlas todas como leídas.
-  ///
-  /// Nunca lanza. Que no se pueda apagar un adorno del icono no es motivo para
-  /// romper la pantalla que lo pide.
-  static Future<void> limpiar() => fijar(0);
-
-  /// Fija el contador del icono en [cantidad].
+  /// Lo llama `NotificacionBloc` cada vez que cambia el conteo de no leídas, así
+  /// que no hay que acordarse de invocarlo desde ninguna pantalla.
   ///
   /// Valores negativos se tratan como cero. En plataformas distintas de iOS no
   /// hace nada: Android no tiene un contador de sistema equivalente y cada capa
   /// de personalización lo resuelve a su manera.
+  ///
+  /// Nunca lanza. Que no se pueda ajustar un adorno del icono no es motivo para
+  /// romper el flujo que lo pide.
   static Future<void> fijar(int cantidad) async {
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       return;
