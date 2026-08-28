@@ -66,8 +66,8 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     on<EdoCtaRecargarSeleccionEvent>(_onRecargarSeleccion);
     on<EdoCtaListLimpiarSesionEvent>(_onLimpiarSesion);
 
-    _fcmPrimerPlanoSub =
-        (fcmPrimerPlanoStream ?? FirebaseMessaging.onMessage).listen(_alLlegar);
+    _fcmPrimerPlanoSub = (fcmPrimerPlanoStream ?? FirebaseMessaging.onMessage)
+        .listen(_alLlegar);
     _fcmToqueSub = (fcmToqueStream ?? FirebaseMessaging.onMessageOpenedApp)
         .listen(_alLlegar);
   }
@@ -95,7 +95,7 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
   bool _confirmaPagoDeEsteEmisor(RemoteMessage message) {
     final bool esDePago =
         message.data[_claveCampania]?.toString() == _campaniaPago &&
-            message.data[_claveAccion]?.toString() == _accionPagoExitoso;
+        message.data[_claveAccion]?.toString() == _accionPagoExitoso;
     if (!esDePago) {
       return false;
     }
@@ -176,36 +176,42 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     bool limpiarSeleccion = false,
   }) async {
     try {
-      emit(state.copyWith(
-        isLoading: true,
-        errorMessage: null,
-        pagosSeleccionados: limpiarSeleccion ? {} : null,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: true,
+          errorMessage: null,
+          pagosSeleccionados: limpiarSeleccion ? {} : null,
+        ),
+      );
 
-      final result = await edoCtaUseCases.getEstadosDeCuenta.run();
+      // Cada BLoC pide solo lo suyo: 1 desde "Pagos Pendientes", 2 desde
+      // "Otros pagos". El filtro por emisor de `EdoCtaListState` se conserva
+      // igualmente — es la red que sostiene el ámbito emisor+ciclo aunque el
+      // servidor devuelva de más.
+      final result = await edoCtaUseCases.getEstadosDeCuenta.run(
+        emisorFiscalId: emisorFiscalId,
+      );
 
       if (result is utils.Success<EstadosDeCuentaResponse>) {
         final data = result.data;
-        emit(state.copyWith(
-          alumnos: data.alumnos,
-          response: data,
-          isLoading: false,
-          errorMessage: null,
-        ));
+        emit(
+          state.copyWith(
+            alumnos: data.alumnos,
+            response: data,
+            isLoading: false,
+            errorMessage: null,
+          ),
+        );
       } else if (result is utils.Error<EstadosDeCuentaResponse>) {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: result.msg,
-        ));
+        emit(state.copyWith(isLoading: false, errorMessage: result.msg));
       }
     } catch (e) {
       // El detalle técnico va al log; al usuario solo un mensaje legible.
-      AppLogger.error('Error inesperado cargando estados de cuenta: $e',
-          tag: 'EdoCta');
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: mensajeErrorRed(e),
-      ));
+      AppLogger.error(
+        'Error inesperado cargando estados de cuenta: $e',
+        tag: 'EdoCta',
+      );
+      emit(state.copyWith(isLoading: false, errorMessage: mensajeErrorRed(e)));
     }
   }
 
@@ -249,13 +255,16 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
     // pagos" habría que haber marcado antes los de "Pagos Pendientes" del mismo
     // ciclo, que están en otra pantalla y en otro carrito. El renglón quedaría
     // bloqueado sin explicación posible.
-    final pagosDisponibles = alumno.estadoDeCuenta
-        .where((e) =>
-            e.estaDisponibleEnInternet &&
-            e.cicloId == cicloId &&
-            e.emisorFiscalId == pago.emisorFiscalId)
-        .toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final pagosDisponibles =
+        alumno.estadoDeCuenta
+            .where(
+              (e) =>
+                  e.estaDisponibleEnInternet &&
+                  e.cicloId == cicloId &&
+                  e.emisorFiscalId == pago.emisorFiscalId,
+            )
+            .toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
     final idsDisponibles = pagosDisponibles.map((e) => e.id).toList();
 
     // Obtener los pagos actualmente seleccionados para este alumno en el ciclo
@@ -271,8 +280,9 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
         // por emisor hace falta porque la respuesta del servidor trae los
         // pagos de todos: sin él, desmarcar aquí arrastraría renglones que
         // pertenecen a otra pantalla y a otro contrato.
-        pagosActuales
-            .removeWhere((id) => id >= pagoId && idsDisponibles.contains(id));
+        pagosActuales.removeWhere(
+          (id) => id >= pagoId && idsDisponibles.contains(id),
+        );
       } else {
         // Si no acepta pagos diversos, solo deseleccionar este pago
         pagosActuales.remove(pagoId);
@@ -317,23 +327,28 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
           '  límite máx  : ${_politica.maxLongitudReferencia} chars',
           tag: 'CARRITO',
         );
-        emit(state.copyWith(
-          errorMessage: AppStrings.edoCtaReferenciaLimiteAlcanzado,
-        ));
+        emit(
+          state.copyWith(
+            errorMessage: AppStrings.edoCtaReferenciaLimiteAlcanzado,
+          ),
+        );
         emit(state.copyWith(errorMessage: null));
         return;
       }
 
       if (pago.aceptaPagosDiversos && _politica.exigeOrdenAscendente) {
         // Verificar que se puede seleccionar (orden ascendente)
-        if (state.puedeSelecionarPago(cicloId, alumnoId, pagoId, idsDisponibles)) {
+        if (state.puedeSelecionarPago(
+          cicloId,
+          alumnoId,
+          pagoId,
+          idsDisponibles,
+        )) {
           pagosActuales.add(pagoId);
           pagosActuales.sort(); // Mantener ordenados
         } else {
           // No se puede seleccionar, emitir error temporal
-          emit(state.copyWith(
-            errorMessage: AppStrings.edoCtaOrdenPagosMsg,
-          ));
+          emit(state.copyWith(errorMessage: AppStrings.edoCtaOrdenPagosMsg));
           // Limpiar el error después de mostrarlo
           emit(state.copyWith(errorMessage: null));
           return;
@@ -351,8 +366,9 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       nuevosSeleccionados[ciclo] = Map<int, List<int>>.from(alumnos);
     });
 
-    final alumnosDelCiclo =
-        Map<int, List<int>>.from(nuevosSeleccionados[cicloId] ?? {});
+    final alumnosDelCiclo = Map<int, List<int>>.from(
+      nuevosSeleccionados[cicloId] ?? {},
+    );
     if (pagosActuales.isEmpty) {
       alumnosDelCiclo.remove(alumnoId);
     } else {

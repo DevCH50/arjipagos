@@ -3,6 +3,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
 import 'package:arjipagos/src/presentation/pages/ticket/TicketPage.dart';
+import 'package:arjipagos/src/presentation/widgets/ConceptoPago.dart';
 import 'package:flutter/material.dart';
 
 /// Item individual de un pago ya realizado.
@@ -28,18 +29,15 @@ class PagoRealizadoItem extends StatelessWidget {
   /// sin montar un `BlocProvider` encima.
   final String? folioDestacado;
 
-  const PagoRealizadoItem({
-    super.key,
-    required this.pago,
-    this.folioDestacado,
-  });
+  const PagoRealizadoItem({super.key, required this.pago, this.folioDestacado});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final bool recienPagado = folioDestacado != null &&
+    final bool recienPagado =
+        folioDestacado != null &&
         pago.ticketFolio.isNotEmpty &&
         pago.ticketFolio == folioDestacado;
 
@@ -47,9 +45,7 @@ class PagoRealizadoItem extends StatelessWidget {
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
       color: AppColors.success.withValues(
-        alpha: recienPagado
-            ? (isDark ? 0.34 : 0.18)
-            : (isDark ? 0.12 : 0.05),
+        alpha: recienPagado ? (isDark ? 0.34 : 0.18) : (isDark ? 0.12 : 0.05),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Column(
@@ -69,23 +65,17 @@ class PagoRealizadoItem extends StatelessWidget {
 
   /// Primera fila: concepto a la izquierda y monto a la derecha.
   ///
-  /// El concepto se lleva todo el ancho sobrante, que es lo que le permite
-  /// caber en una sola línea.
+  /// El concepto se lleva todo el ancho sobrante; si aun así no cabe, envuelve.
   Widget _buildConceptoYMonto(ThemeData theme, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            pago.descripcionAbreviada,
-            // Dos líneas como red de seguridad para pantallas muy angostas o
-            // con el tamaño de fuente del sistema aumentado.
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          // El mismo widget que en Estados de Cuenta y en el Carrito: tamaño
+          // fijo y envolver. Antes era un `Text` con `overflow: ellipsis`, que
+          // es justo lo que no debe pasar: el concepto se lee completo o no
+          // sirve.
+          child: ConceptoPago(texto: pago.descripcionCompleta),
         ),
         const SizedBox(width: 12),
         Text(

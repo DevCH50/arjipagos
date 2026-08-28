@@ -3,7 +3,7 @@ import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
-import 'package:arjipagos/src/presentation/widgets/ConceptoEscalonado.dart';
+import 'package:arjipagos/src/presentation/widgets/ConceptoPago.dart';
 import 'package:arjipagos/src/presentation/widgets/FilaAdaptable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -50,7 +50,7 @@ class CarritoPagoItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConceptoEscalonado(texto: pago.descripcionAbreviada),
+        ConceptoPago(texto: pago.descripcionCompleta),
         const SizedBox(height: 6),
         FilaAdaptable(
           izquierda: _buildVencimiento(theme),
@@ -167,10 +167,7 @@ class CarritoPagoItem extends StatelessWidget {
 
   void _quitarPago(BuildContext context) {
     context.read<CarritoBloc>().add(
-      CarritoQuitarPagoEvent(
-        alumnoId: alumnoId,
-        pagoId: pago.id,
-      ),
+      CarritoQuitarPagoEvent(alumnoId: alumnoId, pagoId: pago.id),
     );
   }
 }

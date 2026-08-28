@@ -40,7 +40,7 @@ class EdoCtaPagadosBody extends StatelessWidget {
             .toList();
 
         if (alumnosConPagos == null || alumnosConPagos.isEmpty) {
-          return const PagadosEmptyWidget();
+          return PagadosEmptyWidget(onRetry: () => _recargarDatos(context));
         }
 
         return RefreshIndicator(

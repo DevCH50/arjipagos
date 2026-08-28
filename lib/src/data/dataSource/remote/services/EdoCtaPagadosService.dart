@@ -7,6 +7,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
+import 'package:arjipagos/src/data/api/RespuestaSinDatos.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
@@ -35,7 +36,8 @@ class EdoCtaPagadosService {
   Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuentaPagados() async {
     try {
       // Obtener userId y token de la sesión
-      final AuthResponse? authResponse = await authUseCases.getUserSession.run();
+      final AuthResponse? authResponse = await authUseCases.getUserSession
+          .run();
 
       if (authResponse == null) {
         AppLogger.warning(
@@ -71,9 +73,7 @@ class EdoCtaPagadosService {
       };
 
       // Body con user_id
-      final Map<String, dynamic> body = {
-        'user_id': userId,
-      };
+      final Map<String, dynamic> body = {'user_id': userId};
 
       final response = await http
           .post(url, headers: headers, body: json.encode(body))
@@ -88,7 +88,9 @@ class EdoCtaPagadosService {
           'El servidor devolvió HTML en lugar de JSON (posible error 500)',
           tag: 'EdoCtaPagados',
         );
-        return Error<EstadosDeCuentaResponse>(AppStrings.errorServidorNoDisponible);
+        return Error<EstadosDeCuentaResponse>(
+          AppStrings.errorServidorNoDisponible,
+        );
       }
 
       final data = json.decode(response.body);
@@ -101,6 +103,13 @@ class EdoCtaPagadosService {
           tag: 'EdoCtaPagados',
         );
         return Success(edoCtaResponse);
+      } else if (esRespuestaSinDatos(response.statusCode, data)) {
+        // Sin familia o sin pagos realizados: estado vacío, no error.
+        AppLogger.info(
+          'El usuario no tiene pagos realizados que mostrar',
+          tag: 'EdoCtaPagados',
+        );
+        return Success(EstadosDeCuentaResponse.vacio());
       } else {
         final errorMsg = ListToString(data['msg']);
         AppLogger.warning(
@@ -110,15 +119,24 @@ class EdoCtaPagadosService {
         return Error<EstadosDeCuentaResponse>(errorMsg);
       }
     } on TimeoutException {
-      AppLogger.error('Timeout obteniendo pagos realizados', tag: 'EdoCtaPagados');
+      AppLogger.error(
+        'Timeout obteniendo pagos realizados',
+        tag: 'EdoCtaPagados',
+      );
       return Error<EstadosDeCuentaResponse>(AppStrings.errorTimeout);
     } on SocketException {
-      AppLogger.error('Sin conexión obteniendo pagos realizados', tag: 'EdoCtaPagados');
+      AppLogger.error(
+        'Sin conexión obteniendo pagos realizados',
+        tag: 'EdoCtaPagados',
+      );
       return Error<EstadosDeCuentaResponse>(AppStrings.errorConnection);
     } catch (e) {
       // Nunca exponer la excepción cruda al usuario: el detalle técnico va al
       // log y a la pantalla solo llega un mensaje legible.
-      AppLogger.error('Error obteniendo pagos realizados: $e', tag: 'EdoCtaPagados');
+      AppLogger.error(
+        'Error obteniendo pagos realizados: $e',
+        tag: 'EdoCtaPagados',
+      );
       return Error<EstadosDeCuentaResponse>(mensajeErrorRed(e));
     }
   }

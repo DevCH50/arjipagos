@@ -7,6 +7,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
+import 'package:arjipagos/src/data/api/RespuestaSinDatos.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
@@ -34,7 +35,8 @@ class HomeService {
   Future<Resource<AlumnoResponse>> getAlumnos() async {
     try {
       // Obtener userId y token de la sesión
-      final AuthResponse? authResponse = await authUseCases.getUserSession.run();
+      final AuthResponse? authResponse = await authUseCases.getUserSession
+          .run();
 
       if (authResponse == null) {
         AppLogger.warning('Intento de obtener alumnos sin sesión', tag: 'Home');
@@ -81,6 +83,10 @@ class HomeService {
           tag: 'Home',
         );
         return Success(alumnosResponse);
+      } else if (esRespuestaSinDatos(response.statusCode, data)) {
+        // Sin familia o sin alumnos: estado vacío, no error.
+        AppLogger.info('El usuario no tiene alumnos que mostrar', tag: 'Home');
+        return Success(AlumnoResponse.vacio());
       } else {
         final errorMsg = ListToString(data['msg']);
         AppLogger.warning('Error obteniendo alumnos: $errorMsg', tag: 'Home');

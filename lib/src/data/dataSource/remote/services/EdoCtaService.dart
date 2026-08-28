@@ -7,6 +7,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
+import 'package:arjipagos/src/data/api/RespuestaSinDatos.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
@@ -27,15 +28,31 @@ class EdoCtaService {
   /// Obtiene los estados de cuenta sin pagar desde el servidor.
   ///
   /// Requiere una sesión activa con token válido.
-  /// Envía el user_id en el body como JSON.
+  /// Envía el `user_id` en el body como JSON.
+  ///
+  /// [emisorFiscalId] acota la consulta a un emisor: **1** para "Pagos
+  /// Pendientes" y **2** para "Otros pagos". Se manda como `emisorfiscal_id`.
+  ///
+  /// **Es opcional a propósito, y omitirlo significa «todos».** No todos los
+  /// que consultan este endpoint miran una sola pantalla: `MenuPrincipalBloc`
+  /// lo usa para la familia y los alumnos, que no son de ningún emisor en
+  /// particular. Poner un valor por omisión dejaría fuera, en silencio, los
+  /// alumnos que solo tuvieran pagos del emisor 2.
+  ///
   /// Retorna [Success] con [EstadosDeCuentaResponse] o [Error] con mensaje.
-  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta() async {
+  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta({
+    int? emisorFiscalId,
+  }) async {
     try {
       // Obtener userId y token de la sesión
-      final AuthResponse? authResponse = await authUseCases.getUserSession.run();
+      final AuthResponse? authResponse = await authUseCases.getUserSession
+          .run();
 
       if (authResponse == null) {
-        AppLogger.warning('Intento de obtener estados de cuenta sin sesión', tag: 'EdoCta');
+        AppLogger.warning(
+          'Intento de obtener estados de cuenta sin sesión',
+          tag: 'EdoCta',
+        );
         return Error<EstadosDeCuentaResponse>(AppStrings.errorNoSession);
       }
 
@@ -64,9 +81,12 @@ class EdoCtaService {
         'Authorization': 'Bearer $token',
       };
 
-      // Body con user_id
+      // Body con user_id y, si la pantalla es de un emisor concreto, su id.
+      // La clave solo se añade cuando hay emisor: mandar `null` haría que el
+      // backend recibiera el campo vacío, que no es lo mismo que no mandarlo.
       final Map<String, dynamic> body = {
         'user_id': userId,
+        'emisorfiscal_id': ?emisorFiscalId,
       };
 
       final response = await http
@@ -76,11 +96,18 @@ class EdoCtaService {
       AppLogger.httpResponse(response.statusCode, url.toString());
 
       // Debug: ver respuesta raw
-      AppLogger.info('Response body (primeros 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}', tag: 'EdoCta');
+      AppLogger.info(
+        'Response body (primeros 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}',
+        tag: 'EdoCta',
+      );
 
       // Verificar si el servidor devolvió HTML en lugar de JSON (error del servidor)
-      if (response.body.trim().startsWith('<!DOCTYPE') || response.body.trim().startsWith('<html')) {
-        AppLogger.error('El servidor devolvió HTML en lugar de JSON (posible error 500)', tag: 'EdoCta');
+      if (response.body.trim().startsWith('<!DOCTYPE') ||
+          response.body.trim().startsWith('<html')) {
+        AppLogger.error(
+          'El servidor devolvió HTML en lugar de JSON (posible error 500)',
+          tag: 'EdoCta',
+        );
         return Error<EstadosDeCuentaResponse>(
           'El servidor no está disponible en este momento. Por favor intenta más tarde.',
         );
@@ -96,16 +123,30 @@ class EdoCtaService {
           tag: 'EdoCta',
         );
         return Success(edoCtaResponse);
+      } else if (esRespuestaSinDatos(response.statusCode, data)) {
+        // El usuario no tiene familia, o no tiene estados de cuenta. No es un
+        // fallo: la pantalla debe mostrar su estado vacío, no «Error al cargar».
+        AppLogger.info(
+          'El usuario no tiene estados de cuenta que mostrar',
+          tag: 'EdoCta',
+        );
+        return Success(EstadosDeCuentaResponse.vacio());
       } else {
         final errorMsg = ListToString(data['msg']);
-        AppLogger.warning('Error obteniendo estados de cuenta: $errorMsg', tag: 'EdoCta');
+        AppLogger.warning(
+          'Error obteniendo estados de cuenta: $errorMsg',
+          tag: 'EdoCta',
+        );
         return Error<EstadosDeCuentaResponse>(errorMsg);
       }
     } on TimeoutException {
       AppLogger.error('Timeout obteniendo estados de cuenta', tag: 'EdoCta');
       return Error<EstadosDeCuentaResponse>(AppStrings.errorTimeout);
     } on SocketException {
-      AppLogger.error('Sin conexión obteniendo estados de cuenta', tag: 'EdoCta');
+      AppLogger.error(
+        'Sin conexión obteniendo estados de cuenta',
+        tag: 'EdoCta',
+      );
       return Error<EstadosDeCuentaResponse>(AppStrings.errorConnection);
     } catch (e) {
       AppLogger.error('Error obteniendo estados de cuenta: $e', tag: 'EdoCta');

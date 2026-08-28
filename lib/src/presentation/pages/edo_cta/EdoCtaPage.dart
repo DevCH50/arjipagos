@@ -95,7 +95,12 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
     );
   }
 
-  /// Construye el AppBar con botón de limpiar selección.
+  /// Construye el AppBar con botón de limpiar selección y el de recargar.
+  ///
+  /// El de recargar va **siempre visible**, sin condición de estado: es la vía
+  /// que le queda al usuario para volver a pedir sus datos cuando la pantalla no
+  /// muestra nada. El de limpiar selección sigue apareciendo solo si hay algo
+  /// seleccionado, que es cuando significa algo.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(widget.titulo),
@@ -118,6 +123,13 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
               );
             }
             return const SizedBox.shrink();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: AppStrings.edoCtaActualizar,
+          onPressed: () {
+            context.read<EdoCtaListBloc>().add(const EdoCtaListRefreshEvent());
           },
         ),
       ],

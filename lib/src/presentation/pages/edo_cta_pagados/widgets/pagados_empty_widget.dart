@@ -2,8 +2,15 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 
 /// Widget que se muestra cuando no hay ningún pago realizado.
+///
+/// Lleva botón de recargar: que hoy no haya pagos realizados no quiere decir que
+/// no vaya a haberlos en cuanto se liquide uno, y el usuario siempre debe poder
+/// volver a pedir sus datos sin salir de la pantalla.
 class PagadosEmptyWidget extends StatelessWidget {
-  const PagadosEmptyWidget({super.key});
+  /// Vuelve a pedir los datos al servidor.
+  final VoidCallback onRetry;
+
+  const PagadosEmptyWidget({super.key, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +42,12 @@ class PagadosEmptyWidget extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text(AppStrings.retry),
             ),
           ],
         ),

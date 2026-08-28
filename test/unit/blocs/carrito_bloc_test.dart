@@ -36,7 +36,10 @@ void main() {
     return CarritoBloc(
       // Storage real sobre el SharedPref mockeado: los tests del BLoC también
       // ejercitan la (de)serialización con ámbito de ciclo.
-      seleccionStorage: SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+      seleccionStorage: SeleccionPagosStorage(
+        mockSharedPref,
+        claveSeleccion: 'seleccion_pagos_ef1',
+      ),
       authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
       edoCtaUseCases: createMockEdoCtaUseCases(
         getEstadosDeCuenta: mockGetEstadosDeCuenta,
@@ -70,17 +73,25 @@ void main() {
         'carga carrito con pagos cuando hay selección en storage',
         build: () {
           when(() => mockSharedPref.readMap(any())).thenAnswer(
-            (_) async => {'1': [100]},
+            (_) async => {
+              '1': [100],
+            },
           );
-          when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
-            (_) async => Success(EstadosDeCuentaResponse(
-              alumnos: [testAlumno],
-              cicloPredeterminadoId: '1',
-              familiaId: '1',
-              familia: 'Test',
-              success: true,
-              message: '',
-            )),
+          when(
+            () => mockGetEstadosDeCuenta.run(
+              emisorFiscalId: any(named: 'emisorFiscalId'),
+            ),
+          ).thenAnswer(
+            (_) async => Success(
+              EstadosDeCuentaResponse(
+                alumnos: [testAlumno],
+                cicloPredeterminadoId: '1',
+                familiaId: '1',
+                familia: 'Test',
+                success: true,
+                message: '',
+              ),
+            ),
           );
           return createBloc();
         },
@@ -101,19 +112,21 @@ void main() {
         seed: () => CarritoState(
           alumnos: [testAlumno],
           pagosSeleccionados: const {
-            TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+            TestEstadoDeCuenta.cicloActual: {
+              1: [1, 2],
+            },
           },
         ),
-        act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
-          alumnoId: 1,
-          pagoId: 2,
-        )),
+        act: (bloc) =>
+            bloc.add(const CarritoQuitarPagoEvent(alumnoId: 1, pagoId: 2)),
         expect: () => [
           isA<CarritoState>().having(
             (s) => s.pagosSeleccionados,
             'pagosSeleccionados',
             {
-              TestEstadoDeCuenta.cicloActual: {1: [1]},
+              TestEstadoDeCuenta.cicloActual: {
+                1: [1],
+              },
             },
           ),
         ],
@@ -125,13 +138,13 @@ void main() {
         seed: () => CarritoState(
           alumnos: [testAlumno],
           pagosSeleccionados: const {
-            TestEstadoDeCuenta.cicloActual: {1: [1]},
+            TestEstadoDeCuenta.cicloActual: {
+              1: [1],
+            },
           },
         ),
-        act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
-          alumnoId: 1,
-          pagoId: 1,
-        )),
+        act: (bloc) =>
+            bloc.add(const CarritoQuitarPagoEvent(alumnoId: 1, pagoId: 1)),
         expect: () => [
           isA<CarritoState>().having(
             (s) => s.pagosSeleccionados,
@@ -149,7 +162,9 @@ void main() {
         seed: () => CarritoState(
           alumnos: [testAlumno],
           pagosSeleccionados: const {
-            TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+            TestEstadoDeCuenta.cicloActual: {
+              1: [1, 2],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoLimpiarEvent()),
@@ -181,15 +196,17 @@ void main() {
       blocTest<CarritoBloc, CarritoState>(
         'procesa pago exitosamente',
         build: () {
-          when(() => mockGetUserSession.run()).thenAnswer(
-            (_) async => testAuthResponse,
-          );
+          when(
+            () => mockGetUserSession.run(),
+          ).thenAnswer((_) async => testAuthResponse);
           return createBloc();
         },
         seed: () => CarritoState(
           alumnos: [testAlumno],
           pagosSeleccionados: const {
-            TestEstadoDeCuenta.cicloActual: {1: [1]},
+            TestEstadoDeCuenta.cicloActual: {
+              1: [1],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
@@ -213,13 +230,19 @@ void main() {
         seed: () => CarritoState(
           alumnos: [testAlumno],
           pagosSeleccionados: const {
-            TestEstadoDeCuenta.cicloActual: {1: [1]},
+            TestEstadoDeCuenta.cicloActual: {
+              1: [1],
+            },
           },
         ),
         act: (bloc) => bloc.add(const CarritoPagoExitosoEvent()),
         expect: () => [
           isA<CarritoState>()
-              .having((s) => s.pagosSeleccionados, 'pagosSeleccionados', isEmpty)
+              .having(
+                (s) => s.pagosSeleccionados,
+                'pagosSeleccionados',
+                isEmpty,
+              )
               .having((s) => s.pagoExitoso, 'pagoExitoso', true),
         ],
       );
@@ -231,7 +254,9 @@ void main() {
       final state = CarritoState(
         alumnos: [testAlumno],
         pagosSeleccionados: const {
-          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+          TestEstadoDeCuenta.cicloActual: {
+            1: [1, 2],
+          },
         },
       );
       // pago id=1: 5000.0, pago id=2: 4500.0
@@ -242,7 +267,9 @@ void main() {
       final state = CarritoState(
         alumnos: [testAlumno],
         pagosSeleccionados: const {
-          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+          TestEstadoDeCuenta.cicloActual: {
+            1: [1, 2],
+          },
         },
       );
       expect(state.cantidadPagos, 2);
@@ -252,7 +279,9 @@ void main() {
       final state = CarritoState(
         alumnos: [testAlumno],
         pagosSeleccionados: const {
-          TestEstadoDeCuenta.cicloActual: {1: [1, 2]},
+          TestEstadoDeCuenta.cicloActual: {
+            1: [1, 2],
+          },
         },
       );
       expect(state.referenciaPago, AppConstants.generarReferencia([1, 2]));
@@ -266,30 +295,34 @@ void main() {
     /// Alumno con pagos de dos ciclos: ids 1 y 2 en el ciclo actual, id 10 en
     /// el anterior.
     Alumno alumnoDosCiclos() => Alumno(
-          alumnoId: 1,
-          familiaId: 1,
-          familia: 'Familia Test',
-          alumno: 'Test',
-          apPaterno: '',
-          apMaterno: '',
-          nombre: 'Test',
-          becaSep: '',
-          becaArji: '',
-          becaBach: '',
-          becaSp: '',
-          esBaja: false,
-          grupoId: 1,
-          grupo: '',
-          urlPhoto: '',
-          estadoDeCuenta: TestEstadoDeCuenta.listaDosCiclos,
-        );
+      alumnoId: 1,
+      familiaId: 1,
+      familia: 'Familia Test',
+      alumno: 'Test',
+      apPaterno: '',
+      apMaterno: '',
+      nombre: 'Test',
+      becaSep: '',
+      becaArji: '',
+      becaBach: '',
+      becaSp: '',
+      esBaja: false,
+      grupoId: 1,
+      grupo: '',
+      urlPhoto: '',
+      estadoDeCuenta: TestEstadoDeCuenta.listaDosCiclos,
+    );
 
     test('itemsCarrito incluye pagos de varios ciclos del mismo alumno', () {
       final state = CarritoState(
         alumnos: [alumnoDosCiclos()],
         pagosSeleccionados: const {
-          cicloA: {1: [1]},
-          cicloB: {1: [10]},
+          cicloA: {
+            1: [1],
+          },
+          cicloB: {
+            1: [10],
+          },
         },
       );
 
@@ -302,8 +335,12 @@ void main() {
       final state = CarritoState(
         alumnos: [alumnoDosCiclos()],
         pagosSeleccionados: const {
-          cicloA: {1: [1, 2]},
-          cicloB: {1: [10]},
+          cicloA: {
+            1: [1, 2],
+          },
+          cicloB: {
+            1: [10],
+          },
         },
       );
       final item = state.itemsCarrito.first;
@@ -323,21 +360,27 @@ void main() {
       seed: () => CarritoState(
         alumnos: [alumnoDosCiclos()],
         pagosSeleccionados: const {
-          cicloA: {1: [1, 2]},
-          cicloB: {1: [10]},
+          cicloA: {
+            1: [1, 2],
+          },
+          cicloB: {
+            1: [10],
+          },
         },
       ),
-      act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
-        alumnoId: 1,
-        pagoId: 2,
-      )),
+      act: (bloc) =>
+          bloc.add(const CarritoQuitarPagoEvent(alumnoId: 1, pagoId: 2)),
       expect: () => [
         isA<CarritoState>().having(
           (s) => s.pagosSeleccionados,
           'pagosSeleccionados',
           {
-            cicloA: {1: [1]},
-            cicloB: {1: [10]},
+            cicloA: {
+              1: [1],
+            },
+            cicloB: {
+              1: [10],
+            },
           },
         ),
       ],
@@ -349,20 +392,24 @@ void main() {
       seed: () => CarritoState(
         alumnos: [alumnoDosCiclos()],
         pagosSeleccionados: const {
-          cicloA: {1: [1]},
-          cicloB: {1: [10]},
+          cicloA: {
+            1: [1],
+          },
+          cicloB: {
+            1: [10],
+          },
         },
       ),
-      act: (bloc) => bloc.add(const CarritoQuitarPagoEvent(
-        alumnoId: 1,
-        pagoId: 1,
-      )),
+      act: (bloc) =>
+          bloc.add(const CarritoQuitarPagoEvent(alumnoId: 1, pagoId: 1)),
       expect: () => [
         isA<CarritoState>().having(
           (s) => s.pagosSeleccionados,
           'pagosSeleccionados',
           {
-            cicloB: {1: [10]},
+            cicloB: {
+              1: [10],
+            },
           },
         ),
       ],

@@ -7,6 +7,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
+import 'package:arjipagos/src/data/api/RespuestaSinDatos.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/models/FacturaResponse.dart';
@@ -30,7 +31,8 @@ class FacturaService {
   Future<Resource<FacturaResponse>> getFacturas() async {
     try {
       // Obtener sesión activa
-      final AuthResponse? authResponse = await authUseCases.getUserSession.run();
+      final AuthResponse? authResponse = await authUseCases.getUserSession
+          .run();
 
       if (authResponse == null) {
         AppLogger.warning(
@@ -91,6 +93,13 @@ class FacturaService {
           tag: 'Factura',
         );
         return Success(facturaResponse);
+      } else if (esRespuestaSinDatos(response.statusCode, data)) {
+        // Sin familia o sin facturas: estado vacío, no error.
+        AppLogger.info(
+          'El usuario no tiene facturas que mostrar',
+          tag: 'Factura',
+        );
+        return Success(FacturaResponse.vacio());
       } else {
         final errorMsg = ListToString(data['msg']);
         AppLogger.warning(

@@ -103,11 +103,7 @@ void main() {
 
       test('debe convertir total entero a double', () {
         // Arrange: total como entero en el JSON
-        final json = {
-          'id': 3,
-          'total': 3000,
-          'estadoPago': 'Pendiente',
-        };
+        final json = {'id': 3, 'total': 3000, 'estadoPago': 'Pendiente'};
 
         // Act
         final estado = EstadoDeCuenta.fromJson(json);
@@ -119,9 +115,7 @@ void main() {
 
       test('debe usar pendiente cuando estadoPago no es reconocido', () {
         // Arrange: valor de estadoPago fuera del enum
-        final json = {
-          'estadoPago': 'ValorDesconocido',
-        };
+        final json = {'estadoPago': 'ValorDesconocido'};
 
         // Act
         final estado = EstadoDeCuenta.fromJson(json);
@@ -199,41 +193,47 @@ void main() {
     // toJson
     // -------------------------------------------------------------------------
     group('toJson', () {
-      test('debe serializar un EstadoDeCuenta pendiente a JSON correctamente', () {
-        // Arrange
-        final estado = TestEstadoDeCuenta.pendiente;
+      test(
+        'debe serializar un EstadoDeCuenta pendiente a JSON correctamente',
+        () {
+          // Arrange
+          final estado = TestEstadoDeCuenta.pendiente;
 
-        // Act
-        final json = estado.toJson();
+          // Act
+          final json = estado.toJson();
 
-        // Assert
-        expect(json['id'], equals(1));
-        expect(json['descripcion_corta'], equals('Colegiatura Enero 2024'));
-        expect(json['total'], equals(5000.0));
-        expect(json['total_formatted'], equals('\$5,000.00'));
-        expect(json['fecha_vencimiento'], equals('2024-01-31'));
-        expect(json['estadoPago'], equals('Pendiente'));
-        expect(json['num_pago'], equals(1));
-        expect(json['num_pago_activo'], isTrue);
-        expect(json['acepta_pagos_diversos'], isTrue);
-        expect(json['esta_disponible_en_internet'], isTrue);
-        expect(json['esta_disponible_en_la_app_movil'], isTrue);
-        expect(json['factura_pdf'], equals(''));
-        expect(json['factura_xml'], equals(''));
-      });
+          // Assert
+          expect(json['id'], equals(1));
+          expect(json['descripcion_corta'], equals('Colegiatura Enero 2024'));
+          expect(json['total'], equals(5000.0));
+          expect(json['total_formatted'], equals('\$5,000.00'));
+          expect(json['fecha_vencimiento'], equals('2024-01-31'));
+          expect(json['estadoPago'], equals('Pendiente'));
+          expect(json['num_pago'], equals(1));
+          expect(json['num_pago_activo'], isTrue);
+          expect(json['acepta_pagos_diversos'], isTrue);
+          expect(json['esta_disponible_en_internet'], isTrue);
+          expect(json['esta_disponible_en_la_app_movil'], isTrue);
+          expect(json['factura_pdf'], equals(''));
+          expect(json['factura_xml'], equals(''));
+        },
+      );
 
-      test('debe serializar un EstadoDeCuenta vencido a JSON correctamente', () {
-        // Arrange
-        final estado = TestEstadoDeCuenta.vencido;
+      test(
+        'debe serializar un EstadoDeCuenta vencido a JSON correctamente',
+        () {
+          // Arrange
+          final estado = TestEstadoDeCuenta.vencido;
 
-        // Act
-        final json = estado.toJson();
+          // Act
+          final json = estado.toJson();
 
-        // Assert
-        expect(json['id'], equals(2));
-        expect(json['estadoPago'], equals('Vencido'));
-        expect(json['num_pago_activo'], isFalse);
-      });
+          // Assert
+          expect(json['id'], equals(2));
+          expect(json['estadoPago'], equals('Vencido'));
+          expect(json['num_pago_activo'], isFalse);
+        },
+      );
 
       test('fromJson y toJson deben ser operaciones inversas (pendiente)', () {
         // Arrange
@@ -295,142 +295,137 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
-    // descripcionAbreviada
+    // descripcionCompleta
     // -------------------------------------------------------------------------
-    group('descripcionAbreviada', () {
+    group('descripcionCompleta', () {
       /// Crea un [EstadoDeCuenta] mínimo con la descripción dada para probar
-      /// el getter [descripcionAbreviada] de forma aislada.
+      /// el getter [EstadoDeCuenta.descripcionCompleta] de forma aislada.
       EstadoDeCuenta conDescripcion(String descripcion) => EstadoDeCuenta(
-            id: 0,
-            cicloId: 0,
-            nivelId: 0,
-            emisorFiscalId: 1,
-            descripcionCorta: descripcion,
-            total: 0,
-            totalFormatted: '',
-            fechaVencimiento: '',
-            estadoPago: EstadoPago.pendiente,
-            numPago: 0,
-            numPagoActivo: false,
-            aceptaPagosDiversos: false,
-            estaDisponibleEnInternet: false,
-            estaDisponibleEnLaAppMovil: true,
-            facturaPdf: '',
-            facturaXml: '',
-          );
+        id: 0,
+        cicloId: 0,
+        nivelId: 0,
+        emisorFiscalId: 1,
+        descripcionCorta: descripcion,
+        total: 0,
+        totalFormatted: '',
+        fechaVencimiento: '',
+        estadoPago: EstadoPago.pendiente,
+        numPago: 0,
+        numPagoActivo: false,
+        aceptaPagosDiversos: false,
+        estaDisponibleEnInternet: false,
+        estaDisponibleEnLaAppMovil: true,
+        facturaPdf: '',
+        facturaXml: '',
+      );
 
       test(
-          'caso real — colapsa los espacios dobles y sobrantes del backend',
-          () {
-        // Tal cual llega en la respuesta de pagos realizados: dos espacios
-        // antes del ciclo y dos al final. Sin limpiarlos, el texto se come
-        // ancho de más y se parte en dos líneas en la lista.
-        final estado = conDescripcion('REINSCRIPCION SECUNDARIA  26 / 27  ');
+        'caso real — colapsa los espacios dobles y sobrantes del backend',
+        () {
+          // Tal cual llega en la respuesta de pagos realizados: dos espacios
+          // antes del ciclo y dos al final. Colapsarlos no quita información y
+          // evita que el texto se coma ancho de más en la lista.
+          final estado = conDescripcion('REINSCRIPCION SECUNDARIA  26 / 27  ');
 
-        expect(estado.descripcionAbreviada, equals('REINS SEC 26 / 27'));
-      });
+          expect(
+            estado.descripcionCompleta,
+            equals('REINSCRIPCION SECUNDARIA 26 / 27'),
+          );
+        },
+      );
 
-      test('Colegiatura se abrevia a COL', () {
-        // Arrange
+      // Estos cinco casos son los que antes se abreviaban. Se dejan uno por uno
+      // —en lugar de un solo test genérico— porque son exactamente los que hay
+      // que ver enteros: hasta el 2026-08-28 el usuario leía 'COL SEC ENERO' en
+      // vez de saber que estaba pagando la colegiatura de secundaria.
+
+      test('Colegiatura ya NO se abrevia a COL', () {
         final estado = conDescripcion('Colegiatura Enero 2024');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('COL ENERO 2024'));
+        expect(estado.descripcionCompleta, equals('COLEGIATURA ENERO 2024'));
       });
 
-      test('Colegiatura + Primaria se abrevian a COL PRIM', () {
-        // Arrange
-        final estado = conDescripcion('Colegiatura Primaria Enero');
-
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('COL PRIM ENERO'));
-      });
-
-      test('Colegiatura + Secundaria se abrevian a COL SEC', () {
-        // Arrange
+      test('Colegiatura + Secundaria salen enteras', () {
         final estado = conDescripcion('Colegiatura Secundaria Enero');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('COL SEC ENERO'));
+        expect(
+          estado.descripcionCompleta,
+          equals('COLEGIATURA SECUNDARIA ENERO'),
+        );
       });
 
-      test('Colegiatura + Preparatoria se abrevian a COL PREPA', () {
-        // Arrange
-        final estado = conDescripcion('Colegiatura Preparatoria Enero');
-
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('COL PREPA ENERO'));
-      });
-
-      test('Inscripcion + Preescolar se abrevian a INS KIND', () {
-        // Arrange
+      test('Inscripcion + Preescolar salen enteras', () {
         final estado = conDescripcion('Inscripcion Preescolar');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('INS KIND'));
+        expect(estado.descripcionCompleta, equals('INSCRIPCION PREESCOLAR'));
       });
 
-      test('Reinscripcion + Primaria se abrevian a REINS PRIM', () {
-        // Arrange
-        final estado = conDescripcion('Reinscripcion Primaria');
-
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('REINS PRIM'));
-      });
-
-      test('1ro de Ingles reemplaza frase completa antes de separar palabras', () {
-        // Arrange: la frase '1RO DE INGLES' se sustituye primero como bloque,
-        // luego 'PRIMARIA' se abrevia como palabra individual.
+      test('1ro de Ingles ya NO se sustituye por 1º ING', () {
         final estado = conDescripcion('1ro de Ingles Primaria');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('1º ING PRIM'));
+        expect(estado.descripcionCompleta, equals('1RO DE INGLES PRIMARIA'));
       });
 
-      test('Seguro Escolar reemplaza frase completa a SEG ESC', () {
-        // Arrange
+      test('Seguro Escolar ya NO se sustituye por SEG ESC', () {
         final estado = conDescripcion('Seguro Escolar');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('SEG ESC'));
+        expect(estado.descripcionCompleta, equals('SEGURO ESCOLAR'));
       });
 
-      test('Cuota Familiar no se abrevia porque el mapa de palabras usa clave compuesta', () {
-        // Arrange: 'CUOTA FAMILIAR' está en el mapa de frases como clave de
-        // dos palabras, pero el algoritmo divide por espacio antes de buscar en
-        // el mapa de palabras individuales, por lo que ninguna de las dos
-        // palabras ('CUOTA', 'FAMILIAR') tiene entrada propia y quedan sin cambio.
+      test('Cuota Familiar sale entera', () {
         final estado = conDescripcion('Cuota Familiar');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('CUOTA FAMILIAR'));
+        expect(estado.descripcionCompleta, equals('CUOTA FAMILIAR'));
       });
 
-      test('Descripcion sin abreviaciones queda igual en mayúsculas', () {
-        // Arrange
-        final estado = conDescripcion('Actividad Deportiva');
+      test('Guardián: no queda ninguna abreviación en el resultado', () {
+        // Si alguien vuelve a meter un mapa de sustituciones, este test cae.
+        const abreviaciones = [
+          'COL ',
+          'SEC ',
+          'PRIM ',
+          'PREPA ',
+          'KIND',
+          'INS ',
+          'REINS ',
+          '1º ING',
+          'SEG ESC',
+        ];
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals('ACTIVIDAD DEPORTIVA'));
+        final estado = conDescripcion(
+          'Colegiatura Secundaria Primaria Preparatoria Preescolar '
+          'Inscripcion Reinscripcion 1ro de Ingles Seguro Escolar',
+        );
+
+        for (final abreviacion in abreviaciones) {
+          expect(
+            estado.descripcionCompleta,
+            isNot(contains(abreviacion)),
+            reason: 'apareció la abreviación "$abreviacion"',
+          );
+        }
       });
 
       test('Descripcion vacía retorna cadena vacía', () {
-        // Arrange
         final estado = conDescripcion('');
 
-        // Act & Assert
-        expect(estado.descripcionAbreviada, equals(''));
+        expect(estado.descripcionCompleta, equals(''));
       });
 
-      test('La abreviación es insensible a mayúsculas/minúsculas de origen', () {
-        // Arrange: la descripción en minúsculas debe producir el mismo resultado
-        // que con mayúsculas, ya que el getter convierte todo a uppercase primero.
+      test('Es insensible a mayúsculas/minúsculas de origen', () {
+        // El backend no es constante con las mayúsculas; el getter las unifica
+        // para que el renglón no quede a dos estilos.
         final estadoMinus = conDescripcion('colegiatura primaria enero');
         final estadoMayus = conDescripcion('COLEGIATURA PRIMARIA ENERO');
 
-        // Act & Assert
-        expect(estadoMinus.descripcionAbreviada, equals(estadoMayus.descripcionAbreviada));
-        expect(estadoMinus.descripcionAbreviada, equals('COL PRIM ENERO'));
+        expect(
+          estadoMinus.descripcionCompleta,
+          equals(estadoMayus.descripcionCompleta),
+        );
+        expect(
+          estadoMinus.descripcionCompleta,
+          equals('COLEGIATURA PRIMARIA ENERO'),
+        );
       });
     });
 
@@ -438,14 +433,17 @@ void main() {
     // EnumValues
     // -------------------------------------------------------------------------
     group('EnumValues', () {
-      test('el mapa map contiene las entradas correctas para pendiente y vencido', () {
-        // Arrange & Act
-        final mapaPago = estadoPagoValues.map;
+      test(
+        'el mapa map contiene las entradas correctas para pendiente y vencido',
+        () {
+          // Arrange & Act
+          final mapaPago = estadoPagoValues.map;
 
-        // Assert
-        expect(mapaPago['Pendiente'], equals(EstadoPago.pendiente));
-        expect(mapaPago['Vencido'], equals(EstadoPago.vencido));
-      });
+          // Assert
+          expect(mapaPago['Pendiente'], equals(EstadoPago.pendiente));
+          expect(mapaPago['Vencido'], equals(EstadoPago.vencido));
+        },
+      );
 
       test('el mapa reverse permite obtener la cadena desde el enum', () {
         // Arrange & Act
@@ -469,7 +467,10 @@ void main() {
 
       test('EnumValues creado manualmente funciona correctamente', () {
         // Arrange
-        final valores = EnumValues({'A': EstadoPago.pendiente, 'B': EstadoPago.vencido});
+        final valores = EnumValues({
+          'A': EstadoPago.pendiente,
+          'B': EstadoPago.vencido,
+        });
 
         // Act
         final reverso = valores.reverse;

@@ -24,19 +24,15 @@ class FacturasPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          BlocBuilder<FacturaBloc, FacturaState>(
-            builder: (context, state) {
-              // Botón de refresco: oculto durante la carga
-              if (state.isLoading) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: AppStrings.homeRefresh,
-                onPressed: () {
-                  context.read<FacturaBloc>().add(const FacturaRefreshEvent());
-                },
-              );
+          // Siempre visible, igual que en Estados de Cuenta, Pagos Realizados y
+          // Home: recargar es la salida que le queda al usuario cuando la
+          // pantalla no muestra lo que espera, así que no se esconde en ningún
+          // estado.
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: AppStrings.homeRefresh,
+            onPressed: () {
+              context.read<FacturaBloc>().add(const FacturaRefreshEvent());
             },
           ),
         ],
@@ -60,7 +56,10 @@ class FacturasPage extends StatelessWidget {
 
           // Estado vacío
           if (state.facturas.isEmpty) {
-            return const FacturaEmptyWidget();
+            return FacturaEmptyWidget(
+              onRetry: () =>
+                  context.read<FacturaBloc>().add(const FacturaRefreshEvent()),
+            );
           }
 
           // Lista de facturas con pull-to-refresh
@@ -68,10 +67,9 @@ class FacturasPage extends StatelessWidget {
             onRefresh: () async {
               context.read<FacturaBloc>().add(const FacturaRefreshEvent());
               // Esperar a que termine la carga
-              await context
-                  .read<FacturaBloc>()
-                  .stream
-                  .firstWhere((s) => !s.isLoading);
+              await context.read<FacturaBloc>().stream.firstWhere(
+                (s) => !s.isLoading,
+              );
             },
             child: ListView(
               // Edge-to-edge (Android 15+): sumamos el alto de la barra de

@@ -14,9 +14,13 @@ class EdoCtaRepositoryImpl implements EdoCtaRepository {
   EdoCtaRepositoryImpl(this.edoCtaService);
 
   @override
-  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta() async {
+  Future<Resource<EstadosDeCuentaResponse>> getEstadosDeCuenta({
+    int? emisorFiscalId,
+  }) async {
     try {
-      final result = await edoCtaService.getEstadosDeCuenta();
+      final result = await edoCtaService.getEstadosDeCuenta(
+        emisorFiscalId: emisorFiscalId,
+      );
       return result;
     } catch (e) {
       AppLogger.error('Error al obtener estados de cuenta: $e', tag: 'EdoCta');

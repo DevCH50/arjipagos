@@ -11,6 +11,115 @@
 
 _(ninguno)_
 
+### Sesión 2026-08-28 (Linux) — «No hay…» en vez de «Error al cargar», concepto completo y emisor en las peticiones
+
+Versión **1.0.29+38**. La 1.0.28 ya está publicada en las dos tiendas (comprobado
+contra `GET /api/v1/app/version?plataforma=android|ios`: las dos devuelven
+`version_minima` y `version_recomendada` en `1.0.28`).
+
+Tres cambios, todos verificados en el Oppo con la cuenta `CATutorP641`.
+
+#### 1 · «No hay…» en vez de «Error al cargar»
+
+Cuando el usuario no tiene familia —ni alumnos, ni estados de cuenta, ni facturas—
+el backend responde **`404`** con `{"success":false,"message":"El usuario no tiene
+una familia asignada."}`. Los services metían eso en su rama de error, y la pantalla
+sacaba **«Error al cargar»** en rojo con un `AlertDialog` encima, cuando lo cierto es
+que no había nada que cargar. Los estados vacíos ya existían y estaban bien
+redactados; nunca se llegaba a ellos, porque el cuerpo de cada pantalla comprueba el
+error **antes** que la lista vacía.
+
+Arreglo en la capa de datos, sin tocar BLoCs ni pantallas: `esRespuestaSinDatos()`
+(nuevo, en `lib/src/data/api/RespuestaSinDatos.dart`) y constructores `.vacio()` en
+los tres modelos de respuesta. Los cuatro services afectados devuelven **`Success`
+vacío** en ese caso.
+
+**El detalle que sostiene todo:** se exige `404` **y** `success: false` a la vez. El
+`404` de Laravel cuando una ruta no existe llega **sin** esa clave y debe seguir
+siendo error. Tragarse cualquier `404` convertiría un fallo de despliegue —una ruta
+renombrada— en una pantalla vacía y silenciosa, que es peor que el problema original.
+Hay tests por los dos lados, service a service.
+
+**Recargar siempre disponible**, por petición expresa: botón **Reintentar** en los
+estados vacíos que no lo tenían y **refresh en el App Bar** de las cuatro pantallas.
+Estados de Cuenta no tenía refresh arriba; Facturas lo escondía mientras cargaba y
+ahora está siempre.
+
+#### 2 · El concepto del pago se lee entero
+
+`descripcionAbreviada` sustituía palabras: 'COLEGIATURA' → 'COL', 'SECUNDARIA' →
+'SEC', 'CUOTA FAMILIAR' → 'CF'… La intención era que cupiera en una línea; el
+resultado era que el usuario leía un código en vez de saber qué está pagando. Ahora
+es **`descripcionCompleta`**: el texto tal cual, solo con los espacios colapsados
+—el backend manda `'REINSCRIPCION SECUNDARIA  26 / 27  '`— y en mayúsculas, que no
+recorta nada y mantiene homogéneo el renglón.
+
+Eso rompió la congruencia tipográfica: `ConceptoEscalonado` medía con `TextPainter`
+y bajaba por una rampa (16 → 14 → 12) para caber en una línea, así que con el texto
+entero casi todos los renglones bajaban de escalón y la lista quedaba despareja,
+además de descuadrar con el importe, que sí conservaba su tamaño.
+
+**Decisión de Carlos:** tipografía uniforme y, si hace falta, dos líneas. El widget
+pasó a ser **`ConceptoPago`** (renombrado con `git mv`): tamaño fijo `bodyLarge`,
+sin `maxLines` y sin `overflow`, envolviendo las líneas que haga falta. Entre una
+lista de altura pareja con letras de tamaños distintos y una de tipografía uniforme
+con renglones de altura distinta, se eligió la segunda: el tamaño de la letra es lo
+que el ojo compara entre renglones, la altura no.
+
+De paso, `PagoRealizadoItem` dejó de usar un `Text` con `overflow: ellipsis` —que sí
+recortaba de verdad— y usa el mismo widget que las otras dos pantallas.
+
+#### 3 · `emisorfiscal_id` en las dos peticiones
+
+- **A Adquira:** `PagoRequest` ya tenía el campo, pero su `toMap()` lo omitía. Ahora
+  viaja como `emisorfiscal_id`. **Mientras el contrato 2 use los datos prestados del
+  1, los dos mandan el mismo `idexpress` ('928'), así que este campo es lo único que
+  los distingue.**
+- **A `/api/v1/alumno/estado-de-cuenta-sin-pagar/`:** propagado por
+  `EdoCtaService` → `EdoCtaRepository` → `GetEstadosDeCuentaUseCase`. Lo pasan
+  `EdoCtaListBloc` (1 o 2 según su pantalla) y `CarritoBloc` (el de su carrito).
+
+**El parámetro es opcional, y omitirlo significa «todos».** `MenuPrincipalBloc` usa
+ese mismo endpoint para la familia y los alumnos del menú, que no son de ningún
+emisor; con un filtro allí, **los alumnos que solo tuvieran pagos del emisor 2
+desaparecerían del menú** sin que nada fallara. Por eso no lleva valor por defecto,
+y hay un test que comprueba que sin emisor la clave no viaja.
+
+#### Verificado en el Oppo (Android 16, build debug, backend de producción)
+
+La prueba del emisor salió mejor de lo esperado: **el mismo usuario y el mismo
+endpoint devuelven cosas distintas según el emisor**, lo que demuestra a la vez que
+el campo llega y que el backend ya filtra en servidor.
+
+| Pantalla | Respuesta para el alumno PABLO |
+| --- | --- |
+| Pagos Pendientes (`emisorfiscal_id: 1`) | `"estado_de_cuenta":[{"id":26416, …}]` |
+| Otros pagos (`emisorfiscal_id: 2`) | `"estado_de_cuenta":[]` |
+
+También comprobado por pantalla: el concepto sale completo («COLEGIATURA PRIMARIA
+26 / 27 SEP 26», antes «COL PRIM 26 / 27 SEP 26») en dos líneas y con el importe del
+mismo tamaño; los estados vacíos con su «No hay…», Reintentar y refresh; y el tema
+oscuro. **Cero `[ERROR]` y cero `[WARNING]`** en todo el recorrido.
+
+**Lo que NO se pudo verificar aquí:** el `emisorfiscal_id` hacia Adquira exigiría un
+cobro real, y el emisor 2 en un carrito exigiría una familia que tenga algún pago de
+ese emisor —la de pruebas no tiene—. Ambos quedan cubiertos solo por tests.
+
+#### Tests
+
+**960 en verde**, incluida la etiqueta `red` (handshake TLS real contra producción).
+`flutter analyze` sin incidencias. Nuevos:
+
+| Archivo | Qué fija |
+| --- | --- |
+| `test/unit/respuesta_sin_datos_test.dart` | El 404 con `success:false` da vacío; el de ruta inexistente sigue siendo error |
+| `test/unit/models/pago_request_test.dart` | El mapa de Adquira lleva 1 y 2 |
+| `test/unit/services/edo_cta_service_emisor_test.dart` | El body lleva 1, lleva 2, y sin emisor **no lleva la clave** |
+| `test/unit/emisor_por_pantalla_test.dart` | Guardián sobre `main.dart`: si alguien toca el `emisorFiscalId: 2` de la ruta, cae |
+
+`edo_cta_push_emisor_test.dart` se reforzó: ya no solo comprueba que refresca la
+lista correcta, sino que **pide su propio emisor** al servidor.
+
 ### Sesión 2026-08-28 (Linux) — El globo del icono de iOS lleva el conteo real
 
 Última pieza que tocaba al lado Flutter de la tanda de notificaciones. El badge ya

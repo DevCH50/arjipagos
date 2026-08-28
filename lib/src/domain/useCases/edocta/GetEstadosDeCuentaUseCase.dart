@@ -14,7 +14,7 @@ class GetEstadosDeCuentaUseCase {
   /// Ejecuta el caso de uso.
   ///
   /// Retorna [Success] con [EstadosDeCuentaResponse] o [Error].
-  Future<Resource<EstadosDeCuentaResponse>> run() async {
-    return await repository.getEstadosDeCuenta();
+  Future<Resource<EstadosDeCuentaResponse>> run({int? emisorFiscalId}) async {
+    return await repository.getEstadosDeCuenta(emisorFiscalId: emisorFiscalId);
   }
 }

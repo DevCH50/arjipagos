@@ -34,7 +34,7 @@ class EdoCtaBody extends StatelessWidget {
         // esta pantalla, y descarta a los alumnos que no tienen ninguno.
         final alumnos = state.alumnosDelEmisor;
         if (alumnos == null || alumnos.isEmpty) {
-          return const EdoCtaEmptyWidget();
+          return EdoCtaEmptyWidget(onRetry: () => _recargarDatos(context));
         }
 
         return RefreshIndicator(

@@ -44,7 +44,11 @@ void main() {
 
     when(() => mockSharedPref.readMap(any())).thenAnswer((_) async => null);
     when(() => mockSharedPref.save(any(), any())).thenAnswer((_) async {});
-    when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
+    when(
+      () => mockGetEstadosDeCuenta.run(
+        emisorFiscalId: any(named: 'emisorFiscalId'),
+      ),
+    ).thenAnswer(
       (_) async => Success(
         EstadosDeCuentaResponse(
           alumnos: [alumnoConPagosPorCiclo(7, const {})],
@@ -86,7 +90,11 @@ void main() {
       await asentar();
 
       // Ni una sola petición: el emisor 1 ni se entera del cobro del 2.
-      verifyNever(() => mockGetEstadosDeCuenta.run());
+      verifyNever(
+        () => mockGetEstadosDeCuenta.run(
+          emisorFiscalId: any(named: 'emisorFiscalId'),
+        ),
+      );
     });
 
     test('un push del emisor 2 SÍ refresca la lista del emisor 2', () async {
@@ -100,7 +108,10 @@ void main() {
       controlador.add(_pushDePago(emisorFiscalId: '2'));
       await asentar();
 
-      verify(() => mockGetEstadosDeCuenta.run()).called(1);
+      // No basta con que haya refrescado: tiene que haber pedido **su** emisor.
+      // Consultar con el 1 traería los pagos de la otra pantalla.
+      verify(() => mockGetEstadosDeCuenta.run(emisorFiscalId: 2)).called(1);
+      verifyNever(() => mockGetEstadosDeCuenta.run(emisorFiscalId: 1));
     });
 
     test('los dos emisores a la vez: solo reacciona el cobrado', () async {
@@ -109,7 +120,9 @@ void main() {
       addTearDown(controlador.close);
 
       final otroMock = MockGetEstadosDeCuentaUseCase();
-      when(() => otroMock.run()).thenAnswer(
+      when(
+        () => otroMock.run(emisorFiscalId: any(named: 'emisorFiscalId')),
+      ).thenAnswer(
         (_) async => Success(
           EstadosDeCuentaResponse(
             alumnos: const [],
@@ -139,8 +152,13 @@ void main() {
       controlador.add(_pushDePago(emisorFiscalId: '1'));
       await asentar();
 
-      verify(() => otroMock.run()).called(1);
-      verifyNever(() => mockGetEstadosDeCuenta.run());
+      // El emisor 1 refresca, y pidiendo el suyo.
+      verify(() => otroMock.run(emisorFiscalId: 1)).called(1);
+      verifyNever(
+        () => mockGetEstadosDeCuenta.run(
+          emisorFiscalId: any(named: 'emisorFiscalId'),
+        ),
+      );
     });
   });
 
@@ -158,7 +176,11 @@ void main() {
       controlador.add(_pushDePago());
       await asentar();
 
-      verify(() => mockGetEstadosDeCuenta.run()).called(1);
+      verify(
+        () => mockGetEstadosDeCuenta.run(
+          emisorFiscalId: any(named: 'emisorFiscalId'),
+        ),
+      ).called(1);
     });
 
     test('un `emisorfiscal_id` ilegible cae en el predeterminado', () async {
@@ -172,7 +194,11 @@ void main() {
       controlador.add(_pushDePago(emisorFiscalId: 'no-es-un-numero'));
       await asentar();
 
-      verify(() => mockGetEstadosDeCuenta.run()).called(1);
+      verify(
+        () => mockGetEstadosDeCuenta.run(
+          emisorFiscalId: any(named: 'emisorFiscalId'),
+        ),
+      ).called(1);
     });
 
     test('un push que no es de pago se ignora', () async {
@@ -200,7 +226,11 @@ void main() {
       );
       await asentar();
 
-      verifyNever(() => mockGetEstadosDeCuenta.run());
+      verifyNever(
+        () => mockGetEstadosDeCuenta.run(
+          emisorFiscalId: any(named: 'emisorFiscalId'),
+        ),
+      );
     });
 
     test('al refrescar por push se vacía la selección de ese emisor', () async {

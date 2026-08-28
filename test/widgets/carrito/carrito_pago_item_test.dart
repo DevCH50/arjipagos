@@ -39,9 +39,7 @@ void main() {
         theme: ThemeData(brightness: brillo, useMaterial3: true),
         home: Scaffold(
           body: MediaQuery(
-            data: MediaQueryData(
-              textScaler: TextScaler.linear(escalaTexto),
-            ),
+            data: MediaQueryData(textScaler: TextScaler.linear(escalaTexto)),
             child: CarritoPagoItem(
               alumnoId: 1,
               pago: pago,
@@ -54,18 +52,20 @@ void main() {
   }
 
   group('CarritoPagoItem - renderizado', () {
-    testWidgets('muestra descripción, importe y botón de quitar',
-        (tester) async {
+    testWidgets('muestra descripción, importe y botón de quitar', (
+      tester,
+    ) async {
       final pago = TestEstadoDeCuenta.pendiente;
       await montar(tester, ancho: 375, pago: pago);
 
-      expect(find.text(pago.descripcionAbreviada), findsOneWidget);
+      expect(find.text(pago.descripcionCompleta), findsOneWidget);
       expect(find.text(pago.totalFormatted), findsOneWidget);
       expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
     });
 
-    testWidgets('el botón queda deshabilitado si no se puede eliminar',
-        (tester) async {
+    testWidgets('el botón queda deshabilitado si no se puede eliminar', (
+      tester,
+    ) async {
       await montar(
         tester,
         ancho: 375,
@@ -110,8 +110,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('no desborda con el texto ampliado por accesibilidad',
-        (tester) async {
+    testWidgets('no desborda con el texto ampliado por accesibilidad', (
+      tester,
+    ) async {
       await montar(
         tester,
         ancho: 320,
@@ -132,12 +133,15 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text(TestEstadoDeCuenta.pendiente.totalFormatted),
-          findsOneWidget);
+      expect(
+        find.text(TestEstadoDeCuenta.pendiente.totalFormatted),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('el ícono de quitar usa el color de error del tema oscuro',
-        (tester) async {
+    testWidgets('el ícono de quitar usa el color de error del tema oscuro', (
+      tester,
+    ) async {
       await montar(
         tester,
         ancho: 375,
@@ -154,15 +158,15 @@ void main() {
   });
 
   group('CarritoPagoItem - lectura y congruencia', () {
-    testWidgets('el importe mide igual que el concepto y va en negrita',
-        (tester) async {
+    testWidgets('el importe mide igual que el concepto y va en negrita', (
+      tester,
+    ) async {
       // Misma regla que en Pagos Pendientes: el importe destaca por peso y no
       // por ser un escalón más grande que el concepto.
       final pago = TestEstadoDeCuenta.pendiente;
       await montar(tester, ancho: 360, pago: pago);
 
-      final concepto =
-          tester.widget<Text>(find.text(pago.descripcionAbreviada));
+      final concepto = tester.widget<Text>(find.text(pago.descripcionCompleta));
       final monto = tester.widget<Text>(find.text(pago.totalFormatted));
 
       expect(monto.style?.fontSize, concepto.style?.fontSize);

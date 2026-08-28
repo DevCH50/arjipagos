@@ -424,6 +424,19 @@ que tocar pantallas, widgets ni BLoCs: el registro instancia uno por cada emisor
 
 5. **Pagos Realizados no se toca.** No tiene `emisorfiscal_id` ni le hace falta.
 
+6. **`emisorfiscal_id` se manda en las dos peticiones**, desde el 2026-08-28: en el `toMap()` de
+   `PagoRequest` que va a Adquira, y en el body de `POST /alumno/estado-de-cuenta-sin-pagar/`.
+   Comprobado en dispositivo que el backend **ya filtra en servidor** por ese campo: el mismo
+   usuario y el mismo endpoint devuelven pagos con el 1 y una lista vacía con el 2.
+
+   **En el endpoint el parámetro es opcional, y omitirlo significa «todos». No ponerle valor por
+   defecto.** `MenuPrincipalBloc` usa ese mismo endpoint para la familia y los alumnos del menú,
+   que no son de ningún emisor; con un filtro allí, los alumnos que solo tuvieran pagos del
+   emisor 2 desaparecerían del menú sin que nada fallara. Hay test guardián.
+
+   Mientras el contrato 2 siga con datos prestados, los dos emisores mandan el mismo `idexpress`
+   ('928'), así que **`emisorfiscal_id` es lo único que los distingue** del lado del cobro.
+
 ### ⚠️ El contrato 2 lleva datos prestados del 1
 
 `ConfiguracionAdquira.ef2` usa hoy el `endpoint` y el `idExpress` del emisor 1, puestos a
@@ -441,6 +454,59 @@ entrega la cuenta del contrato 2. Es una decisión suya, con conocimiento de que
 No es permanente: en cuanto lleguen los datos reales, sustituir `endpoint` e `idExpress` en
 `ConfiguracionAdquira.ef2`, revisar el resto de parámetros, quitar `esProvisional` y borrar el
 grupo de tests "contrato 2 (PROVISIONAL)", que existe solo para no olvidarlo.
+
+## «No hay…» no es «Error al cargar»
+
+**Un `404` con `success: false` significa «este usuario no tiene nada», y debe pintar el estado
+vacío de la pantalla, nunca el de error.** Lo devuelve el backend cuando no hay familia asignada
+—ni alumnos, ni estados de cuenta, ni facturas—:
+
+```json
+{"success": false, "message": "El usuario no tiene una familia asignada."}
+```
+
+Hasta el 2026-08-28 los services metían eso en su rama de error y la pantalla sacaba **«Error al
+cargar»** en rojo con un `AlertDialog` encima. Los estados vacíos ya existían; no se llegaba a
+ellos porque el cuerpo de cada pantalla comprueba el error **antes** que la lista vacía.
+
+Lo resuelve `esRespuestaSinDatos()` (`lib/src/data/api/RespuestaSinDatos.dart`), que usan
+`EdoCtaService`, `EdoCtaPagadosService`, `FacturaService` y `HomeService` para devolver un
+`Success` vacío —hay un constructor `.vacio()` en cada modelo de respuesta—.
+
+**Se exigen las dos condiciones, `404` Y `success: false`.** El `404` de Laravel cuando la ruta
+no existe llega **sin** esa clave y tiene que seguir siendo un error de verdad. Tragarse
+cualquier `404` convertiría un fallo de despliegue —una ruta renombrada, un prefijo mal puesto—
+en una pantalla vacía y silenciosa, que es peor que el problema original. Hay tests por los dos
+lados en `test/unit/respuesta_sin_datos_test.dart`.
+
+**El usuario siempre debe poder recargar.** Las cuatro pantallas llevan **refresh en el App Bar**
+—sin condicionarlo a ningún estado, tampoco a `isLoading`— y botón **Reintentar** tanto en el
+estado de error como en el vacío. Que ahora no haya nada no significa que no vaya a haberlo en
+cuanto el colegio dé de alta un pago.
+
+## El concepto del pago se lee entero
+
+**No abreviar y no recortar.** El concepto es lo que le dice al usuario qué está pagando.
+
+`EstadoDeCuenta.descripcionCompleta` devuelve el texto tal como llega, solo con los espacios
+colapsados —el backend manda `'REINSCRIPCION SECUNDARIA  26 / 27  '`— y en mayúsculas, porque no
+es constante con ellas. **No volver a meter un mapa de sustituciones**: hasta el 2026-08-28
+'COLEGIATURA' salía como 'COL' y 'SECUNDARIA' como 'SEC', y el usuario leía un código. Hay un
+test guardián que falla si reaparece cualquiera de aquellas abreviaciones.
+
+Lo pinta **`ConceptoPago`** (`lib/src/presentation/widgets/ConceptoPago.dart`), y las tres
+pantallas que muestran conceptos usan ese mismo widget: Estados de Cuenta, Carrito y Pagos
+Realizados. **Tamaño fijo `bodyLarge`, sin `maxLines` y sin `overflow`**: si no cabe, envuelve.
+
+**No devolverlo a la rampa que encogía.** Antes se llamaba `ConceptoEscalonado` y medía con
+`TextPainter` para bajar de escalón (16 → 14 → 12) hasta caber en una línea. Con los conceptos
+enteros casi todos bajaban, la lista quedaba con un renglón a 16 y el siguiente a 14, y además
+descuadraba con el importe, que conservaba su tamaño. **Decisión de Carlos el 2026-08-28:**
+entre altura pareja con letras dispares y tipografía uniforme con alturas dispares, se elige la
+segunda — el tamaño de la letra es lo que el ojo compara entre renglones, la altura no.
+
+El importe va del **mismo tamaño que el concepto y en negrita**: destaca por peso y color, no por
+ser más grande. Hay tests que fijan las dos cosas.
 
 ## Volver al login: NUNCA montar un segundo `MyApp`
 

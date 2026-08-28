@@ -42,53 +42,49 @@ EstadoDeCuenta _pago({
   required int id,
   required int cicloId,
   int emisorFiscalId = 1,
-}) =>
-    EstadoDeCuenta(
-      id: id,
-      cicloId: cicloId,
-      nivelId: 1,
-      emisorFiscalId: emisorFiscalId,
-      descripcionCorta: 'Pago $id',
-      total: 1000.0,
-      totalFormatted: '\$1,000.00',
-      fechaVencimiento: '2026-12-31',
-      estadoPago: EstadoPago.pendiente,
-      numPago: 1,
-      numPagoActivo: true,
-      aceptaPagosDiversos: false,
-      estaDisponibleEnInternet: true,
-      estaDisponibleEnLaAppMovil: true,
-      facturaPdf: '',
-      facturaXml: '',
-    );
+}) => EstadoDeCuenta(
+  id: id,
+  cicloId: cicloId,
+  nivelId: 1,
+  emisorFiscalId: emisorFiscalId,
+  descripcionCorta: 'Pago $id',
+  total: 1000.0,
+  totalFormatted: '\$1,000.00',
+  fechaVencimiento: '2026-12-31',
+  estadoPago: EstadoPago.pendiente,
+  numPago: 1,
+  numPagoActivo: true,
+  aceptaPagosDiversos: false,
+  estaDisponibleEnInternet: true,
+  estaDisponibleEnLaAppMovil: true,
+  facturaPdf: '',
+  facturaXml: '',
+);
 
 /// Alumno de prueba sin pagos. Se le cuelgan con `conEstadoDeCuenta`.
 Alumno _alumnoBase(int alumnoId) => Alumno(
-      alumnoId: alumnoId,
-      familiaId: 1,
-      familia: 'Familia Test',
-      alumno: 'Test Alumno',
-      apPaterno: 'Test',
-      apMaterno: 'Test',
-      nombre: 'Test',
-      becaSep: 'No',
-      becaArji: 'No',
-      becaBach: 'No',
-      becaSp: 'No',
-      esBaja: false,
-      grupoId: 1,
-      grupo: '1ro A',
-      urlPhoto: '',
-      estadoDeCuenta: const [],
-    );
+  alumnoId: alumnoId,
+  familiaId: 1,
+  familia: 'Familia Test',
+  alumno: 'Test Alumno',
+  apPaterno: 'Test',
+  apMaterno: 'Test',
+  nombre: 'Test',
+  becaSep: 'No',
+  becaArji: 'No',
+  becaBach: 'No',
+  becaSp: 'No',
+  esBaja: false,
+  grupoId: 1,
+  grupo: '1ro A',
+  urlPhoto: '',
+  estadoDeCuenta: const [],
+);
 
 /// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos (10001, …).
 Alumno _alumnoConPagos(int cantidadPagos) => _alumnoBase(1).conEstadoDeCuenta(
-      List.generate(
-        cantidadPagos,
-        (i) => _pago(id: 10001 + i, cicloId: _kCiclo),
-      ),
-    );
+  List.generate(cantidadPagos, (i) => _pago(id: 10001 + i, cicloId: _kCiclo)),
+);
 
 /// Construye un [CarritoState] con la selección indicada y los alumnos a los
 /// que pertenecen esos pagos.
@@ -104,12 +100,16 @@ CarritoState _estadoCon(
   final porAlumno = <int, List<EstadoDeCuenta>>{};
   seleccion.forEach((cicloId, mapaAlumnos) {
     mapaAlumnos.forEach((alumnoId, ids) {
-      porAlumno.putIfAbsent(alumnoId, () => <EstadoDeCuenta>[]).addAll(
-            ids.map((id) => _pago(
-                  id: id,
-                  cicloId: cicloId,
-                  emisorFiscalId: emisorFiscalId,
-                )),
+      porAlumno
+          .putIfAbsent(alumnoId, () => <EstadoDeCuenta>[])
+          .addAll(
+            ids.map(
+              (id) => _pago(
+                id: id,
+                cicloId: cicloId,
+                emisorFiscalId: emisorFiscalId,
+              ),
+            ),
           );
     });
   });
@@ -125,13 +125,13 @@ CarritoState _estadoCon(
 
 /// Construye un [EstadosDeCuentaResponse] con el alumno indicado.
 EstadosDeCuentaResponse _response(Alumno alumno) => EstadosDeCuentaResponse(
-      alumnos: [alumno],
-      cicloPredeterminadoId: '1',
-      familiaId: '1',
-      familia: 'Familia Test',
-      success: true,
-      message: '',
-    );
+  alumnos: [alumno],
+  cicloPredeterminadoId: '1',
+  familiaId: '1',
+  familia: 'Familia Test',
+  success: true,
+  message: '',
+);
 
 // =============================================================================
 // TESTS
@@ -142,26 +142,21 @@ void main() {
   // Unit tests de CarritoState (sin BLoC)
   // ---------------------------------------------------------------------------
   group('CarritoState — referenciaValida', () {
-    test(
-      'es true cuando el carrito está vacío (referencia = "")',
-      () {
-        const state = CarritoState();
-        expect(state.referenciaPago, isEmpty);
-        expect(state.referenciaValida, isTrue);
-      },
-    );
+    test('es true cuando el carrito está vacío (referencia = "")', () {
+      const state = CarritoState();
+      expect(state.referenciaPago, isEmpty);
+      expect(state.referenciaValida, isTrue);
+    });
 
     test(
       'es true cuando la referencia tiene ≤ ${AppConstants.maxLongitudReferencia} chars '
       '(5 IDs de 5 dígitos = 29 chars)',
       () {
-        final state = _estadoCon(
-          {
-            _kCiclo: {
-              1: [10001, 10002, 10003, 10004, 10005],
-            },
+        final state = _estadoCon({
+          _kCiclo: {
+            1: [10001, 10002, 10003, 10004, 10005],
           },
-        );
+        });
         // "10001D10002D10003D10004D10005" = 29 chars
         expect(state.referenciaPago.length, equals(29));
         expect(state.referenciaValida, isTrue);
@@ -172,31 +167,26 @@ void main() {
       'es false cuando la referencia excede ${AppConstants.maxLongitudReferencia} chars '
       '(6 IDs de 5 dígitos = 35 chars)',
       () {
-        final state = _estadoCon(
-          {
-            _kCiclo: {
-              1: [10001, 10002, 10003, 10004, 10005, 10006],
-            },
+        final state = _estadoCon({
+          _kCiclo: {
+            1: [10001, 10002, 10003, 10004, 10005, 10006],
           },
-        );
+        });
         // "10001D10002D10003D10004D10005D10006" = 35 chars
         expect(state.referenciaPago.length, equals(35));
         expect(state.referenciaValida, isFalse);
       },
     );
 
-    test(
-      'es true para un único pago de IDs largos',
-      () {
-        final state = _estadoCon(
-          {
-            _kCiclo: {1: [99999999]},
-          },
-        );
-        // "99999999A0" = 10 chars ≤ 30
-        expect(state.referenciaValida, isTrue);
-      },
-    );
+    test('es true para un único pago de IDs largos', () {
+      final state = _estadoCon({
+        _kCiclo: {
+          1: [99999999],
+        },
+      });
+      // "99999999A0" = 10 chars ≤ 30
+      expect(state.referenciaValida, isTrue);
+    });
   });
 
   group('CarritoState — longitudReferencia', () {
@@ -206,27 +196,23 @@ void main() {
     });
 
     test('calcula la longitud de la referencia correctamente', () {
-      final state = _estadoCon(
-        {
-          _kCiclo: {
-            1: [100, 200, 300],
-          },
+      final state = _estadoCon({
+        _kCiclo: {
+          1: [100, 200, 300],
         },
-      );
+      });
       // "100D200D300" = 11 chars
       expect(state.longitudReferencia, equals('100D200D300'.length));
       expect(state.longitudReferencia, equals(11));
     });
 
     test('coincide con referenciaPago.length', () {
-      final state = _estadoCon(
-        {
-          _kCiclo: {
-            1: [10001, 10002],
-            2: [20001],
-          },
+      final state = _estadoCon({
+        _kCiclo: {
+          1: [10001, 10002],
+          2: [20001],
         },
-      );
+      });
       expect(state.longitudReferencia, equals(state.referenciaPago.length));
     });
   });
@@ -249,13 +235,16 @@ void main() {
     });
 
     CarritoBloc createBloc() => CarritoBloc(
-          seleccionStorage: SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
-          authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
-          edoCtaUseCases: createMockEdoCtaUseCases(
-            getEstadosDeCuenta: mockGetEstadosDeCuenta,
-          ),
-          emisorFiscalId: 1,
-        );
+      seleccionStorage: SeleccionPagosStorage(
+        mockSharedPref,
+        claveSeleccion: 'seleccion_pagos_ef1',
+      ),
+      authUseCases: createMockAuthUseCases(getUserSession: mockGetUserSession),
+      edoCtaUseCases: createMockEdoCtaUseCases(
+        getEstadosDeCuenta: mockGetEstadosDeCuenta,
+      ),
+      emisorFiscalId: 1,
+    );
 
     // -------------------------------------------------------------------------
     // CarritoPagarEvent — referencia inválida
@@ -265,13 +254,11 @@ void main() {
         'bloquea el pago y emite error cuando la referencia excede el límite '
         '(6 IDs de 5 dígitos = 35 chars > ${AppConstants.maxLongitudReferencia})',
         build: () => createBloc(),
-        seed: () => _estadoCon(
-          {
-            _kCiclo: {
-              1: [10001, 10002, 10003, 10004, 10005, 10006],
-            },
+        seed: () => _estadoCon({
+          _kCiclo: {
+            1: [10001, 10002, 10003, 10004, 10005, 10006],
           },
-        ),
+        }),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
         expect: () => [
           isA<CarritoState>().having(
@@ -286,17 +273,16 @@ void main() {
         'no emite error de referencia cuando la referencia es válida '
         '(5 IDs de 5 dígitos = 29 chars ≤ ${AppConstants.maxLongitudReferencia})',
         build: () {
-          when(() => mockGetUserSession.run())
-              .thenAnswer((_) async => TestAuthResponse.valid);
+          when(
+            () => mockGetUserSession.run(),
+          ).thenAnswer((_) async => TestAuthResponse.valid);
           return createBloc();
         },
-        seed: () => _estadoCon(
-          {
-            _kCiclo: {
-              1: [10001, 10002, 10003, 10004, 10005],
-            },
+        seed: () => _estadoCon({
+          _kCiclo: {
+            1: [10001, 10002, 10003, 10004, 10005],
           },
-        ),
+        }),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
         // Si la referencia es válida, avanza al procesamiento
         // (isProcesandoPago: true → luego pagoData)
@@ -316,13 +302,11 @@ void main() {
       blocTest<CarritoBloc, CarritoState>(
         'el pago bloqueado no emite isProcesandoPago = true',
         build: () => createBloc(),
-        seed: () => _estadoCon(
-          {
-            _kCiclo: {
-              1: [10001, 10002, 10003, 10004, 10005, 10006],
-            },
+        seed: () => _estadoCon({
+          _kCiclo: {
+            1: [10001, 10002, 10003, 10004, 10005, 10006],
           },
-        ),
+        }),
         act: (bloc) => bloc.add(const CarritoPagarEvent()),
         verify: (bloc) {
           // Nunca debe entrar en estado de procesando
@@ -351,9 +335,11 @@ void main() {
               },
             },
           );
-          when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
-            (_) async => Success(_response(_alumnoConPagos(6))),
-          );
+          when(
+            () => mockGetEstadosDeCuenta.run(
+              emisorFiscalId: any(named: 'emisorFiscalId'),
+            ),
+          ).thenAnswer((_) async => Success(_response(_alumnoConPagos(6))));
           return createBloc();
         },
         act: (bloc) => bloc.add(const CarritoInitialEvent()),
@@ -385,9 +371,11 @@ void main() {
               },
             },
           );
-          when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
-            (_) async => Success(_response(_alumnoConPagos(5))),
-          );
+          when(
+            () => mockGetEstadosDeCuenta.run(
+              emisorFiscalId: any(named: 'emisorFiscalId'),
+            ),
+          ).thenAnswer((_) async => Success(_response(_alumnoConPagos(5))));
           return createBloc();
         },
         act: (bloc) => bloc.add(const CarritoInitialEvent()),

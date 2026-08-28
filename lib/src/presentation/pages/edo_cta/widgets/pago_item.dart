@@ -5,7 +5,7 @@ import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dar
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/estado_pago_chip.dart';
-import 'package:arjipagos/src/presentation/widgets/ConceptoEscalonado.dart';
+import 'package:arjipagos/src/presentation/widgets/ConceptoPago.dart';
 import 'package:arjipagos/src/presentation/widgets/FilaAdaptable.dart';
 import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:flutter/material.dart';
@@ -48,12 +48,20 @@ class PagoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<EdoCtaListBloc, EdoCtaListState>(
       builder: (context, state) {
-        final seleccionado =
-            state.isPagoSeleccionado(pago.cicloId, alumno.alumnoId, pago.id);
+        final seleccionado = state.isPagoSeleccionado(
+          pago.cicloId,
+          alumno.alumnoId,
+          pago.id,
+        );
         final puedeSeleccionar = _calcularPuedeSeleccionar(state);
         final bloqueado = !puedeSeleccionar && !seleccionado;
 
-        return _buildRenglon(context, seleccionado, puedeSeleccionar, bloqueado);
+        return _buildRenglon(
+          context,
+          seleccionado,
+          puedeSeleccionar,
+          bloqueado,
+        );
       },
     );
   }
@@ -107,9 +115,7 @@ class PagoItem extends StatelessWidget {
             height: _ladoCasilla,
             // El hueco es de 44 pero la casilla y el candado miden menos: sin
             // centrarlos quedarían pegados a una esquina del hueco.
-            child: Center(
-              child: _buildMarca(context, seleccionado, bloqueado),
-            ),
+            child: Center(child: _buildMarca(context, seleccionado, bloqueado)),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -157,7 +163,7 @@ class PagoItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConceptoEscalonado(texto: pago.descripcionAbreviada),
+        ConceptoPago(texto: pago.descripcionCompleta),
         const SizedBox(height: 6),
         FilaAdaptable(
           izquierda: _buildFecha(theme),
@@ -246,8 +252,8 @@ class PagoItem extends StatelessWidget {
     final color = seleccionado
         ? colorScheme.onSecondaryContainer
         : pago.estadoPago == EstadoPago.vencido
-            ? colorScheme.onErrorContainer
-            : colorScheme.primary;
+        ? colorScheme.onErrorContainer
+        : colorScheme.primary;
 
     return theme.textTheme.bodyLarge!.copyWith(
       fontWeight: FontWeight.bold,
@@ -279,9 +285,9 @@ class PagoItem extends StatelessWidget {
           .map((e) => e.id)
           .toList();
       // Si el emisor no exige orden, no hay nada que bloquear.
-      if (!ConfiguracionAdquira.para(state.emisorFiscalActivo)
-          .politica
-          .exigeOrdenAscendente) {
+      if (!ConfiguracionAdquira.para(
+        state.emisorFiscalActivo,
+      ).politica.exigeOrdenAscendente) {
         return true;
       }
       return state.puedeSelecionarPago(
@@ -306,10 +312,7 @@ class PagoItem extends StatelessWidget {
   /// Alterna la selección del pago.
   void _togglePago(BuildContext context) {
     context.read<EdoCtaListBloc>().add(
-      EdoCtaTogglePagoEvent(
-        alumnoId: alumno.alumnoId,
-        pagoId: pago.id,
-      ),
+      EdoCtaTogglePagoEvent(alumnoId: alumno.alumnoId, pagoId: pago.id),
     );
   }
 

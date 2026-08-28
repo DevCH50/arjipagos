@@ -17,8 +17,14 @@ class PagoRequest {
   final double importe;
   final String urlRetorno;
 
-  /// Emisor fiscal cuyo contrato se está usando. Solo viaja a los registros:
-  /// Adquira identifica el comercio por [idExpress], no por este campo.
+  /// Emisor fiscal cuyo contrato se está usando: **1** desde "Pagos
+  /// Pendientes" y **2** desde "Otros pagos".
+  ///
+  /// Viaja en el `toMap()` como `emisorfiscal_id`. Adquira sigue identificando
+  /// el comercio por [idExpress] —no por este campo—, pero mandarlo permite
+  /// saber de qué contrato salió cada cobro sin tener que deducirlo del
+  /// `idexpress`, que hoy es el mismo en los dos emisores porque el contrato 2
+  /// todavía va con datos prestados (ver `ConfiguracionAdquira.ef2`).
   final int emisorFiscalId;
 
   final String idExpress;
@@ -52,6 +58,10 @@ class PagoRequest {
       'user_id': userId.toString(),
       'importe': importe.toStringAsFixed(2),
       'urlretorno': urlRetorno,
+      // 1 desde "Pagos Pendientes", 2 desde "Otros pagos". No se deriva del
+      // `idexpress`: mientras el contrato 2 use los datos prestados del 1, los
+      // dos mandan el mismo, y este campo es lo único que los distingue.
+      'emisorfiscal_id': emisorFiscalId.toString(),
       'idexpress': idExpress,
       'financiamiento': financiamiento,
       'moneda': moneda,

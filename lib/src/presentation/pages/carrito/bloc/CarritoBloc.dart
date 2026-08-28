@@ -32,10 +32,10 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     required AuthUseCases authUseCases,
     required EdoCtaUseCases edoCtaUseCases,
     required this.emisorFiscalId,
-  })  : _seleccionStorage = seleccionStorage,
-        _authUseCases = authUseCases,
-        _edoCtaUseCases = edoCtaUseCases,
-        super(CarritoState(emisorFiscalActivo: emisorFiscalId)) {
+  }) : _seleccionStorage = seleccionStorage,
+       _authUseCases = authUseCases,
+       _edoCtaUseCases = edoCtaUseCases,
+       super(CarritoState(emisorFiscalActivo: emisorFiscalId)) {
     on<CarritoInitialEvent>(_onInitial);
     on<CarritoQuitarPagoEvent>(_onQuitarPago);
     on<CarritoLimpiarEvent>(_onLimpiar);
@@ -57,16 +57,18 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
       final pagosSeleccionados = await _seleccionStorage.cargar();
 
       if (pagosSeleccionados.isEmpty) {
-        emit(state.copyWith(
-          isLoading: false,
-          pagosSeleccionados: {},
-          alumnos: [],
-        ));
+        emit(
+          state.copyWith(isLoading: false, pagosSeleccionados: {}, alumnos: []),
+        );
         return;
       }
 
-      // Obtener datos de alumnos desde el servidor
-      final result = await _edoCtaUseCases.getEstadosDeCuenta.run();
+      // Obtener datos de alumnos desde el servidor, acotados al emisor de este
+      // carrito: un carrito nunca mezcla emisores, porque sería una sola
+      // transacción hacia dos cuentas bancarias distintas.
+      final result = await _edoCtaUseCases.getEstadosDeCuenta.run(
+        emisorFiscalId: emisorFiscalId,
+      );
 
       if (result is Success) {
         final response = (result as Success).data;
@@ -85,23 +87,24 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
             '(${estadoCargado.longitudReferencia}/${estadoCargado.maxLongitudReferencia} chars)',
             tag: 'Carrito',
           );
-          emit(estadoCargado.copyWith(
-            errorMessage: AppStrings.carritoReferenciaExcede,
-          ));
+          emit(
+            estadoCargado.copyWith(
+              errorMessage: AppStrings.carritoReferenciaExcede,
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: (result as Error).msg,
-        ));
+        emit(
+          state.copyWith(isLoading: false, errorMessage: (result as Error).msg),
+        );
       }
     } catch (e) {
-      AppLogger.error('Error inesperado cargando el carrito',
-          error: e, tag: 'Carrito');
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: mensajeErrorRed(e),
-      ));
+      AppLogger.error(
+        'Error inesperado cargando el carrito',
+        error: e,
+        tag: 'Carrito',
+      );
+      emit(state.copyWith(isLoading: false, errorMessage: mensajeErrorRed(e)));
     }
   }
 
@@ -201,17 +204,20 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
       final authResponse = await _authUseCases.getUserSession.run();
 
       if (authResponse == null) {
-        emit(state.copyWith(
-          isProcesandoPago: false,
-          errorMessage: AppStrings.errorSesionInvalida,
-        ));
+        emit(
+          state.copyWith(
+            isProcesandoPago: false,
+            errorMessage: AppStrings.errorSesionInvalida,
+          ),
+        );
         return;
       }
 
       // Cada carrito cobra por el contrato de su emisor fiscal. El importe, la
       // referencia y los renglones que se ven ya vienen acotados a él.
-      final ConfiguracionAdquira configuracion =
-          ConfiguracionAdquira.para(emisorFiscalId);
+      final ConfiguracionAdquira configuracion = ConfiguracionAdquira.para(
+        emisorFiscalId,
+      );
 
       if (!ConfiguracionAdquira.conoce(emisorFiscalId)) {
         AppLogger.warning(
@@ -254,20 +260,24 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
       );
 
       // Construir datos para el WebView
-      emit(state.copyWith(
-        isProcesandoPago: false,
-        pagoData: {
-          'url': configuracion.endpoint,
-          'params': pagoRequest.toMap(),
-          'token': pagoRequest.token,
-        },
-      ));
+      emit(
+        state.copyWith(
+          isProcesandoPago: false,
+          pagoData: {
+            'url': configuracion.endpoint,
+            'params': pagoRequest.toMap(),
+            'token': pagoRequest.token,
+          },
+        ),
+      );
     } catch (e) {
       AppLogger.error('Error al iniciar el pago', error: e, tag: 'Carrito');
-      emit(state.copyWith(
-        isProcesandoPago: false,
-        errorMessage: mensajeErrorRed(e),
-      ));
+      emit(
+        state.copyWith(
+          isProcesandoPago: false,
+          errorMessage: mensajeErrorRed(e),
+        ),
+      );
     }
   }
 
@@ -279,12 +289,14 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     // Limpiar el carrito del storage
     await _seleccionStorage.guardar({});
 
-    emit(state.copyWith(
-      pagosSeleccionados: {},
-      pagoExitoso: true,
-      mensajeExito: AppStrings.pagoRealizadoConExito,
-      clearPagoData: true,
-    ));
+    emit(
+      state.copyWith(
+        pagosSeleccionados: {},
+        pagoExitoso: true,
+        mensajeExito: AppStrings.pagoRealizadoConExito,
+        clearPagoData: true,
+      ),
+    );
   }
 
   /// Maneja el evento de pago fallido.
@@ -292,10 +304,7 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     CarritoPagoFallidoEvent event,
     Emitter<CarritoState> emit,
   ) {
-    emit(state.copyWith(
-      errorMessage: event.mensaje,
-      clearPagoData: true,
-    ));
+    emit(state.copyWith(errorMessage: event.mensaje, clearPagoData: true));
   }
 
   /// Maneja el evento de cancelar pago (limpiar estado de URL).
@@ -305,5 +314,4 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
   ) {
     emit(state.copyWith(clearPagoData: true, clearError: true));
   }
-
 }

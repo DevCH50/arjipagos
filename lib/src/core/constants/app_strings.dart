@@ -96,8 +96,10 @@ class AppStrings {
 
   static const String menuPrincipalTitle = 'Menú Principal';
   static const String menuCambiarContrasena = 'Cambiar Contraseña';
-  static const String menuTocaCualquierCampo = 'Toca cualquier campo para copiar';
-  static const String menuFacturasProximamente = 'La sección de Facturas estará disponible pronto.';
+  static const String menuTocaCualquierCampo =
+      'Toca cualquier campo para copiar';
+  static const String menuFacturasProximamente =
+      'La sección de Facturas estará disponible pronto.';
   static const String menuMiCuenta = 'Mi cuenta';
   static const String menuSinAlumnos = 'Sin alumnos';
   static const String menuPagosPendientes = 'Pagos Pendientes';
@@ -115,7 +117,8 @@ class AppStrings {
   static const String resenaErrorAbrirTienda =
       'No se pudo abrir la tienda de aplicaciones. Inténtalo de nuevo más tarde.';
   static const String menuCerrando = 'Cerrando sesión...';
-  static const String menuNoPudoCargar = 'No se pudo cargar la información del usuario';
+  static const String menuNoPudoCargar =
+      'No se pudo cargar la información del usuario';
 
   // ============================================================================
   // DRAWER — DATOS DEL USUARIO
@@ -142,7 +145,8 @@ class AppStrings {
   static const String edoCtaTitle = 'Estados de Cuenta';
   static const String edoCtaLoading = 'Cargando estados de cuenta...';
   static const String edoCtaSinPagosPendientes = 'Sin pagos pendientes';
-  static const String edoCtaSinPagosEnLinea = 'Sin pagos disponibles para pago en línea';
+  static const String edoCtaSinPagosEnLinea =
+      'Sin pagos disponibles para pago en línea';
   static const String edoCtaContinuar = 'Continuar';
   static const String edoCtaVence = 'Vence:';
   static const String edoCtaPagoNum = 'Pago #';
@@ -167,18 +171,19 @@ class AppStrings {
   static const String carritoTitle = 'Carrito';
   static const String carritoLoading = 'Cargando carrito...';
   static const String carritoVaciarTitle = 'Vaciar carrito';
-  static const String carritoVaciarConfirm = '¿Estás seguro de que deseas vaciar el carrito?';
+  static const String carritoVaciarConfirm =
+      '¿Estás seguro de que deseas vaciar el carrito?';
   static const String carritoVaciar = 'Vaciar';
   static const String carritoEmpty = 'Selecciona pagos desde Estados de Cuenta';
   static const String carritoSinPagos = 'No hay pagos seleccionados';
   static const String carritoPagar = 'Pagar';
   static const String carritoProcesando = 'Procesando...';
   static const String carritoQuitar = 'Quitar';
-  static const String carritoQuitarOrden = 'Debe quitar primero los pagos más recientes';
+  static const String carritoQuitarOrden =
+      'Debe quitar primero los pagos más recientes';
   static const String carritoReferenciaExcede =
       'La referencia de pago excede el límite permitido por la pasarela.\n\n'
       'Regresa a Estados de Cuenta y reduce la cantidad de pagos seleccionados.';
-
 
   // ============================================================================
   // PAGO WEBVIEW
@@ -187,13 +192,16 @@ class AppStrings {
   static const String pagoWebViewTitle = 'Realizar Pago';
   static const String pagoLoading = 'Cargando página de pago...';
   static const String pagoExitosoTitle = 'Pago exitoso';
-  static const String pagoExitosoMsg = 'Tu pago ha sido procesado correctamente.';
+  static const String pagoExitosoMsg =
+      'Tu pago ha sido procesado correctamente.';
   static const String pagoErrorTitle = 'Error en el pago';
   static const String pagoCancelarTitle = 'Cancelar pago';
-  static const String pagoCancelarMsg = '¿Estás seguro de que deseas cancelar el pago?';
+  static const String pagoCancelarMsg =
+      '¿Estás seguro de que deseas cancelar el pago?';
   static const String pagoContinuar = 'Continuar pago';
   static const String pagoNoProcesado = 'El pago no pudo ser procesado';
-  static const String pagoProcesadoCorrectamente = 'Pago procesado correctamente';
+  static const String pagoProcesadoCorrectamente =
+      'Pago procesado correctamente';
   static const String pagoRealizadoConExito = 'Pago realizado con éxito';
 
   // ============================================================================
@@ -229,17 +237,22 @@ class AppStrings {
       'Por favor, completa todos los campos correctamente.';
 
   // Validaciones inline
-  static const String cambiarContrasenaIngresaActual = 'Ingresa tu contraseña actual';
-  static const String cambiarContrasenaIngresaNueva = 'Ingresa la nueva contraseña';
-  static const String cambiarContrasenaConfirmaError = 'Confirma la nueva contraseña';
-  static const String cambiarContrasenaNoCoinciden = 'Las contraseñas no coinciden';
+  static const String cambiarContrasenaIngresaActual =
+      'Ingresa tu contraseña actual';
+  static const String cambiarContrasenaIngresaNueva =
+      'Ingresa la nueva contraseña';
+  static const String cambiarContrasenaConfirmaError =
+      'Confirma la nueva contraseña';
+  static const String cambiarContrasenaNoCoinciden =
+      'Las contraseñas no coinciden';
 
   // ============================================================================
   // REGISTRO
   // ============================================================================
 
   static const String registerExitosoTitle = 'Registro exitoso';
-  static const String registerExitosoMsg = 'Ahora puedes iniciar sesión con tu cuenta.';
+  static const String registerExitosoMsg =
+      'Ahora puedes iniciar sesión con tu cuenta.';
   static const String registerIrLogin = 'Iniciar sesión';
   static const String registerCamposIncompletos = 'Campos incompletos';
 
@@ -255,15 +268,18 @@ class AppStrings {
 
   static const String errorNoSession = 'No hay sesión activa';
   static const String errorSesionInvalida = 'Sesión no válida';
-  static const String errorNoUserId = 'No se encontró el ID de usuario en la sesión';
+  static const String errorNoUserId =
+      'No se encontró el ID de usuario en la sesión';
   static const String errorNoToken = 'No se encontró el token de autenticación';
   static const String errorConnection = 'Sin conexión, intente más tarde';
   static const String errorUnexpected = 'Error inesperado';
   static const String errorInvalidCredentials = 'Credenciales incorrectas';
-  static const String errorTimeout = 'La solicitud tardó demasiado. Intenta de nuevo.';
+  static const String errorTimeout =
+      'La solicitud tardó demasiado. Intenta de nuevo.';
   static const String errorServidorNoDisponible =
       'El servidor no está disponible en este momento. Por favor intenta más tarde.';
-  static const String errorUnauthorized = 'No autorizado. Inicia sesión de nuevo.';
+  static const String errorUnauthorized =
+      'No autorizado. Inicia sesión de nuevo.';
 
   /// Fallo de TLS: certificado inválido o cadena incompleta en el servidor.
   /// El usuario no puede hacer nada al respecto; es un problema de servidor.
@@ -281,7 +297,8 @@ class AppStrings {
   static const String errorProcesarPago = 'Error al procesar el pago';
   static const String errorVerificarPago = 'Error al verificar el pago';
   static const String errorTokenFcmInvalido = 'Token FCM inválido';
-  static const String errorDatosEliminarToken = 'Datos inválidos para eliminar token';
+  static const String errorDatosEliminarToken =
+      'Datos inválidos para eliminar token';
 
   // ============================================================================
   // ALUMNO
@@ -313,13 +330,17 @@ class AppStrings {
   static const String recuperarContrasenaCorreoEnviado = 'Correo enviado';
   static const String recuperarContrasenaInstrucciones =
       'Ingresa tu usuario y correo registrado. Te enviaremos instrucciones para restablecer tu contraseña.';
-  static const String recuperarContrasenaRevisa = 'Revisa tu bandeja de entrada';
+  static const String recuperarContrasenaRevisa =
+      'Revisa tu bandeja de entrada';
   static const String recuperarContrasenaMensajeEnviado =
       'Hemos enviado las instrucciones para recuperar tu contraseña al correo proporcionado.';
   static const String recuperarContrasenaCorreoLabel = 'Correo electrónico';
-  static const String recuperarContrasenaIngresaCorreo = 'Ingresa tu correo electrónico';
-  static const String recuperarContrasenaCorreoInvalido = 'Ingresa un correo válido';
-  static const String recuperarContrasenaIngresaUsuario = 'Ingresa tu nombre de usuario';
+  static const String recuperarContrasenaIngresaCorreo =
+      'Ingresa tu correo electrónico';
+  static const String recuperarContrasenaCorreoInvalido =
+      'Ingresa un correo válido';
+  static const String recuperarContrasenaIngresaUsuario =
+      'Ingresa tu nombre de usuario';
 
   // ============================================================================
   // LOGIN — EXTRAS
@@ -335,7 +356,8 @@ class AppStrings {
   // ============================================================================
 
   static const String registerApellidoMaterno = 'Apellido Materno (opcional)';
-  static const String registerYaTienesCuenta = '¿Ya tienes cuenta? Inicia sesión';
+  static const String registerYaTienesCuenta =
+      '¿Ya tienes cuenta? Inicia sesión';
   static const String registerRegistrarse = 'Registrarse';
 
   // ============================================================================
@@ -382,7 +404,11 @@ class AppStrings {
   // ESTADOS DE CUENTA — EMPTY
   // ============================================================================
 
-  static const String edoCtaSinEstadosCuenta = 'No tienes estados de cuenta por pagar';
+  static const String edoCtaSinEstadosCuenta =
+      'No tienes estados de cuenta por pagar';
+
+  /// Tooltip del botón de recargar del AppBar de Estados de Cuenta.
+  static const String edoCtaActualizar = 'Actualizar';
 
   // ============================================================================
   // PAGOS REALIZADOS
@@ -472,14 +498,17 @@ class AppStrings {
   static const String facturasDescargando = 'Descargando archivo ZIP...';
   static const String facturasErrorCompartir =
       'No se pudo descargar el archivo para compartir';
-  static const String facturasZipSinDatos = 'Esta factura no tiene archivo adjunto';
-  static const String facturasErrorDescarga = 'Error al descargar el archivo ZIP';
+  static const String facturasZipSinDatos =
+      'Esta factura no tiene archivo adjunto';
+  static const String facturasErrorDescarga =
+      'Error al descargar el archivo ZIP';
 
   // ============================================================================
   // ACTUALIZACIÓN DE LA APP
   // ============================================================================
 
-  static const String actualizacionTituloObligatoria = 'Actualización necesaria';
+  static const String actualizacionTituloObligatoria =
+      'Actualización necesaria';
   static const String actualizacionTituloSugerida = 'Hay una versión nueva';
   static const String actualizacionTituloMantenimiento = 'En mantenimiento';
 

@@ -53,7 +53,10 @@ void main() {
 
     final bloc = EdoCtaListBloc(
       createMockEdoCtaUseCases(),
-      SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
+      SeleccionPagosStorage(
+        mockSharedPref,
+        claveSeleccion: 'seleccion_pagos_ef1',
+      ),
       emisorFiscalId: 1,
     );
     addTearDown(bloc.close);
@@ -110,54 +113,59 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('dentro de un Column con alto sin acotar, como en la lista real',
-        (tester) async {
-      // Este es el contexto de verdad: `PagosList` mete los renglones en un
-      // `Column` que vive dentro de un scroll, así que al renglón le llega el
-      // alto SIN acotar. Montarlo suelto bajo el `Scaffold` le da el alto de
-      // la pantalla y esconde justo los fallos que dependen de eso —fue lo que
-      // dejó pasar un renglón que en el dispositivo no se pintaba—.
-      tester.view.devicePixelRatio = 1.0;
-      tester.view.physicalSize = const Size(390, 800);
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'dentro de un Column con alto sin acotar, como en la lista real',
+      (tester) async {
+        // Este es el contexto de verdad: `PagosList` mete los renglones en un
+        // `Column` que vive dentro de un scroll, así que al renglón le llega el
+        // alto SIN acotar. Montarlo suelto bajo el `Scaffold` le da el alto de
+        // la pantalla y esconde justo los fallos que dependen de eso —fue lo que
+        // dejó pasar un renglón que en el dispositivo no se pintaba—.
+        tester.view.devicePixelRatio = 1.0;
+        tester.view.physicalSize = const Size(390, 800);
+        addTearDown(tester.view.reset);
 
-      final bloc = EdoCtaListBloc(
-        createMockEdoCtaUseCases(),
-        SeleccionPagosStorage(mockSharedPref, claveSeleccion: 'seleccion_pagos_ef1'),
-        emisorFiscalId: 1,
-      );
-      addTearDown(bloc.close);
+        final bloc = EdoCtaListBloc(
+          createMockEdoCtaUseCases(),
+          SeleccionPagosStorage(
+            mockSharedPref,
+            claveSeleccion: 'seleccion_pagos_ef1',
+          ),
+          emisorFiscalId: 1,
+        );
+        addTearDown(bloc.close);
 
-      final pago = TestEstadoDeCuenta.pendiente;
+        final pago = TestEstadoDeCuenta.pendiente;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  BlocProvider<EdoCtaListBloc>.value(
-                    value: bloc,
-                    child: PagoItem(
-                      alumno: TestAlumno.activo,
-                      pago: pago,
-                      pagosDisponibles: [pago],
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    BlocProvider<EdoCtaListBloc>.value(
+                      value: bloc,
+                      child: PagoItem(
+                        alumno: TestAlumno.activo,
+                        pago: pago,
+                        pagosDisponibles: [pago],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(tester.takeException(), isNull);
-      // Y además se ve: un renglón de alto cero no sirve de nada.
-      expect(find.text(pago.descripcionAbreviada), findsOneWidget);
-      expect(tester.getSize(find.byType(PagoItem)).height, greaterThan(0));
-    });
+        expect(tester.takeException(), isNull);
+        // Y además se ve: un renglón de alto cero no sirve de nada.
+        expect(find.text(pago.descripcionCompleta), findsOneWidget);
+        expect(tester.getSize(find.byType(PagoItem)).height, greaterThan(0));
+      },
+    );
   });
 
   group('PagoItem — el texto se lee completo', () {
@@ -174,48 +182,48 @@ void main() {
       expect(fecha.maxLines, 1);
     });
 
-    testWidgets('el concepto se lee en una línea y nunca se recorta',
-        (tester) async {
+    testWidgets('el concepto nunca se recorta', (tester) async {
       final pago = TestEstadoDeCuenta.pendiente;
       await montar(tester, ancho: 320, pago: pago);
 
-      final concepto =
-          tester.widget<Text>(find.text(pago.descripcionAbreviada));
+      final concepto = tester.widget<Text>(find.text(pago.descripcionCompleta));
 
-      // El concepto se queda con la línea entera; si el string no cabe baja de
-      // escalón, no se parte ni se corta con puntos suspensivos.
-      expect(concepto.maxLines, 1);
+      // Sin tope de líneas y sin puntos suspensivos: el concepto envuelve las
+      // líneas que haga falta, pero no hay ninguna vía por la que pueda quedar
+      // cortado. Tampoco se encoge con un `FittedBox`.
+      expect(concepto.maxLines, isNull);
+      expect(concepto.overflow, isNot(TextOverflow.ellipsis));
       expect(concepto.style?.overflow, isNot(TextOverflow.ellipsis));
       expect(
         find.ancestor(
-          of: find.text(pago.descripcionAbreviada),
+          of: find.text(pago.descripcionCompleta),
           matching: find.byType(FittedBox),
         ),
         findsNothing,
       );
     });
 
-    testWidgets('el concepto baja de escalón cuando el string no cabe',
-        (tester) async {
-      // La rampa son los tamaños de cuerpo del tema (16 → 14 → 12). Un
-      // concepto largo baja de escalón para caber entero en una línea; uno
-      // corto se queda en el escalón grande.
+    testWidgets('el concepto mide igual sea corto o largo', (tester) async {
+      // Congruencia tipográfica entre renglones: la lista no puede tener un
+      // concepto a 16 px y el de al lado a 14 según lo que mida cada texto.
+      // Hasta el 2026-08-28 sí pasaba, porque el concepto bajaba por una rampa
+      // (16 → 14 → 12) para caber en una línea. Ahora el tamaño es fijo y lo
+      // que cede es la altura del renglón.
       final corto = TestEstadoDeCuenta.pendiente;
       await montar(tester, ancho: 320, pago: corto);
-      final estiloCorto =
-          tester.widget<Text>(find.text(corto.descripcionAbreviada)).style;
+      final estiloCorto = tester
+          .widget<Text>(find.text(corto.descripcionCompleta))
+          .style;
 
       final largo = TestEstadoDeCuenta.vencido;
       await montar(tester, ancho: 320, pago: largo);
-      final estiloLargo =
-          tester.widget<Text>(find.text(largo.descripcionAbreviada)).style;
+      final estiloLargo = tester
+          .widget<Text>(find.text(largo.descripcionCompleta))
+          .style;
 
-      // Ningún tamaño inventado: los dos salen de la rampa del tema.
-      const rampa = [16.0, 14.0, 12.0];
-      expect(rampa, contains(estiloCorto?.fontSize));
-      expect(rampa, contains(estiloLargo?.fontSize));
-      // El más largo nunca se pinta más grande que el más corto.
-      expect(estiloLargo!.fontSize!, lessThanOrEqualTo(estiloCorto!.fontSize!));
+      expect(estiloLargo?.fontSize, equals(estiloCorto?.fontSize));
+      // Y es el escalón de cuerpo del tema, no un número escrito a mano.
+      expect(estiloCorto?.fontSize, equals(16.0));
     });
 
     testWidgets('el monto y el número de pago siguen visibles', (tester) async {
@@ -229,8 +237,7 @@ void main() {
       );
     });
 
-    testWidgets('el chip de estado conserva su tamaño natural',
-        (tester) async {
+    testWidgets('el chip de estado conserva su tamaño natural', (tester) async {
       // En un `Expanded` la píldora se estiraba a todo el ancho del renglón.
       const ancho = 360.0;
       await montar(tester, ancho: ancho, pago: TestEstadoDeCuenta.pendiente);
@@ -240,15 +247,15 @@ void main() {
       expect(anchoChip, lessThan(ancho / 2));
     });
 
-    testWidgets('el importe mide igual que el concepto y va en negrita',
-        (tester) async {
+    testWidgets('el importe mide igual que el concepto y va en negrita', (
+      tester,
+    ) async {
       // Congruencia tipográfica: el importe destaca por peso y color, no por
       // ser un escalón más grande que el concepto.
       final pago = TestEstadoDeCuenta.pendiente;
       await montar(tester, ancho: 360, pago: pago);
 
-      final concepto =
-          tester.widget<Text>(find.text(pago.descripcionAbreviada));
+      final concepto = tester.widget<Text>(find.text(pago.descripcionCompleta));
       final monto = tester.widget<Text>(find.text(pago.totalFormatted));
 
       expect(monto.style?.fontSize, concepto.style?.fontSize);
