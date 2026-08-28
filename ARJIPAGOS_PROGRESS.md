@@ -4090,3 +4090,74 @@ De limpieza: fuera `badges: ^3.1.2`, que no se importaba en ningún archivo.
   el `MethodChannel` solo se comprueba en un iPhone. **Queda para la Mac.**
 - **No se subió versión ni se hizo release:** la 1.0.28+37 sigue en revisión en las
   dos tiendas. Publicar esto pediría una 1.0.29+38, y esa la decide Carlos.
+
+## Sesión 2026-08-28 (Mac) — Limpieza iOS y Archive de la 1.0.29+38
+
+**Todo esto ocurrió en la Mac. Aquí no se toca Android.**
+
+Se traen los 3 commits que la Linux había subido (`afa8ef6`, `250b42b`, `8215989`): el TLS en
+móviles antiguos, el globo del icono de iOS con el conteo real, y los estados vacíos «No hay…»
+con el concepto completo y el emisor en las peticiones. `git pull` fue fast-forward limpio, sin
+nada local que pisar.
+
+El pull trae cambios de dependencias: **fuera `badges: ^3.1.2`**, dentro el asset
+`assets/certs/isrg_root_x1.pem`, y la versión sube a **1.0.29+38** (la 1.0.28+37 ya estaba en
+revisión en las dos tiendas, así que esta era la pendiente sin publicar — regla 2 de versionado).
+
+**Limpieza obligatoria, la secuencia entera.**
+
+```bash
+flutter clean && flutter pub get && cd ios && pod install && ./scripts/build_ios.sh
+```
+
+`pod install` aplicó sus dos blindajes del `post_install`: el script de dSYM de `objective_c` y
+`LastUpgradeCheck = 2630`. El build salió a **26,7 MB** (`build/ios/iphoneos/Runner.app`) en 178 s.
+
+**Verificado antes del Archive:**
+
+| Qué | Estado |
+| --- | --- |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | 2630 |
+| `Package.swift` (SPM efímero) | `.iOS("15.0")` — regenerado y corregido por `pod install` |
+| `LaunchAction` / `ArchiveAction` | ambos `Release` |
+| `ApiConfig.isProduction` | `true` |
+| `AppIcon.appiconset` | 25 entradas, 21 PNG, **0 huérfanos y 0 fantasmas** |
+| `NSFaceIDUsageDescription` | presente en `Info.plist` |
+| Suite completa | **960 tests en verde** |
+| `git status` | limpio: ni `pod install` ni el build ensucian nada versionado |
+
+No hizo falta `build_runner`: la DI de este proyecto es manual (`AppModule.dart`), no hay ningún
+`.config.dart` generado.
+
+**Archive y subida.** Hechos desde `Runner.xcworkspace`, rechazando el *"Update to recommended
+settings"*. La **1.0.29+38 quedó en Espera de Revisión en App Store** el 2026-08-28.
+
+### Ruido de consola: una línea nueva, catalogada
+
+Ejecutada en el iPhone 17 Pro Max con el botón Run. Doce líneas en todo el recorrido hasta la
+pantalla de pago; once ya estaban en la tabla de `CLAUDE.md`. La nueva:
+
+```
+WebContent[…] xpc_user_sessions_get_foreground_uid() failed with error 1 - Operation not permitted
+```
+
+Es el proceso `WebContent` de WebKit preguntándole a XPC qué sesión de usuario está en primer
+plano; su sandbox no tiene ese permiso, la consulta falla y WebKit sigue sin usar el dato.
+Comprobado con `grep -rI`: no aparece en `lib/`, `ios/Runner/` ni en los Pods. Añadida a la tabla.
+
+**Salen dos PID distintos de `WebContent` (22333 y 22337), y es correcto:** es el *process swap*
+de WebKit al navegar a otro origen, la pasarela mandando del sitio de Adquira al del banco.
+
+### Con el botón Run la app no imprime nada, y es lo esperado
+
+`AppLogger._log()` está tras `if (kDebugMode)` y el Run de Xcode usa `LaunchAction = Release`:
+cero salida de ArjiPagos en la consola. **Un log sin líneas de la app no significa que algo no se
+ejecutara.** Queda escrito en `CLAUDE.md` junto con su consecuencia: el aviso del contrato 2
+provisional (`CarritoBloc.dart:230`) tampoco se ve ahí; para eso hace falta `flutter run`.
+
+### Pendiente
+
+- **El globo del icono de iOS sigue sin confirmar.** Era el pendiente que la Linux dejó para la
+  Mac. La app se ejecutó en el iPhone 17 Pro Max, pero no se verificó explícitamente que el
+  contador del icono suba con el push y baje al marcar como leída.
+- **Android de la 1.0.29+38:** no se ha hecho. El APK/AAB va en la Linux.

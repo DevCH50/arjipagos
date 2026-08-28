@@ -265,8 +265,9 @@ Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xc
 Estos mensajes salen en cada arranque y **no hay nada que corregir**. Verificados
 en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23, ampliados el 2026-08-24 tras
 recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
-(las cinco últimas filas). Ninguno de estos símbolos aparece en `lib/`, `ios/Runner/`
-ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
+(las cinco últimas filas). La fila de `xpc_user_sessions_get_foreground_uid` se añadió el
+2026-08-28 con la 1.0.29+38, al entrar a pagar. Ninguno de estos símbolos aparece en `lib/`,
+`ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
 | --- | --- |
@@ -285,8 +286,21 @@ ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 | `containerToPush is nil, will not push anything to candidate receiver for request token: …` | El subsistema de continuidad de iOS evaluando si hay algo que ofrecer a un dispositivo cercano. No hay actividad que empujar, así que no empuja nada. Sale intercalado con las tandas del teclado |
 | `Unable to hide query parameters from script (missing data)` | WebKit intentando aplicar su protección contra rastreo por enlace en el `WKWebView` del pago, sin datos que aplicar |
 | `WebProcess::markAllLayersVolatile: Failed to mark layers as volatile` | WebKit liberando las capas de la webview al dejar de estar en primer plano |
+| `xpc_user_sessions_get_foreground_uid() failed with error 1 - Operation not permitted` | El proceso `WebContent` de WebKit preguntándole a XPC qué sesión de usuario está en primer plano. Su sandbox —más estrecho que el de la app— no tiene ese permiso: la consulta falla, WebKit sigue adelante y no usa el dato para nada. Sale al abrir el `WKWebView` del pago, una línea por proceso. **Ver dos PID distintos de `WebContent` es normal**: es el *process swap* de WebKit al navegar a otro origen (la pasarela mandando del sitio de Adquira al del banco) |
 | `Failed to terminate process … RBSRequestErrorDomain Code=3 "No such process found"` | WebKit cerrando un proceso `WebContent` que ya había salido solo. Llega tarde y no encuentra a quién matar |
 | `-- LLDB integration loaded --` | El depurador de Xcode adjuntándose. Solo sale al correr desde Xcode, nunca en la app instalada |
+
+**Con el botón Run no sale NI UNA línea de la app, y es lo esperado**
+
+`AppLogger._log()` está envuelto en `if (kDebugMode)`, y el botón **Run** de Xcode usa
+`LaunchAction buildConfiguration = "Release"`. Resultado: en el iPhone físico la consola es
+solo sistema, Flutter y WebKit — cero salida de ArjiPagos. **Un log sin líneas de la app no
+significa que algo no se ejecutara.**
+
+Consecuencia a tener presente: el aviso del contrato 2 provisional
+(`CarritoBloc.dart:230`, cuando `configuracion.esProvisional`) **también es invisible ahí**. Es
+uno de los tres recordatorios de que el dinero de "Otros pagos" entra en la cuenta del emisor 1.
+Para verlo dispararse hace falta `flutter run`, que fuerza Debug. Comprobado el 2026-08-28.
 
 **Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
 
