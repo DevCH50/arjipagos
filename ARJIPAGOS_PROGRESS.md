@@ -11,6 +11,26 @@
 
 _(ninguno)_
 
+### 2026-08-28 — La 1.0.29+38 está en revisión en las dos tiendas
+
+**Enviada a las dos el mismo día**, como ya pasó con la 1.0.28: el Archive salió de la Mac
+(commit `f713666`) y el AAB se subió a Play Console desde la Linux. Las dos plataformas vuelven
+a ir a la par.
+
+| Versión | Play Store | App Store |
+| --- | --- | --- |
+| `1.0.28+37` | Publicada | Publicada |
+| `1.0.29+38` | **En revisión** | **En revisión** |
+
+**`version_minima` y `version_recomendada` se quedan en `1.0.28`** hasta que las dos tiendas
+publiquen. Subir `version_minima` a `1.0.29` con alguna todavía en revisión encierra al usuario
+que aún no puede actualizar: le sale el diálogo obligatorio y la ficha de la tienda le ofrece la
+versión que ya tiene. Para comprobar cuándo publiquen:
+`GET /api/v1/app/version?plataforma=android|ios` — **sin el parámetro `plataforma` el endpoint
+responde un error**, no un valor por defecto.
+
+Lo que lleva esta versión está descrito en las dos secciones siguientes.
+
 ### Sesión 2026-08-28 (Linux) — «No hay…» en vez de «Error al cargar», concepto completo y emisor en las peticiones
 
 Versión **1.0.29+38**. La 1.0.28 ya está publicada en las dos tiendas (comprobado
