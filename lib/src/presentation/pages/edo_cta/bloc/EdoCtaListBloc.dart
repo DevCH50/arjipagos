@@ -8,6 +8,7 @@ import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
+import 'package:arjipagos/src/domain/utils/AmbitoDeSeleccion.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart' as utils;
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
@@ -18,8 +19,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// BLoC que gestiona el estado de la página de estados de cuenta.
 ///
 /// Maneja la carga de estados de cuenta, selección de pagos
-/// (respetando el orden de ID ascendente **dentro de cada ciclo**) y limpieza
-/// de selección. Los pagos seleccionados se persisten vía
+/// (respetando el orden de ID ascendente **dentro de cada ámbito**: ciclo,
+/// emisor, concepto y tipo de deuda) y limpieza de selección. Los pagos
+/// seleccionados se persisten vía
 /// [SeleccionPagosStorage], que también los comparte con el carrito.
 class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
   final EdoCtaUseCases edoCtaUseCases;
@@ -217,9 +219,10 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
 
   /// Maneja la selección/deselección de un pago.
   ///
-  /// Si aceptaPagosDiversos es true, respeta el orden de ID ascendente:
-  /// - Solo puede seleccionar si todos los anteriores están seleccionados.
-  /// - Al deseleccionar, también deselecciona los de ID mayor.
+  /// Si aceptaPagosDiversos es true, respeta el orden de ID ascendente
+  /// **dentro del ámbito del pago** (ver `ambitoDeSeleccion`):
+  /// - Solo puede seleccionar si todos los anteriores de su ámbito lo están.
+  /// - Al deseleccionar, arrastra los de ID mayor de ese mismo ámbito.
   ///
   /// Si aceptaPagosDiversos es false, se puede marcar/desmarcar libremente.
   void _onTogglePago(
@@ -245,27 +248,17 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       orElse: () => throw Exception('Pago no encontrado'),
     );
 
-    // El ciclo del pago delimita el ámbito de toda la regla de selección.
+    // El ciclo sigue siendo la llave del mapa de selección, aunque el ámbito de
+    // la regla sea más estrecho.
     final cicloId = pago.cicloId;
 
-    // Obtener los pagos disponibles en internet DEL MISMO CICLO Y DEL MISMO
-    // EMISOR FISCAL, ordenados por ID. Filtrar por ciclo es lo que impide que
-    // un pago de otro ciclo condicione el orden ascendente de éste; filtrar por
-    // emisor impide algo peor: sin ello, para marcar el primer pago de "Otros
-    // pagos" habría que haber marcado antes los de "Pagos Pendientes" del mismo
-    // ciclo, que están en otra pantalla y en otro carrito. El renglón quedaría
-    // bloqueado sin explicación posible.
-    final pagosDisponibles =
-        alumno.estadoDeCuenta
-            .where(
-              (e) =>
-                  e.estaDisponibleEnInternet &&
-                  e.cicloId == cicloId &&
-                  e.emisorFiscalId == pago.emisorFiscalId,
-            )
-            .toList()
-          ..sort((a, b) => a.id.compareTo(b.id));
-    final idsDisponibles = pagosDisponibles.map((e) => e.id).toList();
+    // Los pagos publicados en internet que comparten ámbito con éste —mismo
+    // ciclo, mismo emisor, mismo concepto y mismo tipo de deuda—, ordenados por
+    // id. Ver `ambitoDeSeleccion`: el orden ascendente y el arrastre al
+    // deseleccionar se evalúan aquí dentro y en ningún sitio más.
+    final idsDisponibles = alumno.estadoDeCuenta
+        .where((e) => e.estaDisponibleEnInternet)
+        .idsDelMismoAmbitoQue(pago);
 
     // Obtener los pagos actualmente seleccionados para este alumno en el ciclo
     final pagosActuales = List<int>.from(state.pagosDe(cicloId, alumnoId));
@@ -276,10 +269,9 @@ class EdoCtaListBloc extends Bloc<EdoCtaListEvent, EdoCtaListState> {
       if (pago.aceptaPagosDiversos && _politica.exigeOrdenAscendente) {
         // Si acepta pagos diversos, deseleccionar también los de ID mayor.
         //
-        // Acotado a `idsDisponibles` —mismo ciclo y mismo emisor—. El filtro
-        // por emisor hace falta porque la respuesta del servidor trae los
-        // pagos de todos: sin él, desmarcar aquí arrastraría renglones que
-        // pertenecen a otra pantalla y a otro contrato.
+        // Acotado a `idsDisponibles`, que es el ámbito entero del pago. Sin él
+        // el arrastre se llevaría por delante renglones de otro concepto, de
+        // otro ciclo o de la otra pantalla, que no dependen de éste para nada.
         pagosActuales.removeWhere(
           (id) => id >= pagoId && idsDisponibles.contains(id),
         );

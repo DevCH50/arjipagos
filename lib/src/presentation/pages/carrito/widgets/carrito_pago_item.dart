@@ -153,7 +153,7 @@ class CarritoPagoItem extends StatelessWidget {
       child: IconButton(
         // Candado en vez de un botón de quitar apagado: un control que no
         // responde parece un fallo, un candado explica que ese pago sostiene
-        // a los anteriores del ciclo.
+        // a los anteriores de su concepto.
         icon: Icon(
           puedeEliminar ? Icons.remove_circle_outline : Icons.lock_outline,
           color: puedeEliminar

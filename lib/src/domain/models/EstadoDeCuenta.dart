@@ -47,8 +47,8 @@ class EstadoDeCuenta {
 
   /// Ciclo escolar al que pertenece el pago.
   ///
-  /// Delimita el ámbito de las reglas de selección: el orden ascendente y el
-  /// arrastre al deseleccionar se evalúan solo entre pagos del mismo ciclo.
+  /// Es una de las cuatro piezas del ámbito de selección, junto con
+  /// [emisorFiscalId], [pagoId] y [deudaAnterior]. Ver `AmbitoDeSeleccion`.
   int cicloId;
 
   /// Nivel educativo del pago. Informativo: no interviene en la selección.
@@ -64,6 +64,36 @@ class EstadoDeCuenta {
   /// De ahí que un carrito **nunca** pueda mezclar emisores: sería una sola
   /// transacción hacia dos cuentas distintas.
   int emisorFiscalId;
+
+  /// Cargo del catálogo del que nace este renglón.
+  ///
+  /// Es **el concepto** a efectos de la selección: todas las parcialidades de
+  /// un mismo cargo comparten `pago_id`, y es la clave con la que el propio
+  /// backend las agrupa para calcular [numPagoActivo]. Sin él, dos conceptos
+  /// del mismo ciclo caían en una sola fila ordenada por id y el que tenía los
+  /// ids más altos quedaba detrás de todo el otro: a IVANA no la dejaba pagar
+  /// `EXTENSION DE HORARIO` sin liquidar antes `COLEGIATURA`.
+  ///
+  /// Llega desde el 08-sep-2026. Vale `0` con un backend que aún no lo mande,
+  /// y entonces todos los pagos vuelven a caer en un solo ámbito: exactamente
+  /// como se comportaba la app antes de tenerlo.
+  ///
+  /// El renglón trae además `concepto_id`, que **no se parsea a propósito**:
+  /// cada `pago_id` pertenece a un solo concepto, así que en la clave del
+  /// ámbito no distingue nada que `pagoId` no distinga ya, y aquí no se
+  /// guardan campos que nadie usa.
+  int pagoId;
+
+  /// `true` si el cargo es el arrastre de un ciclo anterior.
+  ///
+  /// Va en el ámbito de selección junto a [pagoId]: una deuda vieja puede vivir
+  /// en el ciclo en curso con el mismo cargo del catálogo que la deuda viva, y
+  /// son dos filas de parcialidades independientes. El backend no las separa
+  /// —agrupa solo por cargo y emisor—, así que si no entrara aquí, pagar la
+  /// deuda anterior sería requisito para tocar el mes en curso.
+  ///
+  /// Llega desde el 08-sep-2026 en los dos endpoints, pendientes y pagados.
+  bool deudaAnterior;
 
   String descripcionCorta;
   double total;
@@ -107,6 +137,10 @@ class EstadoDeCuenta {
     required this.estaDisponibleEnLaAppMovil,
     required this.facturaPdf,
     required this.facturaXml,
+    // Opcionales con valor por defecto: el backend los añadió después, y con
+    // uno que no los mande el ámbito de selección se colapsa al de antes.
+    this.pagoId = 0,
+    this.deudaAnterior = false,
     // Opcionales: solo existen en la respuesta de pagos realizados, así que
     // el flujo de pagos pendientes construye el modelo sin ellos.
     this.fechaDePago = '',
@@ -157,6 +191,9 @@ class EstadoDeCuenta {
     cicloId: _parseIntSeguro(json['ciclo_id']),
     nivelId: _parseIntSeguro(json['nivel_id']),
     emisorFiscalId: _parseEmisorFiscal(json['emisorfiscal_id']),
+    // Ausente o ilegible cae en 0 / false, que es el ámbito único de siempre.
+    pagoId: _parseIntSeguro(json['pago_id']),
+    deudaAnterior: json['deuda_anterior'] == true,
     descripcionCorta: json['descripcion_corta']?.toString() ?? '',
     total: (json['total'] ?? 0).toDouble(),
     totalFormatted: json['total_formatted']?.toString() ?? '',
@@ -180,6 +217,10 @@ class EstadoDeCuenta {
     'ciclo_id': cicloId,
     'nivel_id': nivelId,
     'emisorfiscal_id': emisorFiscalId,
+    // Solo lo manda el endpoint de pendientes: emitirlo siempre dejaría de ser
+    // inverso de `fromJson` en el flujo de pagos realizados, igual que pasa con
+    // los campos del ticket al revés.
+    if (pagoId > 0) 'pago_id': pagoId,
     'descripcion_corta': descripcionCorta,
     'total': total,
     'total_formatted': totalFormatted,
@@ -199,6 +240,8 @@ class EstadoDeCuenta {
     if (fechaDePago.isNotEmpty) 'fecha_de_pago': fechaDePago,
     if (ticketFolio.isNotEmpty) 'ticket_folio': ticketFolio,
     if (ticketUrl.isNotEmpty) 'ticket_url': ticketUrl,
+    // Al final del renglón y sin condición, como lo mandan los dos endpoints.
+    'deuda_anterior': deudaAnterior,
   };
 }
 

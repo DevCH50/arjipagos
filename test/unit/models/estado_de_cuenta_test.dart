@@ -242,6 +242,9 @@ void main() {
           'ciclo_id': 2024,
           'nivel_id': 1,
           'emisorfiscal_id': 1,
+          // Las dos claves del ámbito, tal como las manda el endpoint de
+          // pendientes desde el 08-sep-2026.
+          'pago_id': 900,
           'descripcion_corta': 'Colegiatura Enero 2024',
           'total': 5000.0,
           'total_formatted': '\$5,000.00',
@@ -254,6 +257,7 @@ void main() {
           'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
+          'deuda_anterior': false,
         };
 
         // Act
@@ -271,6 +275,7 @@ void main() {
           'ciclo_id': 2024,
           'nivel_id': 1,
           'emisorfiscal_id': 1,
+          'pago_id': 900,
           'descripcion_corta': 'Colegiatura Diciembre 2023',
           'total': 4500.0,
           'total_formatted': '\$4,500.00',
@@ -283,6 +288,9 @@ void main() {
           'esta_disponible_en_la_app_movil': true,
           'factura_pdf': '',
           'factura_xml': '',
+          // Un arrastre del ciclo anterior: comparte cargo con el renglón de
+          // arriba y aun así es otra fila de parcialidades.
+          'deuda_anterior': true,
         };
 
         // Act

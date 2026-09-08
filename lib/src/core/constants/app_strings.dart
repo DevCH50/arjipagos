@@ -152,10 +152,15 @@ class AppStrings {
   static const String edoCtaPagoNum = 'Pago #';
   static const String edoCtaVencido = 'Vencido';
   static const String edoCtaPendiente = 'Pendiente';
+  // El «de este concepto» no es un adorno: la regla se aplica por separado en
+  // cada concepto, así que un mensaje que hable de "los pagos anteriores" a
+  // secas manda al usuario a buscar renglones que no tienen nada que ver.
   static const String edoCtaInfoDialogMsg =
-      'Debes seleccionar primero los pagos anteriores para poder seleccionar este.';
+      'Debes seleccionar primero los pagos anteriores de este concepto para '
+      'poder seleccionar este.';
   static const String edoCtaOrdenPagosMsg =
-      'Debe seleccionar los pagos en orden (del más antiguo al más reciente)';
+      'Debe seleccionar los pagos de cada concepto en orden '
+      '(del más antiguo al más reciente)';
   static const String edoCtaGrupo = 'Grupo:';
   static const String edoCtaLimpiarSeleccion = 'Limpiar selección';
   static const String edoCtaReferenciaLimiteAlcanzado =
@@ -180,7 +185,7 @@ class AppStrings {
   static const String carritoProcesando = 'Procesando...';
   static const String carritoQuitar = 'Quitar';
   static const String carritoQuitarOrden =
-      'Debe quitar primero los pagos más recientes';
+      'Debe quitar primero los pagos más recientes de este concepto';
   static const String carritoReferenciaExcede =
       'La referencia de pago excede el límite permitido por la pasarela.\n\n'
       'Regresa a Estados de Cuenta y reduce la cantidad de pagos seleccionados.';

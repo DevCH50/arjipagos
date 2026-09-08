@@ -22,9 +22,9 @@ class EdoCtaListState extends Equatable {
 
   /// Pagos seleccionados: {cicloId: {alumnoId: [pagoId1, pagoId2, ...]}}
   ///
-  /// El ámbito del ciclo es lo que delimita las reglas de selección: el orden
-  /// ascendente se evalúa solo entre pagos del mismo ciclo, de modo que los
-  /// pagos de un ciclo nunca condicionan la selección de otro.
+  /// El ciclo y el alumno son las llaves del mapa; el ámbito donde se evalúan
+  /// las reglas de selección es más estrecho —añade emisor, concepto y tipo de
+  /// deuda— y lo define `ambitoDeSeleccion`.
   /// Los IDs de pagos están ordenados de menor a mayor.
   final Map<int, Map<int, List<int>>> pagosSeleccionados;
 
@@ -132,8 +132,10 @@ class EdoCtaListState extends Equatable {
   /// Verifica si un pago puede ser seleccionado (respetando el orden).
   ///
   /// Un pago solo puede seleccionarse si todos los pagos con ID menor
-  /// **del mismo ciclo** ya están seleccionados. [todosLosPagosIds] debe venir
-  /// filtrado al ciclo de [pagoId].
+  /// **de su mismo ámbito** ya están seleccionados. [todosLosPagosIds] debe
+  /// venir acotado con `idsDelMismoAmbitoQue`: ciclo, emisor, concepto y tipo
+  /// de deuda. Aquí no se vuelve a filtrar nada, así que una lista más ancha
+  /// bloquea renglones que no dependen de éste.
   bool puedeSelecionarPago(
     int cicloId,
     int alumnoId,

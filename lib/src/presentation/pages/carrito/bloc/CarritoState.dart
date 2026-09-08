@@ -2,6 +2,7 @@ import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
+import 'package:arjipagos/src/domain/utils/AmbitoDeSeleccion.dart';
 import 'package:equatable/equatable.dart';
 
 /// Estado del BLoC de Carrito.
@@ -219,25 +220,25 @@ class CarritoItem {
   }
 
   /// ID del pago más alto SOLO de los que tienen aceptaPagosDiversos = true,
-  /// **dentro del ciclo [cicloId]**.
+  /// **dentro del ámbito de [pago]**: ciclo, emisor, concepto y tipo de deuda.
   ///
-  /// El ámbito por ciclo evita que un pago de otro ciclo bloquee la eliminación:
-  /// cada ciclo tiene su propio máximo. Los pagos sin pagos diversos se pueden
-  /// eliminar libremente.
-  int? maxPagoIdConPagosDiversos(int cicloId) {
+  /// Cada ámbito tiene su propio máximo, así que quitar del carrito la última
+  /// parcialidad de un concepto no depende de lo que haya de los demás. Los
+  /// pagos sin pagos diversos se pueden eliminar libremente.
+  int? maxPagoIdConPagosDiversos(EstadoDeCuenta pago) {
     final pagosConDiversos = pagos
-        .where((p) => p.aceptaPagosDiversos && p.cicloId == cicloId)
-        .toList();
+        .where((p) => p.aceptaPagosDiversos)
+        .delMismoAmbitoQue(pago);
     if (pagosConDiversos.isEmpty) {
       return null;
     }
-    return pagosConDiversos.map((p) => p.id).reduce((a, b) => a > b ? a : b);
+    return pagosConDiversos.last.id;
   }
 
   /// Verifica si un pago específico se puede eliminar.
   /// - Si aceptaPagosDiversos = false: Siempre se puede eliminar
   /// - Si aceptaPagosDiversos = true: Solo si es el ID más alto de los que
-  ///   aceptan pagos diversos dentro de su mismo ciclo.
+  ///   aceptan pagos diversos dentro de su mismo ámbito.
   bool puedeEliminarPago(int pagoId) {
     final pago = pagos.firstWhere(
       (p) => p.id == pagoId,
@@ -250,7 +251,7 @@ class CarritoItem {
     }
 
     // Si acepta pagos diversos, solo puede eliminarse si es el ID más alto
-    // de su propio ciclo
-    return pagoId == maxPagoIdConPagosDiversos(pago.cicloId);
+    // de su propio ámbito
+    return pagoId == maxPagoIdConPagosDiversos(pago);
   }
 }

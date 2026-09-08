@@ -59,6 +59,15 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
+  /// Construye el AppBar con el botón de vaciar el carrito.
+  ///
+  /// **Aquí se habla con `_bloc`, nunca con `context.read`.** Este método lo
+  /// llama `build`, así que su `context` es el del `State`, que está **por
+  /// encima** del `BlocProvider.value` que monta el propio `build`: buscar el
+  /// BLoC desde ahí revienta con `ProviderNotFoundException`. Es exactamente
+  /// lo que le pasó al botón de recargar de `EdoCtaPage` el 08-sep-2026, y
+  /// aquí aplica igual porque el carrito también tiene una instancia por
+  /// emisor que vive en el registro, no en la raíz de la app.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: const Text(AppStrings.carritoTitle),
@@ -68,6 +77,7 @@ class _CarritoPageState extends State<CarritoPage> {
       ),
       actions: [
         BlocBuilder<CarritoBloc, CarritoState>(
+          bloc: _bloc,
           builder: (context, state) {
             if (state.cantidadPagos > 0) {
               return IconButton(
@@ -83,6 +93,10 @@ class _CarritoPageState extends State<CarritoPage> {
     );
   }
 
+  /// Pide confirmación antes de vaciar el carrito.
+  ///
+  /// [context] solo sirve para abrir el diálogo; el evento va directo a
+  /// `_bloc` por lo que explica `_buildAppBar`.
   void _confirmarVaciarCarrito(BuildContext context) {
     showDialog(
       context: context,
@@ -97,7 +111,7 @@ class _CarritoPageState extends State<CarritoPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<CarritoBloc>().add(const CarritoLimpiarEvent());
+              _bloc!.add(const CarritoLimpiarEvent());
             },
             child: const Text(AppStrings.carritoVaciar),
           ),

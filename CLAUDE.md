@@ -451,6 +451,36 @@ que tocar pantallas, widgets ni BLoCs: el registro instancia uno por cada emisor
    Mientras el contrato 2 siga con datos prestados, los dos emisores mandan el mismo `idexpress`
    ('928'), así que **`emisorfiscal_id` es lo único que los distingue** del lado del cobro.
 
+### En el AppBar de `EdoCtaPage` y `CarritoPage` no se usa `context.read`
+
+**Se habla con `_bloc`, la instancia que el `State` ya tiene. Usar `context.read` ahí es un
+crash inmediato**, y es consecuencia directa de que estos dos BLoC vivan en el registro y no en
+la raíz.
+
+`_buildAppBar()` es un método del `State`, así que el `context` que ve dentro es el del `State`,
+y ése está **por encima** del `BlocProvider.value` que monta el propio `build`. La búsqueda no
+encuentra nada:
+
+```
+ProviderNotFoundException: Could not find the correct Provider<EdoCtaListBloc>
+  #3 _EdoCtaPageState._buildAppBar.<anonymous closure> (EdoCtaPage.dart:132)
+```
+
+Pasó el 2026-09-08: el botón de recargar tiraba la pantalla en las dos entradas del menú. Lo
+desconcertante es que el `BlocBuilder` de al lado sí funciona —un widget se coloca donde se
+usa, no donde se construye—, así que el botón de limpiar selección aparecía y desaparecía bien
+mientras el otro reventaba. Y no se vio venir porque mientras `EdoCtaListBloc` colgaba de
+`blocProviders` la búsqueda encontraba el de la raíz.
+
+Los `BlocBuilder` del AppBar llevan `bloc:` por lo mismo: ahí dentro nada depende del provider.
+El resto de la pantalla —`EdoCtaBody`, `TotalSeleccionadoBar`, `PagoItem`, `CarritoBody`…— son
+widgets aparte que sí quedan debajo del provider, y siguen usando `context.read` sin problema.
+
+Test guardián: `test/unit/appbar_encuentra_su_bloc_test.dart`, que **monta la pantalla y pulsa
+el botón**. Lleva anotadas sus dos trampas: los BLoC hay que crearlos dentro del `testWidgets`
+—uno creado en `setUp` nace fuera de la zona `FakeAsync` y ningún `pump` resuelve sus
+`Future`— y **no vale `pumpAndSettle`**, porque el punto del alumno anima sin parar.
+
 ### ⚠️ El contrato 2 lleva datos prestados del 1
 
 `ConfiguracionAdquira.ef2` usa hoy el `endpoint` y el `idExpress` del emisor 1, puestos a
@@ -670,7 +700,18 @@ Reintentar solo cuando AGP estable soporte API 37 **y** el plugin declare la ver
   guardián (`test/unit/services/services_no_filtran_excepciones_test.dart`) que falla si
   reaparece la fuga. Motivo: el 2026-08-13 un `HandshakeException` por cadena TLS incompleta
   llegó literal a la pantalla de login.
-- La selección de pagos (Estados de Cuenta y Carrito) siempre se evalúa con ámbito de `ciclo_id`: el orden ascendente al seleccionar, el arrastre al deseleccionar y el poder quitar del carrito se aplican dentro de cada ciclo por separado. Los pagos de un ciclo nunca condicionan la selección de otro. La estructura de selección es `{cicloId: {alumnoId: [pagoId]}}` y se persiste vía `SeleccionPagosStorage`.
+- La selección de pagos (Estados de Cuenta y Carrito) se evalúa **siempre con el ámbito
+  completo que define `ambitoDeSeleccion` (`lib/src/domain/utils/AmbitoDeSeleccion.dart`):
+  ciclo, emisor fiscal, concepto (`pagoId`) y tipo de deuda (`deudaAnterior`)**. El orden
+  ascendente al seleccionar, el arrastre al deseleccionar y el poder quitar del carrito se
+  aplican dentro de cada ámbito por separado, y nada de fuera lo condiciona. Para acotar una
+  lista está `idsDelMismoAmbitoQue`; no rehacer el filtro a mano en cada pantalla, que es como
+  se acaba recortando la clave. **Cada vez que se ha recortado ha salido un fallo:** al mezclar
+  ciclos, luego al mezclar emisores, y el 2026-09-08 al mezclar conceptos —IVANA no podía pagar
+  su extensión de horario sin liquidar toda la colegiatura, porque los ids de ésta eran más
+  bajos—. La estructura persistida sigue siendo `{cicloId: {alumnoId: [pagoId]}}` vía
+  `SeleccionPagosStorage`: ciclo y alumno son las llaves del mapa, el ámbito es más estrecho.
+  Test: `test/unit/seleccion_por_concepto_test.dart`.
 - No te metas al backend a menos que el usuario te lo pida.
 - Revisa minuciosamente que en iOS y Android no tenga fallos o errores, que todo funcione  
   perfectamente bien, y que se vea en todas los distintos tamaños de pantallas tando de iOS como  

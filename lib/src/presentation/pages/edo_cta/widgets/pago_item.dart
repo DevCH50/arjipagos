@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
+import 'package:arjipagos/src/domain/utils/AmbitoDeSeleccion.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListState.dart';
@@ -276,14 +277,14 @@ class PagoItem extends StatelessWidget {
 
   /// Calcula si el pago puede ser seleccionado según las reglas.
   ///
-  /// El orden ascendente se evalúa solo entre pagos del mismo ciclo, por eso
-  /// [pagosDisponibles] se filtra por `cicloId` antes de consultar al estado.
+  /// El orden ascendente se evalúa solo dentro del ámbito del pago —ciclo,
+  /// emisor, concepto y tipo de deuda—, por eso [pagosDisponibles] se acota con
+  /// `idsDelMismoAmbitoQue` antes de consultar al estado. Es el mismo recorte
+  /// que hace `EdoCtaListBloc`: si aquí fuera otro, el candado y el toque
+  /// dirían cosas distintas.
   bool _calcularPuedeSeleccionar(EdoCtaListState state) {
     if (pago.aceptaPagosDiversos) {
-      final idsDisponibles = pagosDisponibles
-          .where((e) => e.cicloId == pago.cicloId)
-          .map((e) => e.id)
-          .toList();
+      final idsDisponibles = pagosDisponibles.idsDelMismoAmbitoQue(pago);
       // Si el emisor no exige orden, no hay nada que bloquear.
       if (!ConfiguracionAdquira.para(
         state.emisorFiscalActivo,

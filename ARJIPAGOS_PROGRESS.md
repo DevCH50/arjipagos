@@ -4181,3 +4181,96 @@ provisional (`CarritoBloc.dart:230`) tampoco se ve ahí; para eso hace falta `fl
   Mac. La app se ejecutó en el iPhone 17 Pro Max, pero no se verificó explícitamente que el
   contador del icono suba con el push y baje al marcar como leída.
 - **Android de la 1.0.29+38:** no se ha hecho. El APK/AAB va en la Linux.
+
+---
+
+## Sesión 2026-09-08 (Linux) — La selección se hace por concepto, y el botón de recargar vuelve a funcionar
+
+Dos cosas, con el mismo usuario de prueba (`ArjiNIP113`, alumna IVANA) y verificadas en el
+Oppo CPH2639 con `flutter run`.
+
+### 1. El ámbito de selección ahora incluye el concepto
+
+**El fallo.** A IVANA no la dejaba pagar `EXTENSION DE HORARIO PREESCOLAR` sin liquidar antes
+toda la `COLEGIATURA PREESCOLAR`. Son dos cargos distintos del catálogo, y ninguno depende del
+otro. Pasaba porque las parcialidades de colegiatura tienen ids más bajos que las de extensión:
+al evaluar el orden ascendente sobre el ciclo entero, todas las de colegiatura quedaban "antes".
+
+**El arreglo.** `lib/src/domain/utils/AmbitoDeSeleccion.dart`, nuevo. La clave del ámbito pasa
+a ser `ciclo-emisor-concepto-deudaAnterior`:
+
+| Pieza | Por qué |
+| --- | --- |
+| `cicloId` | Ya estaba: los pagos de un ciclo no condicionan los de otro |
+| `emisorFiscalId` | Ya estaba: cada emisor es otra pantalla y otro carrito |
+| `pagoId` | **Nuevo.** Es el concepto: el backend agrupa las parcialidades por ahí |
+| `deudaAnterior` | **Nuevo.** Un arrastre puede compartir cargo con la deuda viva y son filas distintas |
+
+`EstadoDeCuenta` gana `pagoId` y `deudaAnterior`, tolerantes a que no lleguen (`0` / `false`),
+y en ese caso el ámbito se colapsa al de antes. La extensión `delMismoAmbitoQue` /
+`idsDelMismoAmbitoQue` evita repetir el filtro en cada pantalla; la usan `EdoCtaListBloc`,
+`PagoItem` y `CarritoItem.maxPagoIdConPagosDiversos`.
+
+Los tres mensajes que hablaban de "los pagos anteriores" ahora dicen "de este concepto":
+mandar al usuario a buscar renglones que no tienen nada que ver era peor que no decir nada.
+
+**Verificado en el Oppo:** `EXTENSION DE HORARIO … SEP 26 (Pago #1)` sale marcable con la
+colegiatura entera sin pagar; al marcarlo se abre su `Pago #2` y la colegiatura sigue en su
+propia fila. El backend ya manda `pago_id`.
+
+Test: `test/unit/seleccion_por_concepto_test.dart`.
+
+### 2. El botón de recargar de Estados de Cuenta tiraba la pantalla
+
+Lo reportó Carlos en esta sesión. Reproducido con `flutter run`:
+
+```
+ProviderNotFoundException: Could not find the correct Provider<EdoCtaListBloc>
+  #3 _EdoCtaPageState._buildAppBar.<anonymous closure> (EdoCtaPage.dart:132)
+```
+
+**La causa.** `_buildAppBar()` es un método del `State`, así que el `context` que ve es el del
+`State`, **por encima** del `BlocProvider.value` que monta el propio `build`. El `BlocBuilder`
+de al lado sí funcionaba —un widget se coloca donde se usa, no donde se construye—, y por eso
+el botón de limpiar selección aparecía y desaparecía bien mientras el de recargar reventaba.
+
+**Por qué no se vio venir.** Mientras `EdoCtaListBloc` colgaba de `blocProviders`, en la raíz,
+la búsqueda desde el `State` encontraba el de la raíz. Se rompió al pasar a haber uno por
+emisor, que vive en el registro. `CarritoPage` comparte esa forma exacta, así que se blindó
+igual aunque su botón no estuviera roto.
+
+**El arreglo.** En las dos pantallas el `AppBar` habla con `_bloc`, la instancia que el `State`
+ya tiene, y el `BlocBuilder` lleva `bloc:`. Dentro del AppBar nada depende del provider.
+
+**Test guardián:** `test/unit/appbar_encuentra_su_bloc_test.dart`. Monta la pantalla y **pulsa
+el botón de verdad** —un test que buscara `context.read` en el código no cazaría la siguiente
+variante del mismo error—. Comprobado que falla, con la `ProviderNotFoundException` exacta, al
+devolver `EdoCtaPage` a `context.read`.
+
+Dos trampas de ese test, anotadas ahí mismo porque cuestan una tarde: los BLoC hay que crearlos
+**dentro** del `testWidgets` (uno creado en `setUp` nace fuera de la zona `FakeAsync` y sus
+`Future` no los resuelve ningún `pump`), y **no vale `pumpAndSettle`**, porque el punto del
+alumno anima sin parar y el test muere por tiempo agotado.
+
+### Auditoría de los 14 botones de recargar de la app
+
+Carlos pidió revisarlos todos. Los BLoC de la raíz (`HomeBloc`, `FacturaBloc`,
+`EdoCtaPagadosBloc`, `NotificacionBloc`) son inmunes a esto: se encuentran desde cualquier
+contexto. Solo los dos por emisor eran vulnerables.
+
+| Botón | Estado |
+| --- | --- |
+| Estados de Cuenta / Otros pagos — barra | **Estaba roto.** Arreglado y probado en dispositivo |
+| Estados de Cuenta — limpiar selección | Probado en dispositivo |
+| Estado vacío de Estados de Cuenta — Reintentar | Probado en dispositivo |
+| Estado de error de Estados de Cuenta | Mismo sitio del árbol que el vacío, bajo el provider |
+| Carrito — vaciar | Blindado igual; probado en dispositivo, con diálogo y confirmación |
+| Pagos Realizados, Facturas, Notificaciones, Aviso de Privacidad | Probados en dispositivo |
+| Reintentar de la webview de pago | Recibe el callback por parámetro, no busca provider |
+| `HomesPage` (`home/HomePage.dart`) | **No se puede probar: nadie llega a esa pantalla** |
+
+**`HomesPage` está registrada en `main.dart` como ruta `'Homes'` y ningún sitio de `lib/`
+navega a ella.** Su botón usa `HomeBloc`, que sí cuelga de la raíz, así que es seguro. Queda
+para que Carlos decida si la pantalla sigue haciendo falta; no se toca sin preguntar.
+
+Analizador limpio y **972 tests en verde**.

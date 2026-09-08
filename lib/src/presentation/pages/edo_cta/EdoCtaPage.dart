@@ -101,6 +101,15 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
   /// que le queda al usuario para volver a pedir sus datos cuando la pantalla no
   /// muestra nada. El de limpiar selección sigue apareciendo solo si hay algo
   /// seleccionado, que es cuando significa algo.
+  ///
+  /// **Aquí se habla con `_bloc`, nunca con `context.read`.** Este método lo
+  /// llama `build`, así que el `context` que ve es el del `State`, y ése está
+  /// **por encima** del `BlocProvider.value` que el propio `build` monta: la
+  /// búsqueda no encuentra nada y revienta con `ProviderNotFoundException`.
+  /// Pasó el 08-sep-2026 — el botón de recargar tiraba la pantalla en las dos
+  /// entradas del menú— y no se veía venir porque `EdoCtaListBloc` colgaba de
+  /// la raíz hasta que pasó a haber uno por emisor. El `BlocBuilder` lleva
+  /// `bloc:` por lo mismo: dentro del AppBar nada depende del provider.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(widget.titulo),
@@ -110,16 +119,14 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
       ),
       actions: [
         BlocBuilder<EdoCtaListBloc, EdoCtaListState>(
+          bloc: _bloc,
           builder: (context, state) {
             if (state.cantidadPagosSeleccionados > 0) {
               return IconButton(
                 icon: const Icon(Icons.clear_all),
                 tooltip: AppStrings.edoCtaLimpiarSeleccion,
-                onPressed: () {
-                  context.read<EdoCtaListBloc>().add(
-                    const EdoCtaLimpiarSeleccionEvent(),
-                  );
-                },
+                onPressed: () =>
+                    _bloc!.add(const EdoCtaLimpiarSeleccionEvent()),
               );
             }
             return const SizedBox.shrink();
@@ -128,9 +135,7 @@ class _EdoCtaPageState extends State<EdoCtaPage> {
         IconButton(
           icon: const Icon(Icons.refresh),
           tooltip: AppStrings.edoCtaActualizar,
-          onPressed: () {
-            context.read<EdoCtaListBloc>().add(const EdoCtaListRefreshEvent());
-          },
+          onPressed: () => _bloc!.add(const EdoCtaListRefreshEvent()),
         ),
       ],
     );
