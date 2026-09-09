@@ -134,13 +134,16 @@ void main() {
         expect(pago.id, equals(15173));
       });
 
-      test('tolera la ausencia de factura_pdf y factura_xml', () {
+      // `factura_pdf` y `factura_xml` se retiraron del modelo el 2026-09-09:
+      // las facturas van por su propio endpoint. Lo que se comprueba ahora es
+      // que el renglón de un pago realizado se parsea entero sin ellos.
+      test('parsea el pago realizado sin los campos de factura', () {
         // Act
         final pago = EstadoDeCuenta.fromJson(TestPagoRealizado.conTicketJson);
 
         // Assert
-        expect(pago.facturaPdf, isEmpty);
-        expect(pago.facturaXml, isEmpty);
+        expect(pago.tieneTicket, isTrue);
+        expect(pago.ticketFolio, isNotEmpty);
       });
     });
 
@@ -155,7 +158,6 @@ void main() {
         expect(respuesta.familia, equals('DAMASCO CANELLA'));
 
         final Alumno alumno = respuesta.alumnos.first;
-        expect(alumno.familiaId, equals(1384));
         expect(alumno.grupo, isEmpty);
         expect(alumno.estadoDeCuenta, hasLength(2));
         expect(

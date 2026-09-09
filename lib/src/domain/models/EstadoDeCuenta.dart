@@ -3,8 +3,8 @@
 ///
 /// El operador `??` por sí solo no basta: solo atrapa `null`, así que un
 /// String asignado a un campo `int` reventaría el parseo del estado de cuenta
-/// completo con un `TypeError`. El ciclo no llega tipado de forma confiable
-/// (ver `EstadosDeCuentaResponse.fromJson`, que hace `.toString()`).
+/// completo con un `TypeError`. El ciclo no llega tipado de forma confiable:
+/// unas respuestas lo mandan como número y otras como texto.
 /// Emisor fiscal que se asume cuando el backend no manda `emisorfiscal_id`.
 ///
 /// Vive en el dominio —y no en `ConfiguracionAdquira`, que lo reexporta— para
@@ -51,9 +51,6 @@ class EstadoDeCuenta {
   /// [emisorFiscalId], [pagoId] y [deudaAnterior]. Ver `AmbitoDeSeleccion`.
   int cicloId;
 
-  /// Nivel educativo del pago. Informativo: no interviene en la selección.
-  int nivelId;
-
   /// Emisor fiscal que cobra este pago.
   ///
   /// Decide **dos cosas a la vez**: en qué pantalla aparece el renglón
@@ -69,7 +66,7 @@ class EstadoDeCuenta {
   ///
   /// Es **el concepto** a efectos de la selección: todas las parcialidades de
   /// un mismo cargo comparten `pago_id`, y es la clave con la que el propio
-  /// backend las agrupa para calcular [numPagoActivo]. Sin él, dos conceptos
+  /// backend las agrupa en parcialidades. Sin él, dos conceptos
   /// del mismo ciclo caían en una sola fila ordenada por id y el que tenía los
   /// ids más altos quedaba detrás de todo el otro: a IVANA no la dejaba pagar
   /// `EXTENSION DE HORARIO` sin liquidar antes `COLEGIATURA`.
@@ -101,12 +98,8 @@ class EstadoDeCuenta {
   String fechaVencimiento;
   EstadoPago estadoPago;
   int numPago;
-  bool numPagoActivo;
   bool aceptaPagosDiversos;
   bool estaDisponibleEnInternet;
-  bool estaDisponibleEnLaAppMovil;
-  String facturaPdf;
-  String facturaXml;
 
   /// Fecha y hora en que se liquidó el pago (`dd-MM-yyyy HH:mm:ss`).
   ///
@@ -123,7 +116,6 @@ class EstadoDeCuenta {
   EstadoDeCuenta({
     required this.id,
     required this.cicloId,
-    required this.nivelId,
     required this.emisorFiscalId,
     required this.descripcionCorta,
     required this.total,
@@ -131,12 +123,8 @@ class EstadoDeCuenta {
     required this.fechaVencimiento,
     required this.estadoPago,
     required this.numPago,
-    required this.numPagoActivo,
     required this.aceptaPagosDiversos,
     required this.estaDisponibleEnInternet,
-    required this.estaDisponibleEnLaAppMovil,
-    required this.facturaPdf,
-    required this.facturaXml,
     // Opcionales con valor por defecto: el backend los añadió después, y con
     // uno que no los mande el ámbito de selección se colapsa al de antes.
     this.pagoId = 0,
@@ -189,7 +177,6 @@ class EstadoDeCuenta {
   factory EstadoDeCuenta.fromJson(Map<String, dynamic> json) => EstadoDeCuenta(
     id: _parseIntSeguro(json['id']),
     cicloId: _parseIntSeguro(json['ciclo_id']),
-    nivelId: _parseIntSeguro(json['nivel_id']),
     emisorFiscalId: _parseEmisorFiscal(json['emisorfiscal_id']),
     // Ausente o ilegible cae en 0 / false, que es el ámbito único de siempre.
     pagoId: _parseIntSeguro(json['pago_id']),
@@ -201,12 +188,8 @@ class EstadoDeCuenta {
     estadoPago:
         estadoPagoValues.map[json['estadoPago']] ?? EstadoPago.pendiente,
     numPago: json['num_pago'] ?? 0,
-    numPagoActivo: json['num_pago_activo'] ?? false,
     aceptaPagosDiversos: json['acepta_pagos_diversos'] ?? true,
     estaDisponibleEnInternet: json['esta_disponible_en_internet'] ?? true,
-    estaDisponibleEnLaAppMovil: json['esta_disponible_en_la_app_movil'] ?? true,
-    facturaPdf: json['factura_pdf']?.toString() ?? '',
-    facturaXml: json['factura_xml']?.toString() ?? '',
     fechaDePago: json['fecha_de_pago']?.toString() ?? '',
     ticketFolio: json['ticket_folio']?.toString() ?? '',
     ticketUrl: json['ticket_url']?.toString() ?? '',
@@ -215,7 +198,6 @@ class EstadoDeCuenta {
   Map<String, dynamic> toJson() => {
     'id': id,
     'ciclo_id': cicloId,
-    'nivel_id': nivelId,
     'emisorfiscal_id': emisorFiscalId,
     // Solo lo manda el endpoint de pendientes: emitirlo siempre dejaría de ser
     // inverso de `fromJson` en el flujo de pagos realizados, igual que pasa con
@@ -227,12 +209,8 @@ class EstadoDeCuenta {
     'fecha_vencimiento': fechaVencimiento,
     'estadoPago': estadoPagoValues.reverse[estadoPago],
     'num_pago': numPago,
-    'num_pago_activo': numPagoActivo,
     'acepta_pagos_diversos': aceptaPagosDiversos,
     'esta_disponible_en_internet': estaDisponibleEnInternet,
-    'esta_disponible_en_la_app_movil': estaDisponibleEnLaAppMovil,
-    'factura_pdf': facturaPdf,
-    'factura_xml': facturaXml,
     // Campos exclusivos de los pagos realizados. El endpoint de pagos
     // pendientes no los envía, así que solo se serializan cuando traen
     // valor: de lo contrario `fromJson`/`toJson` dejarían de ser inversas

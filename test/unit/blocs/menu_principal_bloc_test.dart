@@ -217,9 +217,7 @@ void main() {
           when(() => mockGetEstadosDeCuenta.run()).thenAnswer(
             (_) async => Success(
               EstadosDeCuentaResponse(
-                familiaId: '1',
                 familia: 'Familia López García',
-                cicloPredeterminadoId: '2024',
                 alumnos: [testAlumnoActivo],
                 success: true,
                 message: '',

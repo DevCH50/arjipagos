@@ -4603,3 +4603,149 @@ Lo que sí sobra: las cuatro becas, `factura_pdf`/`factura_xml`, `nivel_id`, `nu
 
 Analizador limpio y **927 tests en verde**. Bajó desde 937 porque se fueron los tests del
 Registro, no porque falle nada. DI regenerado.
+
+---
+
+## 2026-09-09 — El backend recortó el JSON, y tres modelos se habrían caído
+
+El backend aplicó lo pedido en `CAMPOS_JSON_QUE_LA_APP_NO_USA.md`: dejó de mandar los campos
+que la app no usaba, conservando solo los datos de perfil del login. Al repasar los modelos
+para quitar el código muerto aparecieron **tres fallos duros**, no simple basura.
+
+### Lo que se habría roto
+
+`fromJson` asignaba el valor a un campo **no nulable** sin `??` ni `.toString()`. Con la clave
+ausente, `dynamic` null contra `String`/`int` es un `TypeError` que revienta el parseo entero:
+
+| Modelo | Campo | Consecuencia |
+| --- | --- | --- |
+| `AuthResponse` | `token_type` → `String` | **El login entero.** Ningún usuario habría podido entrar |
+| `FacturaResponse` | `ciclo_predeterminado_id`, `familia_id` → `int` | Facturas en «Error al cargar» |
+| `Factura` | `directorio`, `pdf`, `xml` → `String` | Ídem |
+
+`EstadosDeCuentaResponse` no reventaba pero hacía `.toString()` sobre null: `cicloPredeterminadoId`
+y `familiaId` se habrían quedado con el texto literal `'null'`. Nadie los leía, pero es la misma
+clase de fallo silencioso.
+
+**La lección:** un campo que «solo sobra» deja de sobrar en cuanto el backend lo quita. Al pedir
+un recorte del JSON hay que revisar el parseo, no solo los usos.
+
+### Lo retirado
+
+Se quitaron de los modelos —ninguno tenía un solo uso en `lib/`—:
+
+| Modelo | Campos |
+| --- | --- |
+| `Alumno` | `familiaId`, `apPaterno`, `apMaterno`, las cuatro becas, `grupoId` |
+| `EstadoDeCuenta` | `nivelId`, `numPagoActivo`, `estaDisponibleEnLaAppMovil`, `facturaPdf`, `facturaXml` |
+| `EstadosDeCuentaResponse` | `cicloPredeterminadoId`, `familiaId` |
+| `FacturaResponse` | `cicloPredeterminadoId`, `familiaId` |
+| `Factura` | `directorio`, `pdf`, `xml` |
+| `AuthResponse` | `tokenType` |
+| `Notificacion` | `tags`, `userId` |
+
+**`User` no se tocó**: sus `apPaterno`/`apMaterno` son datos de perfil del login y el backend los
+sigue mandando. **`estaDisponibleEnInternet` tampoco**: es el que filtra las listas.
+
+Quitar el campo del modelo, en vez de hacerlo tolerante, deja la app inmune en los dos sentidos:
+`fromJson` ignora una clave de más y no depende de una que falte.
+
+### Dos guardianes nuevos
+
+En `alumno_test.dart` y `estado_de_cuenta_test.dart`, «ignora los campos que el backend ya no
+manda»: parsean la respuesta **de antes** del recorte —con todo lo retirado dentro— y comprueban
+que lo útil se lee igual y que `toJson()` no resucita ninguna clave muerta.
+
+### Verificado
+
+Analizador limpio y **927 tests en verde**. Y en el Oppo CPH2639 (Android 16), con
+`flutter run` contra producción y el backend ya recortado, recorriendo la app entera:
+
+- La respuesta llega sin los campos: `{"alumno_id":137,"alumno":"…","nombre":"ANDREA",
+  "es_baja":false,"familia":"…","grupo":"KIND. 3 A","url_photo":"…","estado_de_cuenta":[…]}`
+- Login, Menú Principal, Estados de Cuenta, selección y candados, Carrito, Otros pagos (estado
+  vacío correcto, no «Error al cargar»), Pagos Realizados, visor de ticket PDF, Facturas,
+  descarga y compartir del ZIP, Notificaciones, menú lateral, Cambiar Contraseña, Aviso de
+  Privacidad, y cerrar sesión + volver a entrar.
+- El botón de recargar del AppBar sigue sin reventar (el fallo del 08-sep).
+- Claro y oscuro, los dos.
+- **Cero excepciones, cero overflows y cero errores en todo el registro.**
+
+No se probó «Pagar»: abre la pasarela real de Adquira con dinero de verdad.
+
+Sin datos en dispositivo quedó solo el parseo de notificaciones (`tags`/`user_id`), porque el
+usuario de prueba no tiene ninguna. Cubierto por tests.
+
+### El backend revirtió el recorte, y los cambios se quedan
+
+Carlos pidió deshacerlo el mismo día: **la app que está en las tiendas no aguanta el JSON
+recortado**. Es el fallo de arriba visto desde el otro lado — la 1.0.29+38 y anteriores leen
+`token_type` en un `String` no nulable, así que el recorte les habría roto el login a todos los
+usuarios ya instalados.
+
+**Los cambios de esta sesión NO se deshacen.** Van en la dirección contraria: `fromJson` ya no
+lee esas claves, así que le da igual que estén o que falten. Verificado en el Oppo con el backend
+ya revertido —vuelven `ciclo_predeterminado_id`, `familia_id`, `ap_paterno`, las cuatro becas y
+`grupo_id`—: login, estados de cuenta, pagos realizados, facturas y banners cargan, y **cero
+excepciones** en el registro.
+
+**El orden para cuando se retome, y no es «publicar y ya»:**
+
+1. Publicar esta versión en las dos tiendas.
+2. **Esperar a que los usuarios actualicen.** Publicar no desinstala nada: quien siga en una
+   versión vieja se queda sin poder entrar en cuanto el backend quite `token_type`.
+3. Forzar el piso con la política de versión que la app ya consulta
+   (`GET /api/v1/app/version?plataforma=android` → `build mínimo`, hoy en `null`). Poniendo ahí
+   el build de esta versión, quien no actualice ve la pantalla de actualización obligatoria en
+   vez de un login roto.
+4. Recién entonces, aplicar el recorte de `CAMPOS_JSON_QUE_LA_APP_NO_USA.md`.
+
+El paso 3 es el que hace segura la operación. Sin él, el recorte deja fuera a quien no actualizó.
+
+---
+
+## 2026-09-09 — Release 1.0.30+39
+
+**Por qué esta versión y no otra.** `/api/v1/app/version` devolvió `version_recomendada: 1.0.29`
+para **android y ios**, así que la 1.0.29 ya está publicada en las dos tiendas y la del `pubspec`
+(1.0.29+38) no era mayor. Por la regla de versionado: patch +1 y build +1 → **1.0.30+39**.
+
+**Qué lleva.** La retirada de los campos que la app no usaba, con los tres parseos no nulables
+que se habrían caído cuando el backend recorte el JSON. Es justo la versión que hay que publicar
+**antes** de volver a aplicar el recorte (ver la sección anterior sobre el orden).
+
+**Dependencias: no se subieron, y es decisión tomada.** Había parches y menores dentro de los
+rangos (`firebase_core` 4.13→4.14, `firebase_messaging` 16.5→16.6, `local_auth_android/darwin`,
+`flutter_widget_from_html_core` 0.17.2→0.17.4, `build_runner`, `flutter_secure_storage`
+10.3.1→10.3.2). Entre ellas van **push y biometría**: meterlas hoy pondría plugins nativos sin
+probar en dispositivo dentro de una release ya verificada. Se suben después, con tiempo de
+volver al Oppo. Las bloqueadas (`flutter_secure_storage` 11, `injectable_generator` 3.1,
+`cached_network_image` 4) siguen sin tocarse.
+
+### Verificado antes de publicar
+
+| Comprobación | Resultado |
+| --- | --- |
+| `flutter analyze` | limpio |
+| `flutter test` | **927 en verde** |
+| DI regenerado (`build_runner`) | sin cambios: ya estaba al día |
+| `ApiConfig.isProduction` | `true` |
+| Permiso INTERNET (Android) | presente, con los otros 8 |
+| `NSFaceIDUsageDescription` (iOS) | presente — sin ella iOS mata el proceso |
+| `NSCamera`/`NSPhotoLibrary` (iOS) | ausentes **a propósito**: no hay plugin de cámara ni galería |
+| Orientación | `UIInterfaceOrientationPortrait` y `portraitUp`, coherentes |
+| Catálogo de iconos iOS | 25 entradas, 21 PNG, **0 huérfanos y 0 fantasmas** |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | 2630 los dos |
+| Scheme: Launch y Archive | `Release` los dos |
+| Bloques del `Podfile` (dwarf, iOS 15, 2630) | los tres en su sitio |
+
+**El formato no se tocó.** `dart format` cambiaría **195 de 358 archivos**: el repo nunca ha
+seguido ese estilo, y reformatearlo enterraría el cambio real en un diff ajeno. Si algún día se
+adopta, que sea en un commit propio y solo.
+
+### Lo que NO se pudo verificar aquí
+
+**iOS solo está comprobado de forma estática** —Info.plist, catálogo de iconos, scheme, Podfile,
+analizador y tests, que son de plataforma neutra—. El build, el Archive y la prueba en iPhone
+**exigen la Mac**: esta máquina es la de Android y ni siquiera tiene el toolchain de iOS. Ver la
+sección «Dos máquinas».

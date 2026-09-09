@@ -773,6 +773,10 @@ Reintentar solo cuando AGP estable soporte API 37 **y** el plugin declare la ver
   `SeleccionPagosStorage`: ciclo y alumno son las llaves del mapa, el ámbito es más estrecho.
   Test: `test/unit/seleccion_por_concepto_test.dart`.
 - No te metas al backend a menos que el usuario te lo pida.
+- **NUNCA hacer `commit`, `push` ni un release por iniciativa propia.** Se preparan los cambios,
+  se verifican y se informa; el `git commit`, el `git push` y cualquier build de release solo se
+  ejecutan cuando Carlos lo pide explícitamente en ese momento. Una autorización anterior no
+  vale para la siguiente vez.
 - Revisa minuciosamente que en iOS y Android no tenga fallos o errores, que todo funcione  
   perfectamente bien, y que se vea en todas los distintos tamaños de pantallas tando de iOS como  
   de Android

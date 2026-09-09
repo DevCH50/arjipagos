@@ -76,8 +76,6 @@ void main() {
       (_) async => Success(
         EstadosDeCuentaResponse(
           alumnos: [alumno],
-          cicloPredeterminadoId: '$ciclo',
-          familiaId: '1',
           familia: 'Familia Test',
           success: true,
           message: '',

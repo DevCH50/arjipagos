@@ -63,8 +63,6 @@ void main() {
             (_) async => Success(
               EstadosDeCuentaResponse(
                 alumnos: [alumnoTest],
-                cicloPredeterminadoId: '1',
-                familiaId: '1',
                 familia: 'Familia Test',
                 success: true,
                 message: '',
@@ -288,18 +286,10 @@ void main() {
       () {
         final alumno = Alumno(
           alumnoId: 1,
-          familiaId: 1,
           familia: 'Familia Test',
           alumno: 'Test',
-          apPaterno: '',
-          apMaterno: '',
           nombre: 'Test',
-          becaSep: '',
-          becaArji: '',
-          becaBach: '',
-          becaSp: '',
           esBaja: false,
-          grupoId: 1,
           grupo: '',
           urlPhoto: '',
           estadoDeCuenta: TestEstadoDeCuenta.listaDosCiclos,

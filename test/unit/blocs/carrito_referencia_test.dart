@@ -45,7 +45,6 @@ EstadoDeCuenta _pago({
 }) => EstadoDeCuenta(
   id: id,
   cicloId: cicloId,
-  nivelId: 1,
   emisorFiscalId: emisorFiscalId,
   descripcionCorta: 'Pago $id',
   total: 1000.0,
@@ -53,29 +52,17 @@ EstadoDeCuenta _pago({
   fechaVencimiento: '2026-12-31',
   estadoPago: EstadoPago.pendiente,
   numPago: 1,
-  numPagoActivo: true,
   aceptaPagosDiversos: false,
   estaDisponibleEnInternet: true,
-  estaDisponibleEnLaAppMovil: true,
-  facturaPdf: '',
-  facturaXml: '',
 );
 
 /// Alumno de prueba sin pagos. Se le cuelgan con `conEstadoDeCuenta`.
 Alumno _alumnoBase(int alumnoId) => Alumno(
   alumnoId: alumnoId,
-  familiaId: 1,
   familia: 'Familia Test',
   alumno: 'Test Alumno',
-  apPaterno: 'Test',
-  apMaterno: 'Test',
   nombre: 'Test',
-  becaSep: 'No',
-  becaArji: 'No',
-  becaBach: 'No',
-  becaSp: 'No',
   esBaja: false,
-  grupoId: 1,
   grupo: '1ro A',
   urlPhoto: '',
   estadoDeCuenta: const [],
@@ -126,8 +113,6 @@ CarritoState _estadoCon(
 /// Construye un [EstadosDeCuentaResponse] con el alumno indicado.
 EstadosDeCuentaResponse _response(Alumno alumno) => EstadosDeCuentaResponse(
   alumnos: [alumno],
-  cicloPredeterminadoId: '1',
-  familiaId: '1',
   familia: 'Familia Test',
   success: true,
   message: '',

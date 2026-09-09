@@ -17,8 +17,6 @@ import '../../helpers/mocks.dart';
 
 /// Respuesta de facturas de prueba (lista vacía, suficiente para el flujo).
 FacturaResponse get _facturaResponse => FacturaResponse(
-      cicloPredeterminadoId: 2024,
-      familiaId: 1,
       familia: 'Familia López García',
       facturas: [],
       success: true,

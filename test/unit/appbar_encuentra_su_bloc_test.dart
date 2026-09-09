@@ -48,7 +48,6 @@ import '../helpers/test_data.dart';
 
 void main() {
   const int alumnoId = 1;
-  const int ciclo = TestEstadoDeCuenta.cicloActual;
 
   late MockGetEstadosDeCuentaUseCase mockGetEstadosDeCuenta;
   late MockSharedPref mockSharedPref;
@@ -93,8 +92,6 @@ void main() {
       return Success(
         EstadosDeCuentaResponse(
           alumnos: [alumno],
-          cicloPredeterminadoId: '$ciclo',
-          familiaId: '1',
           familia: 'Familia Test',
           success: true,
           message: '',

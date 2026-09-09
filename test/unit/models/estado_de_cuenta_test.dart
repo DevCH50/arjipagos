@@ -22,12 +22,8 @@ void main() {
           'fecha_vencimiento': '2024-01-31',
           'estadoPago': 'Pendiente',
           'num_pago': 1,
-          'num_pago_activo': true,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
-          'esta_disponible_en_la_app_movil': true,
-          'factura_pdf': '',
-          'factura_xml': '',
         };
 
         // Act
@@ -41,11 +37,8 @@ void main() {
         expect(estado.fechaVencimiento, equals('2024-01-31'));
         expect(estado.estadoPago, equals(EstadoPago.pendiente));
         expect(estado.numPago, equals(1));
-        expect(estado.numPagoActivo, isTrue);
         expect(estado.aceptaPagosDiversos, isTrue);
         expect(estado.estaDisponibleEnInternet, isTrue);
-        expect(estado.facturaPdf, isEmpty);
-        expect(estado.facturaXml, isEmpty);
       });
 
       test('debe crear un EstadoDeCuenta vencido desde JSON', () {
@@ -58,12 +51,8 @@ void main() {
           'fecha_vencimiento': '2023-12-31',
           'estadoPago': 'Vencido',
           'num_pago': 2,
-          'num_pago_activo': false,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
-          'esta_disponible_en_la_app_movil': true,
-          'factura_pdf': '',
-          'factura_xml': '',
         };
 
         // Act
@@ -74,7 +63,6 @@ void main() {
         expect(estado.descripcionCorta, equals('Colegiatura Diciembre 2023'));
         expect(estado.total, equals(4500.0));
         expect(estado.estadoPago, equals(EstadoPago.vencido));
-        expect(estado.numPagoActivo, isFalse);
       });
 
       test('debe aplicar valores por defecto cuando los campos son null', () {
@@ -93,12 +81,9 @@ void main() {
         // estadoPago desconocido cae en pendiente por defecto
         expect(estado.estadoPago, equals(EstadoPago.pendiente));
         expect(estado.numPago, equals(0));
-        expect(estado.numPagoActivo, isFalse);
         // Los booleanos de pago/internet tienen true como valor por defecto
         expect(estado.aceptaPagosDiversos, isTrue);
         expect(estado.estaDisponibleEnInternet, isTrue);
-        expect(estado.facturaPdf, equals(''));
-        expect(estado.facturaXml, equals(''));
       });
 
       test('debe convertir total entero a double', () {
@@ -124,9 +109,20 @@ void main() {
         expect(estado.estadoPago, equals(EstadoPago.pendiente));
       });
 
-      test('debe leer facturaPdf y facturaXml cuando están presentes', () {
-        // Arrange
+      // El backend dejó de mandar estos cinco campos el 2026-09-09. Se
+      // repetían en CADA renglón de CADA alumno, que es donde estaba el peso
+      // de la respuesta. Un servidor sin actualizar los sigue enviando: el
+      // parseo tiene que ignorarlos, y `toJson` no puede devolverlos.
+      test('ignora los campos que el backend ya no manda', () {
+        // Arrange: el renglón de ANTES del recorte.
         final json = {
+          'id': 9,
+          'ciclo_id': 2024,
+          'nivel_id': 3,
+          'num_pago': 2,
+          'num_pago_activo': true,
+          'esta_disponible_en_internet': true,
+          'esta_disponible_en_la_app_movil': true,
           'factura_pdf': 'https://example.com/factura.pdf',
           'factura_xml': 'https://example.com/factura.xml',
           'estadoPago': 'Pendiente',
@@ -134,37 +130,51 @@ void main() {
 
         // Act
         final estado = EstadoDeCuenta.fromJson(json);
+        final serializado = estado.toJson();
 
-        // Assert
-        expect(estado.facturaPdf, equals('https://example.com/factura.pdf'));
-        expect(estado.facturaXml, equals('https://example.com/factura.xml'));
+        // Assert: lo que se usa sigue leyéndose…
+        expect(estado.id, equals(9));
+        expect(estado.cicloId, equals(2024));
+        expect(estado.numPago, equals(2));
+        expect(estado.estaDisponibleEnInternet, isTrue);
+
+        // …y lo retirado no reaparece al serializar.
+        for (final clave in const [
+          'nivel_id',
+          'num_pago_activo',
+          'esta_disponible_en_la_app_movil',
+          'factura_pdf',
+          'factura_xml',
+        ]) {
+          expect(
+            serializado.containsKey(clave),
+            isFalse,
+            reason: '`$clave` se retiró del modelo: no debe volver a toJson()',
+          );
+        }
       });
 
       // -----------------------------------------------------------------------
-      // ciclo_id / nivel_id — el backend no los manda con un tipo consistente,
-      // así que el parseo debe aguantar int, String o ausencia sin reventar.
+      // ciclo_id — el backend no lo manda con un tipo consistente, así que el
+      // parseo debe aguantar int, String o ausencia sin reventar.
       // -----------------------------------------------------------------------
-      test('debe leer ciclo_id y nivel_id cuando llegan como int', () {
+      test('debe leer ciclo_id cuando llega como int', () {
         final estado = EstadoDeCuenta.fromJson({
           'ciclo_id': 2024,
-          'nivel_id': 3,
           'emisorfiscal_id': 1,
           'estadoPago': 'Pendiente',
         });
 
         expect(estado.cicloId, equals(2024));
-        expect(estado.nivelId, equals(3));
       });
 
-      test('debe leer ciclo_id y nivel_id cuando llegan como String', () {
+      test('debe leer ciclo_id cuando llega como String', () {
         final estado = EstadoDeCuenta.fromJson({
           'ciclo_id': '2024',
-          'nivel_id': '3',
           'estadoPago': 'Pendiente',
         });
 
         expect(estado.cicloId, equals(2024));
-        expect(estado.nivelId, equals(3));
       });
 
       test('debe caer a 0 cuando ciclo_id falta, es null o no es numérico', () {
@@ -210,12 +220,8 @@ void main() {
           expect(json['fecha_vencimiento'], equals('2024-01-31'));
           expect(json['estadoPago'], equals('Pendiente'));
           expect(json['num_pago'], equals(1));
-          expect(json['num_pago_activo'], isTrue);
           expect(json['acepta_pagos_diversos'], isTrue);
           expect(json['esta_disponible_en_internet'], isTrue);
-          expect(json['esta_disponible_en_la_app_movil'], isTrue);
-          expect(json['factura_pdf'], equals(''));
-          expect(json['factura_xml'], equals(''));
         },
       );
 
@@ -231,7 +237,6 @@ void main() {
           // Assert
           expect(json['id'], equals(2));
           expect(json['estadoPago'], equals('Vencido'));
-          expect(json['num_pago_activo'], isFalse);
         },
       );
 
@@ -240,7 +245,6 @@ void main() {
         final originalJson = {
           'id': 1,
           'ciclo_id': 2024,
-          'nivel_id': 1,
           'emisorfiscal_id': 1,
           // Las dos claves del ámbito, tal como las manda el endpoint de
           // pendientes desde el 08-sep-2026.
@@ -251,12 +255,8 @@ void main() {
           'fecha_vencimiento': '2024-01-31',
           'estadoPago': 'Pendiente',
           'num_pago': 1,
-          'num_pago_activo': true,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
-          'esta_disponible_en_la_app_movil': true,
-          'factura_pdf': '',
-          'factura_xml': '',
           'deuda_anterior': false,
         };
 
@@ -273,7 +273,6 @@ void main() {
         final originalJson = {
           'id': 2,
           'ciclo_id': 2024,
-          'nivel_id': 1,
           'emisorfiscal_id': 1,
           'pago_id': 900,
           'descripcion_corta': 'Colegiatura Diciembre 2023',
@@ -282,12 +281,8 @@ void main() {
           'fecha_vencimiento': '2023-12-31',
           'estadoPago': 'Vencido',
           'num_pago': 2,
-          'num_pago_activo': false,
           'acepta_pagos_diversos': true,
           'esta_disponible_en_internet': true,
-          'esta_disponible_en_la_app_movil': true,
-          'factura_pdf': '',
-          'factura_xml': '',
           // Un arrastre del ciclo anterior: comparte cargo con el renglón de
           // arriba y aun así es otra fila de parcialidades.
           'deuda_anterior': true,
@@ -311,7 +306,6 @@ void main() {
       EstadoDeCuenta conDescripcion(String descripcion) => EstadoDeCuenta(
         id: 0,
         cicloId: 0,
-        nivelId: 0,
         emisorFiscalId: 1,
         descripcionCorta: descripcion,
         total: 0,
@@ -319,12 +313,8 @@ void main() {
         fechaVencimiento: '',
         estadoPago: EstadoPago.pendiente,
         numPago: 0,
-        numPagoActivo: false,
         aceptaPagosDiversos: false,
         estaDisponibleEnInternet: false,
-        estaDisponibleEnLaAppMovil: true,
-        facturaPdf: '',
-        facturaXml: '',
       );
 
       test(

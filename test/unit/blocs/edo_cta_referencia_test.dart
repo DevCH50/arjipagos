@@ -40,7 +40,6 @@ const int _kCiclo = 2024;
 EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta(
       id: id,
       cicloId: cicloId,
-      nivelId: 1,
       emisorFiscalId: 1,
       descripcionCorta: 'Pago $id',
       total: 1000.0,
@@ -48,30 +47,18 @@ EstadoDeCuenta _pago({required int id, int cicloId = _kCiclo}) => EstadoDeCuenta
       fechaVencimiento: '2026-12-31',
       estadoPago: EstadoPago.pendiente,
       numPago: 1,
-      numPagoActivo: true,
       aceptaPagosDiversos: false,
       estaDisponibleEnInternet: true,
-      estaDisponibleEnLaAppMovil: true,
-      facturaPdf: '',
-      facturaXml: '',
     );
 
 /// Crea un [Alumno] con [cantidadPagos] pagos de IDs de 5 dígitos consecutivos
 /// a partir de 10001 (10001, 10002, …).
 Alumno _alumno({required int alumnoId, required int cantidadPagos}) => Alumno(
       alumnoId: alumnoId,
-      familiaId: 1,
       familia: 'Familia Test',
       alumno: 'Alumno $alumnoId',
-      apPaterno: 'Test',
-      apMaterno: 'Test',
       nombre: 'Test',
-      becaSep: 'No',
-      becaArji: 'No',
-      becaBach: 'No',
-      becaSp: 'No',
       esBaja: false,
-      grupoId: 1,
       grupo: '1ro A',
       urlPhoto: '',
       estadoDeCuenta: List.generate(cantidadPagos, (i) => _pago(id: 10001 + i)),
@@ -81,18 +68,10 @@ Alumno _alumno({required int alumnoId, required int cantidadPagos}) => Alumno(
 /// un segundo alumno en tests multi-alumno).
 Alumno _alumnoB({required int alumnoId, required int cantidadPagos}) => Alumno(
       alumnoId: alumnoId,
-      familiaId: 1,
       familia: 'Familia Test',
       alumno: 'Alumno B $alumnoId',
-      apPaterno: 'Test',
-      apMaterno: 'Test',
       nombre: 'Test',
-      becaSep: 'No',
-      becaArji: 'No',
-      becaBach: 'No',
-      becaSp: 'No',
       esBaja: false,
-      grupoId: 1,
       grupo: '1ro B',
       urlPhoto: '',
       estadoDeCuenta: List.generate(cantidadPagos, (i) => _pago(id: 20001 + i)),

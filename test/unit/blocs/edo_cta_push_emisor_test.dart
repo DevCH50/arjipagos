@@ -52,8 +52,6 @@ void main() {
       (_) async => Success(
         EstadosDeCuentaResponse(
           alumnos: [alumnoConPagosPorCiclo(7, const {})],
-          cicloPredeterminadoId: '1',
-          familiaId: '1',
           familia: 'Familia Test',
           success: true,
           message: '',
@@ -126,8 +124,6 @@ void main() {
         (_) async => Success(
           EstadosDeCuentaResponse(
             alumnos: const [],
-            cicloPredeterminadoId: '1',
-            familiaId: '1',
             familia: 'Familia Test',
             success: true,
             message: '',

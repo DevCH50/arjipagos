@@ -90,7 +90,6 @@ void main() {
       final pago = EstadoDeCuenta(
         id: 3,
         cicloId: TestEstadoDeCuenta.cicloActual,
-        nivelId: 1,
         emisorFiscalId: 1,
         descripcionCorta: 'Colegiatura Septiembre 2024 con recargo por mora',
         total: 1234567.89,
@@ -98,12 +97,8 @@ void main() {
         fechaVencimiento: '2024-09-30',
         estadoPago: EstadoPago.vencido,
         numPago: 3,
-        numPagoActivo: true,
         aceptaPagosDiversos: true,
         estaDisponibleEnInternet: true,
-        estaDisponibleEnLaAppMovil: true,
-        facturaPdf: '',
-        facturaXml: '',
       );
 
       await montar(tester, ancho: 320, pago: pago);

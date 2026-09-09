@@ -67,7 +67,6 @@ void main() {
         status: 200,
         msg: 'ok',
         accessToken: '',
-        tokenType: 'Bearer',
         user: TestUser.valid,
         apiVersion: '1.0.0',
         appVersion: '1.0.0',

@@ -20,7 +20,6 @@ void main() {
         expect(authResponse.status, equals(200));
         expect(authResponse.msg, equals('Login exitoso'));
         expect(authResponse.accessToken, isNotEmpty);
-        expect(authResponse.tokenType, equals('Bearer'));
         expect(authResponse.apiVersion, equals('1.0.0'));
         expect(authResponse.appVersion, equals('1.0.0'));
       });
@@ -48,7 +47,6 @@ void main() {
 
         // Assert
         expect(authResponse.accessToken, startsWith('eyJ'));
-        expect(authResponse.tokenType, equals('Bearer'));
       });
     });
 
@@ -64,7 +62,6 @@ void main() {
         expect(json['status'], equals(200));
         expect(json['msg'], equals('Login exitoso'));
         expect(json['access_token'], isNotEmpty);
-        expect(json['token_type'], equals('Bearer'));
         expect(json['user'], isA<Map<String, dynamic>>());
       });
 

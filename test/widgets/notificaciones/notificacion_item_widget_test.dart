@@ -35,7 +35,6 @@ void main() {
   }) {
     return Notificacion(
       id: 1,
-      userId: 10,
       titulo: titulo,
       mensaje: mensaje,
       campania: 'estado_cuenta',
@@ -48,7 +47,6 @@ void main() {
   Notificacion notificacionLeida() {
     return Notificacion(
       id: 2,
-      userId: 10,
       titulo: 'Notificación leída',
       mensaje: 'Este mensaje ya fue leído.',
       campania: 'manual',
@@ -170,7 +168,6 @@ void main() {
     testWidgets('muestra "hace Xmin" para notificaciones recientes', (tester) async {
       final notif = Notificacion(
         id: 3,
-        userId: 10,
         titulo: 'Test',
         mensaje: 'Test',
         campania: 'manual',
@@ -186,7 +183,6 @@ void main() {
     testWidgets('muestra "hace Xh" para notificaciones de horas', (tester) async {
       final notif = Notificacion(
         id: 4,
-        userId: 10,
         titulo: 'Test',
         mensaje: 'Test',
         campania: 'manual',
@@ -202,7 +198,6 @@ void main() {
     testWidgets('muestra "ayer" para notificaciones del día anterior', (tester) async {
       final notif = Notificacion(
         id: 5,
-        userId: 10,
         titulo: 'Test',
         mensaje: 'Test',
         campania: 'manual',
@@ -218,7 +213,6 @@ void main() {
     testWidgets('muestra fecha dd/MM/yy para notificaciones antiguas', (tester) async {
       final notif = Notificacion(
         id: 6,
-        userId: 10,
         titulo: 'Test',
         mensaje: 'Test',
         campania: 'manual',

@@ -29,7 +29,6 @@ class MockNotificacionBloc
 Notificacion _notif({required bool isRead, String mensaje = 'Mensaje simple'}) =>
     Notificacion(
       id: 1,
-      userId: 10,
       titulo: 'Título de prueba',
       mensaje: mensaje,
       campania: 'estado_cuenta',

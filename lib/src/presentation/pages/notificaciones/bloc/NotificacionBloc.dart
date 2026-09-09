@@ -178,7 +178,6 @@ class NotificacionBloc extends Bloc<NotificacionEvent, NotificacionState> {
 
     final notificacion = Notificacion(
       id: idMensaje,
-      userId: 0,
       titulo: titulo,
       mensaje: dataBody.isNotEmpty ? dataBody : systemBody,
       campania: message.data['campania']?.toString() ?? '',

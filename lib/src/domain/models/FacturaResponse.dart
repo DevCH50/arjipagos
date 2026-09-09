@@ -10,16 +10,12 @@ String facturaResponseToJson(FacturaResponse data) =>
 
 /// Respuesta del endpoint de facturas.
 class FacturaResponse {
-  int cicloPredeterminadoId;
-  int familiaId;
   String familia;
   List<Factura> facturas;
   bool success;
   String message;
 
   FacturaResponse({
-    required this.cicloPredeterminadoId,
-    required this.familiaId,
     required this.familia,
     required this.facturas,
     required this.success,
@@ -32,8 +28,6 @@ class FacturaResponse {
   /// (ver `esRespuestaSinDatos`), así que el vacío se fabrica aquí. Con
   /// `success: true`: la consulta fue bien, sencillamente no hay facturas.
   factory FacturaResponse.vacio() => FacturaResponse(
-    cicloPredeterminadoId: 0,
-    familiaId: 0,
     familia: '',
     facturas: <Factura>[],
     success: true,
@@ -42,8 +36,6 @@ class FacturaResponse {
 
   factory FacturaResponse.fromJson(Map<String, dynamic> json) =>
       FacturaResponse(
-        cicloPredeterminadoId: json['ciclo_predeterminado_id'],
-        familiaId: json['familia_id'],
         familia: json['familia'],
         facturas: List<Factura>.from(
           json['facturas'].map((x) => Factura.fromJson(x)),
@@ -53,8 +45,6 @@ class FacturaResponse {
       );
 
   Map<String, dynamic> toJson() => {
-    'ciclo_predeterminado_id': cicloPredeterminadoId,
-    'familia_id': familiaId,
     'familia': familia,
     'facturas': List<dynamic>.from(facturas.map((x) => x.toJson())),
     'success': success,

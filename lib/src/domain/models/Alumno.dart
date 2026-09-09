@@ -1,37 +1,29 @@
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 
+/// Un alumno de la familia, con los pagos que le corresponden.
+///
+/// **Solo lleva los campos que la app pinta o usa.** El 2026-09-09 el backend
+/// dejó de mandar `familia_id`, `ap_paterno`, `ap_materno`, las cuatro becas y
+/// `grupo_id`: ninguno se mostraba en pantalla y se repetían en cada alumno de
+/// cada respuesta. No volver a añadirlos «por si acaso» —el peso de la
+/// respuesta es lo que se estaba recortando—; si algún día hace falta uno, se
+/// pide al backend y se da de alta aquí a la vez.
 class Alumno {
   int alumnoId;
-  int familiaId;
   String familia;
   String alumno;
-  String apPaterno;
-  String apMaterno;
   String nombre;
-  String becaSep;
-  String becaArji;
-  String becaBach;
-  String becaSp;
   bool esBaja;
-  int grupoId;
   String grupo;
   String urlPhoto;
   List<EstadoDeCuenta> estadoDeCuenta;
 
   Alumno({
     required this.alumnoId,
-    required this.familiaId,
     required this.familia,
     required this.alumno,
-    required this.apPaterno,
-    required this.apMaterno,
     required this.nombre,
-    required this.becaSep,
-    required this.becaArji,
-    required this.becaBach,
-    required this.becaSp,
     required this.esBaja,
-    required this.grupoId,
     required this.grupo,
     required this.urlPhoto,
     required this.estadoDeCuenta,
@@ -44,18 +36,10 @@ class Alumno {
   /// mutar el modelo que vino del servidor.
   Alumno conEstadoDeCuenta(List<EstadoDeCuenta> pagos) => Alumno(
     alumnoId: alumnoId,
-    familiaId: familiaId,
     familia: familia,
     alumno: alumno,
-    apPaterno: apPaterno,
-    apMaterno: apMaterno,
     nombre: nombre,
-    becaSep: becaSep,
-    becaArji: becaArji,
-    becaBach: becaBach,
-    becaSp: becaSp,
     esBaja: esBaja,
-    grupoId: grupoId,
     grupo: grupo,
     urlPhoto: urlPhoto,
     estadoDeCuenta: pagos,
@@ -63,18 +47,10 @@ class Alumno {
 
   factory Alumno.fromJson(Map<String, dynamic> json) => Alumno(
     alumnoId: json['alumno_id'] ?? 0,
-    familiaId: json['familia_id'] ?? 0,
     familia: json['familia']?.toString() ?? '',
     alumno: json['alumno']?.toString() ?? '',
-    apPaterno: json['ap_paterno']?.toString() ?? '',
-    apMaterno: json['ap_materno']?.toString() ?? '',
     nombre: json['nombre']?.toString() ?? '',
-    becaSep: json['beca_sep']?.toString() ?? '',
-    becaArji: json['beca_arji']?.toString() ?? '',
-    becaBach: json['beca_bach']?.toString() ?? '',
-    becaSp: json['beca_sp']?.toString() ?? '',
     esBaja: json['es_baja'] ?? false,
-    grupoId: json['grupo_id'] ?? 0,
     grupo: json['grupo']?.toString() ?? '',
     urlPhoto: json['url_photo']?.toString() ?? '',
     estadoDeCuenta: json['estado_de_cuenta'] != null
@@ -86,18 +62,10 @@ class Alumno {
 
   Map<String, dynamic> toJson() => {
     'alumno_id': alumnoId,
-    'familia_id': familiaId,
     'familia': familia,
     'alumno': alumno,
-    'ap_paterno': apPaterno,
-    'ap_materno': apMaterno,
-    'nombre': nombre, 
-    'beca_sep': becaSep,
-    'beca_arji': becaArji,
-    'beca_bach': becaBach,
-    'beca_sp': becaSp,
+    'nombre': nombre,
     'es_baja': esBaja,
-    'grupo_id': grupoId,
     'grupo': grupo,
     'url_photo': urlPhoto,
     'estado_de_cuenta': List<dynamic>.from(
