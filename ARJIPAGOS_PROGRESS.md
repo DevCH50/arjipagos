@@ -11,26 +11,37 @@
 
 _(ninguno)_
 
-### 2026-09-09 — La 1.0.30+39 está en Espera de Revisión en App Store
+### 2026-09-09 — La 1.0.30+39: publicada en Play Store, en Espera de Revisión en App Store
 
 **Archive hecho y subido desde la Mac, sin incidencias.** El scheme con el Thread Performance
 Checker apagado no afectó al Archive, como estaba previsto: ese atributo vive en el
-`LaunchAction` y el Archive usa el `ArchiveAction`.
+`LaunchAction` y el Archive usa el `ArchiveAction`. **Play Store ya publicó la 1.0.30+39**, con
+el AAB generado y subido desde la Linux.
 
 | Versión | Play Store | App Store |
 | --- | --- | --- |
 | `1.0.28+37` | Publicada | Publicada |
-| `1.0.29+38` | En revisión | — |
-| `1.0.30+39` | **Sin subir** | **En Espera de Revisión** |
+| `1.0.29+38` | Publicada | Publicada |
+| `1.0.30+39` | **Publicada** | **En Espera de Revisión** |
 
-**Android va por detrás: la 1.0.30+39 NO se ha subido a Play Console.** El APK y el AAB se
-generan en la Linux y no existen en esta máquina —`build/` es local y el `flutter clean` de la
-limpieza iOS lo borró entero—. Que iOS esté enviada no dice nada del estado de Android.
+**La 1.0.29+38 sí llegó a publicarse en las dos**, y por eso existe la 1.0.30: al preparar el
+release, `/api/v1/app/version` devolvía `version_recomendada: 1.0.29` para android **y** ios, así
+que la del `pubspec` ya no era mayor que la publicada y hubo que subir patch y build. Está
+anotado en la sección «Release 1.0.30+39» de más abajo.
 
-**`version_minima` y `version_recomendada` se quedan donde están.** Enviado no es publicado, y
-subirlas con una tienda todavía en revisión encierra al usuario que aún no puede actualizar.
-Comprobar con `GET /api/v1/app/version?plataforma=android|ios` — sin el parámetro `plataforma`
-el endpoint responde un error, no un valor por defecto.
+**Ahora las dos plataformas dejan de ir a la par**, por primera vez en varias versiones: Android
+publicada y iOS todavía en cola de revisión.
+
+**El siguiente release de Android tiene que subir versión.** La 1.0.30+39 ya está publicada en
+Play Store, así que la regla 1 de versionado obliga a `1.0.31+40` como mínimo: `pubspec.yaml`
+está hoy en la versión publicada, no por encima de ella.
+
+**`version_minima` y `version_recomendada` se quedan en `1.0.29` de momento.** Que Android
+publique no basta: con la 1.0.30 aún en revisión en App Store, subirlas a `1.0.30` encierra al
+usuario de iPhone —le sale el diálogo de actualización obligatoria y la ficha de la tienda le
+ofrece la versión que ya tiene instalada—. Hay que esperar a que Apple publique. Comprobar con
+`GET /api/v1/app/version?plataforma=android|ios` — sin el parámetro `plataforma` el endpoint
+responde un error, no un valor por defecto.
 
 Lo que lleva esta versión llegó en los seis commits del pull de esta misma sesión (hasta
 `083040c`): la decoración estacional por mes, la selección por concepto, el arreglo del botón de
@@ -63,8 +74,9 @@ A petición de Carlos se apagó el checker en el scheme
 Run**: el `ArchiveAction` no lo lleva, así que el Archive y la subida a App Store Connect se
 comportan igual que siempre.
 
-La versión en `pubspec.yaml` es **1.0.30+39**, que llegó con el pull y aún no está publicada.
-Por la regla 2 de versionado se usa esa para el release, sin incrementar.
+La versión en `pubspec.yaml` era **1.0.30+39**, que llegó con el pull sin publicar todavía. Por
+la regla 2 de versionado se usó esa para el release, sin incrementar. Ese mismo día se publicó
+en Play Store, así que el siguiente release ya tendrá que subir versión.
 
 ### 2026-08-28 — La 1.0.29+38 está en revisión en las dos tiendas
 
