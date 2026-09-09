@@ -26,33 +26,13 @@ class AppStrings {
   // ============================================================================
   // LOGIN
   // ============================================================================
-
-  static const String loginTitle = 'Iniciar Sesión';
   static const String loginUsername = 'Usuario';
   static const String loginPassword = 'Contraseña';
-  static const String loginButton = 'Ingresar';
   static const String loginForgotPassword = '¿Olvidaste tu contraseña?';
-  static const String loginNoAccount = '¿No tienes cuenta?';
-  static const String loginRegister = 'Regístrate';
-
-  // Validaciones
-  static const String loginUsernameRequired = 'Escribe el Nombre de Usuario';
-  static const String loginPasswordRequired = 'Ingresa la Contraseña';
-  static const String loginPasswordMinLength = 'Mínimo 6 caracteres';
 
   // ============================================================================
   // REGISTRO
   // ============================================================================
-
-  static const String registerTitle = 'REGISTRO';
-  static const String registerName = 'Nombre';
-  static const String registerLastName = 'Apellido Paterno';
-  static const String registerSecondLastName = 'Apellido Materno';
-  static const String registerPhone = 'Celular';
-  static const String registerEmail = 'Email';
-  static const String registerPassword = 'Contraseña';
-  static const String registerConfirmPassword = 'Confirmar Contraseña';
-  static const String registerButton = 'Guardar';
 
   // ============================================================================
   // GENERAL — ACCIONES COMUNES
@@ -62,14 +42,11 @@ class AppStrings {
   static const String cancel = 'Cancelar';
   static const String confirm = 'Confirmar';
   static const String retry = 'Reintentar';
-  static const String close = 'Cerrar';
   static const String back = 'Volver';
   static const String send = 'Enviar';
-  static const String update = 'Actualizar';
   static const String error = 'Error';
   static const String info = 'Información';
   static const String understood = 'Entendido';
-  static const String comingSoon = 'Próximamente';
   static const String mostrarContrasena = 'Mostrar contraseña';
   static const String ocultarContrasena = 'Ocultar contraseña';
   static const String errorAlCargar = 'Error al cargar';
@@ -77,18 +54,7 @@ class AppStrings {
   // ============================================================================
   // HOME
   // ============================================================================
-
-  static const String homeLoading = 'Cargando Alumnos...';
-  static const String homeNoStudents = 'No hay Alumnos registrados';
   static const String homeRefresh = 'Actualizar';
-  static const String homeRetry = 'Reintentar';
-  static const String homeError = 'Error';
-
-  // Labels de información
-  static const String homeFamilyId = 'Familia ID';
-  static const String homeSchoolYear = 'Ciclo Escolar';
-  static const String homeStudent = 'Alumno';
-  static const String homeStudents = 'Alumnos';
 
   // ============================================================================
   // MENÚ PRINCIPAL
@@ -98,8 +64,6 @@ class AppStrings {
   static const String menuCambiarContrasena = 'Cambiar Contraseña';
   static const String menuTocaCualquierCampo =
       'Toca cualquier campo para copiar';
-  static const String menuFacturasProximamente =
-      'La sección de Facturas estará disponible pronto.';
   static const String menuMiCuenta = 'Mi cuenta';
   static const String menuSinAlumnos = 'Sin alumnos';
   static const String menuPagosPendientes = 'Pagos Pendientes';
@@ -117,8 +81,6 @@ class AppStrings {
   static const String resenaErrorAbrirTienda =
       'No se pudo abrir la tienda de aplicaciones. Inténtalo de nuevo más tarde.';
   static const String menuCerrando = 'Cerrando sesión...';
-  static const String menuNoPudoCargar =
-      'No se pudo cargar la información del usuario';
 
   // ============================================================================
   // DRAWER — DATOS DEL USUARIO
@@ -136,7 +98,6 @@ class AppStrings {
   static const String logoutTitle = 'Cerrar Sesión';
   static const String logoutMessage = '¿Estás seguro que deseas cerrar sesión?';
   static const String logoutConfirm = 'Cerrar Sesión';
-  static const String logoutCancel = 'Cancelar';
 
   // ============================================================================
   // ESTADOS DE CUENTA
@@ -161,7 +122,6 @@ class AppStrings {
   static const String edoCtaOrdenPagosMsg =
       'Debe seleccionar los pagos de cada concepto en orden '
       '(del más antiguo al más reciente)';
-  static const String edoCtaGrupo = 'Grupo:';
   static const String edoCtaLimpiarSeleccion = 'Limpiar selección';
   static const String edoCtaReferenciaLimiteAlcanzado =
       'No es posible agregar más pagos a esta transacción.\n\n'
@@ -232,7 +192,6 @@ class AppStrings {
   static const String cambiarContrasenaActual = 'Contraseña actual';
   static const String cambiarContrasenaNueva = 'Nueva contraseña';
   static const String cambiarContrasenaConfirmar = 'Confirmar nueva contraseña';
-  static const String cambiarContrasenaButton = 'Cambiar Contraseña';
   static const String cambiarContrasenaActualizada = 'Contraseña actualizada';
   static const String cambiarContrasenaDescripcion =
       'Ingresa tu contraseña actual y la nueva contraseña que deseas establecer.';
@@ -254,12 +213,6 @@ class AppStrings {
   // ============================================================================
   // REGISTRO
   // ============================================================================
-
-  static const String registerExitosoTitle = 'Registro exitoso';
-  static const String registerExitosoMsg =
-      'Ahora puedes iniciar sesión con tu cuenta.';
-  static const String registerIrLogin = 'Iniciar sesión';
-  static const String registerCamposIncompletos = 'Campos incompletos';
 
   // ============================================================================
   // VALIDACIONES COMUNES
@@ -298,9 +251,6 @@ class AppStrings {
   /// Error HTTP con código de estado (5xx, o respuesta no-JSON).
   static String errorServidorHttp(int codigo) =>
       'Error del servidor ($codigo). Intenta más tarde.';
-
-  static const String errorProcesarPago = 'Error al procesar el pago';
-  static const String errorVerificarPago = 'Error al verificar el pago';
   static const String errorTokenFcmInvalido = 'Token FCM inválido';
   static const String errorDatosEliminarToken =
       'Datos inválidos para eliminar token';
@@ -308,15 +258,8 @@ class AppStrings {
   // ============================================================================
   // ALUMNO
   // ============================================================================
-
-  static const String alumnoDetails = 'Detalles del Alumno';
   static const String alumnoGroup = 'Grupo';
   static const String alumnoGroupLabel = 'Grupo:';
-  static const String alumnoScholarships = 'Becas';
-  static const String alumnoStatus = 'Estado';
-  static const String alumnoActive = 'Activo';
-  static const String alumnoInactive = 'Dado de baja';
-  static const String alumnoBaja = 'Baja';
   // Forma en minúscula para usarse dentro de oraciones
   static const String alumnoSingular = 'alumno';
   static const String alumnoPlural = 'alumnos';
@@ -324,8 +267,6 @@ class AppStrings {
   // ============================================================================
   // HOME — ERRORES
   // ============================================================================
-
-  static const String homeDatosInesperados = 'Datos inesperados';
 
   // ============================================================================
   // RECUPERAR CONTRASEÑA
@@ -360,11 +301,6 @@ class AppStrings {
   // REGISTRO — EXTRAS
   // ============================================================================
 
-  static const String registerApellidoMaterno = 'Apellido Materno (opcional)';
-  static const String registerYaTienesCuenta =
-      '¿Ya tienes cuenta? Inicia sesión';
-  static const String registerRegistrarse = 'Registrarse';
-
   // ============================================================================
   // CARRITO — EXTRAS
   // ============================================================================
@@ -389,21 +325,10 @@ class AppStrings {
   // ============================================================================
 
   static const String noTienesCuentaAtencion = '¡Atención!';
-  static const String homeCargando = 'Cargando...';
 
   // ============================================================================
   // ALUMNO — ETIQUETAS DE DETALLE
   // ============================================================================
-
-  static const String alumnoIdLabel = 'ID:';
-  static const String alumnoBecasLabel = 'Becas:';
-  static const String alumnoSepLabel = 'SEP:';
-  static const String alumnoArjiLabel = 'ARJI:';
-  static const String alumnoBachLabel = 'Bach:';
-  static const String alumnoSpLabel = 'SP:';
-  static const String alumnoEstadoLabel = 'Estado:';
-  static const String alumnoEstadoBaja = '❌ Baja';
-  static const String alumnoEstadoActivo = '✅ Activo';
 
   // ============================================================================
   // ESTADOS DE CUENTA — EMPTY
@@ -464,9 +389,7 @@ class AppStrings {
   // ============================================================================
 
   static const String ticketTitle = 'Ticket de pago';
-  static const String ticketActualizar = 'Actualizar';
   static const String ticketErrorCarga = 'No se pudo cargar el ticket';
-  static const String ticketReintentar = 'Reintentar';
   static const String ticketNoDisponible =
       'Este pago no tiene un ticket disponible';
   static const String ticketSesionExpirada =
@@ -496,11 +419,7 @@ class AppStrings {
   static const String drawerAvisoPrivacidad = 'Aviso de Privacidad';
   static const String drawerVersionAndroid = 'Android';
   static const String drawerVersionIos = 'iOS';
-  static const String drawerAvisoPrivacidadError =
-      'No se pudo abrir el Aviso de Privacidad';
   static const String avisoDePrivacidadActualizar = 'Actualizar';
-  static const String avisoDePrivacidadCargando =
-      'Cargando aviso de privacidad...';
   static const String avisoDePrivacidadErrorCarga =
       'No se pudo cargar el Aviso de Privacidad';
   static const String avisoDePrivacidadReintentar = 'Reintentar';
@@ -518,13 +437,10 @@ class AppStrings {
   static const String facturasReferencia = 'Referencia:';
   static const String facturasTotal = 'Total:';
   static const String facturasCompartir = 'Compartir factura';
-  static const String facturasDescargando = 'Descargando archivo ZIP...';
   static const String facturasErrorCompartir =
       'No se pudo descargar el archivo para compartir';
   static const String facturasZipSinDatos =
       'Esta factura no tiene archivo adjunto';
-  static const String facturasErrorDescarga =
-      'Error al descargar el archivo ZIP';
 
   // ============================================================================
   // ACTUALIZACIÓN DE LA APP
@@ -573,7 +489,6 @@ class AppStrings {
 
   /// Pantalla del cerrojo.
   static const String biometriaAppBloqueada = 'Arjí Pagos está bloqueada';
-  static const String biometriaToqueParaEntrar = 'Toca para desbloquear';
   static const String biometriaDesbloquear = 'Desbloquear';
   static const String biometriaUsarContrasena = 'Entrar con mi contraseña';
 
@@ -585,12 +500,6 @@ class AppStrings {
       'La aplicación se abre sin pedir nada';
   static const String biometriaNoDisponibleEnAparato =
       'Este dispositivo no tiene bloqueo de pantalla configurado';
-
-  /// Confirmación al activar.
-  static const String biometriaActivadoTitulo = 'Bloqueo activado';
-  static const String biometriaActivadoMensaje =
-      'A partir de ahora se te pedirá confirmar tu identidad al volver a la '
-      'aplicación. Puedes desactivarlo cuando quieras desde el menú.';
 
   /// Avisos de fallo. Ninguno muestra el detalle técnico: eso va a AppLogger.
   static const String biometriaErrorTitulo = 'No se pudo desbloquear';

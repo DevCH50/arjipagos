@@ -514,7 +514,7 @@ cargar»** en rojo con un `AlertDialog` encima. Los estados vacíos ya existían
 ellos porque el cuerpo de cada pantalla comprueba el error **antes** que la lista vacía.
 
 Lo resuelve `esRespuestaSinDatos()` (`lib/src/data/api/RespuestaSinDatos.dart`), que usan
-`EdoCtaService`, `EdoCtaPagadosService`, `FacturaService` y `HomeService` para devolver un
+`EdoCtaService`, `EdoCtaPagadosService` y `FacturaService` para devolver un
 `Success` vacío —hay un constructor `.vacio()` en cada modelo de respuesta—.
 
 **Se exigen las dos condiciones, `404` Y `success: false`.** El `404` de Laravel cuando la ruta
@@ -594,7 +594,7 @@ app, así que al no recrearse `MyApp` conservan los datos del usuario anterior. 
 dos lados, y hacen falta los dos:
 
 1. **Al cerrar sesión se vacían.** `cerrarSesionCompleta(context)` manda un evento
-   `…LimpiarSesion` a `MenuPrincipalBloc`, `HomeBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y
+   `…LimpiarSesion` a `MenuPrincipalBloc`, `EdoCtaListBloc`, `EdoCtaPagadosBloc` y
    `FacturaBloc`, y cada uno emite su **estado inicial entero**. No vale un `copyWith`: el de
    estos estados nunca vacía un campo (`familia ?? this.familia`), así que arrastraría lo del
    usuario que se va. `CarritoBloc` y `NotificacionBloc` se recargan solos en el `initState` de

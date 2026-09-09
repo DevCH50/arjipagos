@@ -1,7 +1,6 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
-import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/biometria/BiometriaUseCases.dart';
@@ -14,15 +13,11 @@ import 'package:arjipagos/src/presentation/pages/actualizacion/bloc/Actualizacio
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/biometria/bloc/BiometriaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
-import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterBloc.dart';
-import 'package:arjipagos/src/presentation/pages/auth/register/bloc/RegisterEvent.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaBloc.dart';
@@ -53,14 +48,6 @@ List<BlocProvider> blocProviders = [
   BlocProvider<LoginBloc>(
     create: (context) =>
         LoginBloc(locator<AuthUseCases>())..add(const LoginInitialEvent()),
-  ),
-  BlocProvider<RegisterBloc>(
-    create: (context) =>
-        RegisterBloc(locator<AuthUseCases>())..add(const RegisterInitialEvent()),
-  ),
-  BlocProvider<HomeBloc>(
-    create: (context) =>
-        HomeBloc(locator<HomeUseCases>())..add(const GetHomesList()),
   ),
   BlocProvider<MenuPrincipalBloc>(
     create: (context) => MenuPrincipalBloc(

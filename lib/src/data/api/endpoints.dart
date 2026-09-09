@@ -13,14 +13,11 @@ abstract class Endpoints {
   static const String login = '/api/v1/login';
 
   /// POST - Registrar usuario
-  static const String register = '/api/v1/register';
 
   // ============================================================================
   // ALUMNOS
   // ============================================================================
 
-  /// GET - Obtener alumnos por usuario
-  static String alumnos(String userId) => '/api/v1/alumnos/$userId';
 
   // ============================================================================
   // ESTADOS DE CUENTA

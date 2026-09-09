@@ -220,10 +220,16 @@ const Map<Temporada, List<Color>> _paletasClaras = <Temporada, List<Color>>{
     Color(0xFF6A1B9A), // Morado de altar
     Color(0xFFE91E63), // Rosa mexicano
   ],
+  // **El dorado va EN MEDIO, y no es un capricho.** Con el rojo pegado al
+  // verde —el orden de hasta el 2026-09-09— el degradado de la franja pasa por
+  // el punto medio de dos complementarios, que es un **café sucio**: el vivo
+  // parecía otoño mal impreso, no navidad. Con el dorado en medio las dos
+  // transiciones son limpias: verde→dorado por oliva, dorado→rojo por naranja.
+  // El verde tiene que seguir siendo el primero: es el color de la guirnalda.
   Temporada.navidad: <Color>[
     Color(0xFF1B5E20), // Verde pino
-    Color(0xFFC62828), // Rojo
     Color(0xFFC8A02C), // Dorado
+    Color(0xFFC62828), // Rojo
   ],
   Temporada.amistad: <Color>[
     Color(0xFFD81B60),
@@ -265,10 +271,12 @@ const Map<Temporada, List<Color>> _paletasOscuras = <Temporada, List<Color>>{
     Color(0xFF9C5BC7),
     Color(0xFFF06292),
   ],
+  // Mismo orden que en claro, y por el mismo motivo: el dorado separa el verde
+  // del rojo para que el degradado no se enlode.
   Temporada.navidad: <Color>[
     Color(0xFF4CAF50),
-    Color(0xFFEF5350),
     Color(0xFFE5C158),
+    Color(0xFFEF5350),
   ],
   Temporada.amistad: <Color>[
     Color(0xFFF06292),

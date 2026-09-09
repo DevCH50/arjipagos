@@ -24,25 +24,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Resource> registerUser({
-    required String nombre,
-    required String apPaterno,
-    required String apMaterno,
-    required String celular,
-    required String email,
-    required String password,
-  }) {
-    return authService.register(
-      nombre: nombre,
-      apPaterno: apPaterno,
-      apMaterno: apMaterno,
-      celular: celular,
-      email: email,
-      password: password,
-    );
-  }
-
-  @override
   Future<AuthResponse?> getUserSession() async {
     final data = await secureStorage.getUserSession();
     if (data != null) {

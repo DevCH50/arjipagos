@@ -10,8 +10,6 @@ import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPaga
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaEvent.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:flutter/widgets.dart';
@@ -85,7 +83,6 @@ Future<void> cerrarSesionCompleta(BuildContext context) async {
 /// vaciarlo aquí también.**
 void _limpiarBlocsDeSesion(BuildContext context) {
   context.read<MenuPrincipalBloc>().add(const MenuPrincipalLimpiarSesion());
-  context.read<HomeBloc>().add(const HomeLimpiarSesionEvent());
   // Todos los emisores: la sesión es de la app, no de un contrato. Va por el
   // registro y no por `context.read` porque hay una instancia por emisor.
   for (final EdoCtaListBloc bloc in locator<EdoCtaListBlocPorEmisor>().todos) {

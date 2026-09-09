@@ -38,8 +38,10 @@ void main() {
   group('Cierre de sesión', () {
     test('vacía los BLoCs de datos que viven en la raíz de la app', () {
       const eventosDeLimpieza = [
+        // `HomeBloc` estuvo en esta lista hasta el 2026-09-09, cuando se
+        // retiró la pantalla Home entera: el menú principal la sustituyó y su
+        // BLoC ya no existe. El respaldo está en `otros/`.
         'MenuPrincipalLimpiarSesion',
-        'HomeLimpiarSesionEvent',
         'EdoCtaListLimpiarSesionEvent',
         'EdoCtaPagadosLimpiarSesionEvent',
         'FacturaLimpiarSesionEvent',
@@ -65,7 +67,6 @@ void main() {
         'ActualizacionBloc': 'solo comprueba la versión instalada',
         'BiometriaBloc': 'estado del cerrojo, no datos de la cuenta',
         'LoginBloc': 'formulario de acceso',
-        'RegisterBloc': 'formulario de alta',
         'CambiarContrasenaBloc': 'formulario',
         'BannerBloc': 'los avisos son los mismos para todos',
         // Estos sí llevan datos, pero se recargan solos en el `initState` de su

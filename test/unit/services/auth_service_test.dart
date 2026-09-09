@@ -97,48 +97,6 @@ void main() {
   });
 
   // ==========================================================================
-  // register
-  // ==========================================================================
-
-  group('AuthService.register', () {
-    Future<Resource<String>> register(http.Client client) => http.runWithClient(
-          () => service.register(
-            nombre: 'Juan',
-            apPaterno: 'Pérez',
-            apMaterno: 'García',
-            celular: '5551234567',
-            email: 'juan@ejemplo.com',
-            password: 'secret123',
-          ),
-          () => client,
-        );
-
-    test('devuelve Success con mensaje en 201', () async {
-      final client =
-          _clientQueResponde(json.encode({'message': 'Registro exitoso'}), 201);
-
-      final result = await register(client);
-
-      expect(result, isA<Success<String>>());
-      expect((result as Success<String>).data, 'Registro exitoso');
-    });
-
-    test('devuelve Error ante status no exitoso', () async {
-      final client = _clientQueResponde(
-          json.encode({'msg': 'El email ya existe'}), 422);
-
-      final result = await register(client);
-
-      expect((result as Error).msg, 'El email ya existe');
-    });
-
-    test('mapea SocketException a Error(errorConnection)', () async {
-      final result = await register(_clientQueLanza(const SocketException('x')));
-      expect((result as Error).msg, AppStrings.errorConnection);
-    });
-  });
-
-  // ==========================================================================
   // cambiarContrasena
   // ==========================================================================
 

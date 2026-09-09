@@ -89,27 +89,9 @@ class AppColors {
   // COLORES DE HEADER HOME (TEMA CLARO — cafecito)
   // ============================================================================
 
-  /// Fondo cálido claro (surfaceContainerLow del esquema cafecito)
-  static const Color homeHeaderBackground = Color(0xFFFCF2EE);
-
-  /// Icono café primary claro
-  static const Color homeHeaderIcon = Color(0xFF734C35);
-
-  /// Texto sobre superficie clara
-  static const Color homeHeaderText = Color(0xFF1F1B19);
-
   // ============================================================================
   // COLORES DE HEADER HOME (TEMA OSCURO — cafecito)
   // ============================================================================
-
-  /// Fondo oscuro cálido (surfaceContainer del esquema cafecito)
-  static const Color homeHeaderBackgroundDark = Color(0xFF231F1D);
-
-  /// Icono primary oscuro (primary del esquema cafecito dark)
-  static const Color homeHeaderIconDark = Color(0xFFF0BB9E);
-
-  /// Texto sobre superficie oscura
-  static const Color homeHeaderTextDark = Color(0xFFEAE1DD);
 
   // ============================================================================
   // COLORES DE DIÁLOGOS (TEMA CLARO)
@@ -122,10 +104,6 @@ class AppColors {
   // ============================================================================
   // COLORES DE DIÁLOGOS (TEMA OSCURO)
   // ============================================================================
-
-  static const Color dialogBackgroundDark = Color(0xFF2C2C2C);
-  static const Color dialogTitleTextDark = Colors.white;
-  static const Color dialogBodyTextDark = Color(0xFFBDBDBD);
 
   // ============================================================================
   // COLORES DE PANTALLAS DE AUTENTICACIÓN (fondo imagen)
@@ -202,16 +180,4 @@ class AppColors {
   /// Obtiene el color de texto de alumno baja según el tema
   static Color getAlumnoBajaText(bool isDark) =>
       isDark ? alumnoBajaTextDark : alumnoBajaText;
-
-  /// Obtiene el color de fondo del header según el tema
-  static Color getHomeHeaderBackground(bool isDark) =>
-      isDark ? homeHeaderBackgroundDark : homeHeaderBackground;
-
-  /// Obtiene el color del icono del header según el tema
-  static Color getHomeHeaderIcon(bool isDark) =>
-      isDark ? homeHeaderIconDark : homeHeaderIcon;
-
-  /// Obtiene el color del texto del header según el tema
-  static Color getHomeHeaderText(bool isDark) =>
-      isDark ? homeHeaderTextDark : homeHeaderText;
 }

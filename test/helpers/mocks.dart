@@ -11,7 +11,6 @@ import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
 import 'package:arjipagos/src/domain/repository/BannerRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
-import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -21,9 +20,6 @@ import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/banners/GetBannersUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaPagadosUseCases.dart';
@@ -49,9 +45,6 @@ import 'package:mocktail/mocktail.dart';
 
 /// Mock del repositorio de autenticación.
 class MockAuthRepository extends Mock implements AuthRepository {}
-
-/// Mock del repositorio de alumnos.
-class MockHomeRepository extends Mock implements HomeRepository {}
 
 /// Mock del repositorio de estados de cuenta.
 class MockEdoCtaRepository extends Mock implements EdoCtaRepository {}
@@ -88,15 +81,10 @@ class MockGetUserSessionUseCase extends Mock implements GetUserSessionUseCase {}
 /// Mock del caso de uso de logout.
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
 
-/// Mock del caso de uso de obtener alumnos.
-class MockGetAlumnosUseCase extends Mock implements GetAlumnosUseCase {}
-
 // ============================================================================
 // FACTORIES DE USE CASES CON MOCKS
 // ============================================================================
 
-/// Mock del caso de uso de registro.
-class MockRegisterUseCase extends Mock implements RegisterUseCase {}
 
 /// Mock del caso de uso de cambio de contraseña.
 class MockCambiarContrasenaUseCase extends Mock
@@ -112,7 +100,6 @@ AuthUseCases createMockAuthUseCases({
   MockSaveUserSessionUseCase? saveUserSession,
   MockGetUserSessionUseCase? getUserSession,
   MockLogoutUseCase? logout,
-  MockRegisterUseCase? register,
   MockCambiarContrasenaUseCase? cambiarContrasena,
   MockRecuperarContrasenaUseCase? recuperarContrasena,
 }) {
@@ -121,16 +108,10 @@ AuthUseCases createMockAuthUseCases({
     saveUserSession: saveUserSession ?? MockSaveUserSessionUseCase(),
     getUserSession: getUserSession ?? MockGetUserSessionUseCase(),
     logout: logout ?? MockLogoutUseCase(),
-    register: register ?? MockRegisterUseCase(),
     cambiarContrasena: cambiarContrasena ?? MockCambiarContrasenaUseCase(),
     recuperarContrasena:
         recuperarContrasena ?? MockRecuperarContrasenaUseCase(),
   );
-}
-
-/// Crea un HomeUseCases con todos los use cases mockeados.
-HomeUseCases createMockHomeUseCases({MockGetAlumnosUseCase? getAlumnos}) {
-  return HomeUseCases(getAlumnos: getAlumnos ?? MockGetAlumnosUseCase());
 }
 
 /// Mock del caso de uso de obtener estados de cuenta.

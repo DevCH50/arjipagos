@@ -214,41 +214,176 @@ class MotivoEstacionalPainter extends CustomPainter {
   // DICIEMBRE — RAMA CON ESFERAS
   // ==========================================================================
 
-  /// Una rama horizontal con púas alternas y esferas colgando.
+  /// Una guirnalda de pino: agujas tupidas a lo largo de un eje, con esferas
+  /// colgando de su hilo.
   ///
-  /// Tampoco usa [_repetir]: la rama es continua de lado a lado, y lo que se
-  /// repite son las púas y las esferas sobre ella.
+  /// Tampoco usa [_repetir]: el eje es continuo de lado a lado, y lo que se
+  /// repite son las agujas y las esferas sobre él.
+  ///
+  /// ## Por qué está dibujada así
+  ///
+  /// La primera versión era **un peine**: un eje con una púa por nodo,
+  /// inclinada a un lado y al otro alternándose. A 15 px de alto los pares se
+  /// juntaban formando uves perfectas y el conjunto se leía como una **sierra
+  /// dentada**, no como pino. Encima las esferas flotaban despegadas, sin nada
+  /// que las sujetara. Tres cambios lo arreglan, y ninguno es decorativo:
+  ///
+  /// 1. **Las agujas salen hacia los dos lados del eje**, arriba y abajo. Así
+  ///    llenan el alto —antes la mitad de arriba era aire muerto— y el
+  ///    contorno deja de ser una línea de dientes regulares.
+  /// 2. **El largo varía** con un seno de periodo largo. Es la diferencia
+  ///    entre follaje y peine: lo que delata a un patrón dibujado es la
+  ///    regularidad, no la forma.
+  /// 3. **Las esferas cuelgan de un hilo** y llevan un punto de brillo. Con eso
+  ///    se leen como esferas y no como lunares sueltos.
   void _ramaNavidad(Canvas canvas, Size size) {
-    final double y = size.height * 0.3;
-    final Paint rama = Paint()
-      ..color = colores.first.withValues(alpha: opacidad)
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
+    final double alto = size.height;
+    // El eje va algo por encima del centro: debajo cuelgan las esferas, que
+    // necesitan más sitio que las agujas de arriba.
+    final double y = alto * 0.42;
+    final Color verde = colores.first;
 
-    canvas.drawLine(Offset(0, y), Offset(size.width, y), rama);
+    // Paso corto: los picos tienen que ser muchos y pequeños para leerse como
+    // agujas y no como una sierra.
+    const double paso = 5;
+    final int picos = math.max(2, (size.width / paso).round());
+    final double ancho = size.width / picos;
 
-    const double paso = 9;
-    final int cuantas = math.max(1, (size.width / paso).round());
+    final Color verdeFondo = _sombraDe(verde);
+    final Color verdeFrente = _aclarar(verde, 0.1);
+
+    // **Dos capas, no una.** Una sola masa de un verde es una mancha plana; y
+    // las agujas sueltas que se probaron encima se leían como rayas sucias
+    // cruzando la guirnalda. Dos siluetas del mismo follaje —la de atrás más
+    // grande y oscura, la de delante más corta, más clara y desfasada media
+    // celda— dan la profundidad sin ensuciar nada.
+    canvas.drawPath(
+      _follaje(size, y, ancho, picos, arriba: 0.30, abajo: 0.34, desfase: 0),
+      _pincel(verdeFondo),
+    );
+    canvas.drawPath(
+      _follaje(
+        size,
+        y,
+        ancho,
+        picos,
+        arriba: 0.20,
+        abajo: 0.24,
+        desfase: 0.5,
+      ),
+      _pincel(verdeFrente),
+    );
+
+    _esferas(canvas, size, y);
+  }
+
+  /// Una silueta de follaje: una cinta con el contorno en picos irregulares
+  /// arriba y abajo, centrada en [y].
+  ///
+  /// [arriba] y [abajo] son la altura máxima del pico, en fracción del alto
+  /// total. [desfase] corre los picos en fracciones de celda, y es lo que
+  /// permite superponer dos capas sin que coincidan.
+  ///
+  /// Los dos bordes usan **senos distintos**: sincronizados, la silueta se
+  /// convierte en una hilera de rombos, que fue justo lo que salió al primer
+  /// intento. Y son senos, no azar: el dibujo tiene que ser idéntico en cada
+  /// repintado para que `shouldRepaint` signifique algo.
+  Path _follaje(
+    Size size,
+    double y,
+    double ancho,
+    int picos, {
+    required double arriba,
+    required double abajo,
+    required double desfase,
+  }) {
+    final double alto = size.height;
+    // La cintura es lo que mantiene la masa continua entre pico y pico. Con la
+    // cintura casi a cero los dos bordes se tocaban y salían rombos sueltos.
+    final double cintura = alto * 0.14;
+    final double corrimiento = ancho * desfase;
+
+    final Path masa = Path()..moveTo(0, y - cintura);
+    for (int i = 0; i < picos; i++) {
+      final double x = ancho * i + corrimiento;
+      final double largo = 0.55 + 0.45 * math.sin(i * 1.7);
+      masa
+        ..lineTo(x + ancho * 0.5, y - alto * arriba * largo)
+        ..lineTo(x + ancho, y - cintura);
+    }
+    masa.lineTo(size.width, y + cintura);
+    for (int i = picos - 1; i >= 0; i--) {
+      final double x = ancho * i + corrimiento;
+      final double largo = 0.55 + 0.45 * math.sin(i * 2.3 + 1);
+      masa
+        ..lineTo(x + ancho * 0.5, y + alto * abajo * largo)
+        ..lineTo(x, y + cintura);
+    }
+    return masa..close();
+  }
+
+  /// Las esferas de la guirnalda, colgadas del eje que está en [y].
+  ///
+  /// **Nunca usan el primer color de la temporada**, que es el verde de las
+  /// agujas: una esfera verde sobre follaje verde no se ve. Alternan los otros
+  /// dos —el dorado y el rojo—, que es justo para lo que están en la paleta.
+  void _esferas(Canvas canvas, Size size, double y) {
+    final double alto = size.height;
+    final double radio = alto * 0.155;
+    // Una cada seis agujas: más juntas se amontonan y tapan la guirnalda.
+    const double separacion = 4.5 * 6;
+    final int cuantas = math.max(1, (size.width / separacion).round());
     final double ancho = size.width / cuantas;
-    final double largoPua = size.height * 0.34;
 
     for (int i = 0; i < cuantas; i++) {
       final double x = ancho * (i + 0.5);
-      // Las púas se abren en abanico: se inclinan más cuanto más lejos del
-      // centro de su grupo, como las agujas de una rama de pino.
-      final double sesgo = (i.isEven ? 1 : -1) * ancho * 0.45;
-      canvas.drawLine(Offset(x, y), Offset(x + sesgo, y + largoPua), rama);
+      // Dos profundidades alternas: colgadas todas a la misma altura parecen
+      // un metrónomo. La larga está calculada para que la esfera **no se salga
+      // por abajo**: eje (0.42) + hilo (0.24) + diámetro (0.31) = 0.97 del alto.
+      final double hilo = alto * (i.isEven ? 0.16 : 0.24);
+      final Offset centro = Offset(x, y + hilo + radio);
+      final Color color = colores[1 + (i % (colores.length - 1))];
 
-      // Una esfera cada tres púas, para que no se amontonen.
-      if (i % 3 == 1) {
-        final double radio = size.height * 0.16;
-        canvas.drawCircle(
-          Offset(x, y + largoPua + radio * 0.7),
-          radio,
-          _pincel(colores[(i ~/ 3 + 1) % colores.length]),
-        );
-      }
+      // El hilo arranca **dentro** del follaje, no en su borde: así la esfera
+      // cuelga de la guirnalda en vez de flotar debajo.
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x, centro.dy - radio * 0.6),
+        Paint()
+          ..color = colorTrazo.withValues(alpha: 0.5 * opacidad)
+          ..strokeWidth = 0.8
+          ..isAntiAlias = true,
+      );
+      canvas.drawCircle(centro, radio, _pincel(color));
+      // El brillo, arriba a la izquierda: es lo que convierte un círculo plano
+      // en una esfera, y a este tamaño basta con un punto.
+      canvas.drawCircle(
+        centro.translate(-radio * 0.3, -radio * 0.35),
+        radio * 0.32,
+        Paint()
+          ..color = _aclarar(color).withValues(alpha: 0.85 * opacidad)
+          ..isAntiAlias = true,
+      );
     }
+  }
+
+  /// El color, más claro. El reverso de [_oscurecer]: saca el brillo de una
+  /// esfera —o el verde de delante de la guirnalda— sin meter blanco, que sobre
+  /// el tema oscuro cantaría.
+  Color _aclarar(Color color, [double cuanto = 0.25]) {
+    final HSLColor hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness + cuanto).clamp(0.0, 1.0)).toColor();
+  }
+
+  /// El color un punto más oscuro, **pero sin llegar a negro**.
+  ///
+  /// No vale [_oscurecer] aquí: resta 0.3 de luminosidad y el verde pino
+  /// (`0xFF1B5E20`) ya está en 0.24, así que el `clamp` lo dejaba en **negro
+  /// puro**. El eje de la guirnalda salía como un alambre negro y las agujas de
+  /// arriba, como púas. El suelo de 0.16 mantiene el verde reconocible.
+  Color _sombraDe(Color color) {
+    final HSLColor hsl = HSLColor.fromColor(color);
+    return hsl.withLightness(math.max(hsl.lightness - 0.08, 0.16)).toColor();
   }
 
   // ==========================================================================

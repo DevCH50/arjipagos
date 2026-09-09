@@ -8,16 +8,6 @@ abstract class AuthRepository {
   Future<Resource> login(String username, String password);
   Future<bool> logout();
 
-  /// Registra un nuevo usuario en el sistema.
-  Future<Resource> registerUser({
-    required String nombre,
-    required String apPaterno,
-    required String apMaterno,
-    required String celular,
-    required String email,
-    required String password,
-  });
-
   /// Cambia la contraseña del usuario autenticado.
   Future<Resource> cambiarContrasena({
     required String passwordActual,

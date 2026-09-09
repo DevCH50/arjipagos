@@ -33,8 +33,6 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dar
     as _i908;
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart'
     as _i303;
-import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart'
-    as _i167;
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart'
     as _i955;
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart'
@@ -52,15 +50,12 @@ import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart'
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart' as _i57;
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart'
     as _i1073;
-import 'package:arjipagos/src/domain/repository/HomeRepository.dart' as _i123;
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart'
     as _i775;
 import 'package:arjipagos/src/domain/repository/ResenaRepository.dart' as _i434;
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart' as _i522;
 import 'package:arjipagos/src/domain/repository/VersionRepository.dart'
     as _i943;
-import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart'
-    as _i18;
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart' as _i887;
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart'
     as _i557;
@@ -96,9 +91,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i424.AuthService>(() => appModule.authService);
     gh.factory<_i1009.AuthRepository>(() => appModule.authRepository);
     gh.factory<_i887.AuthUseCases>(() => appModule.authUseCases);
-    gh.factory<_i167.HomeService>(() => appModule.homeService);
-    gh.factory<_i123.HomeRepository>(() => appModule.homeRepository);
-    gh.factory<_i18.HomeUseCases>(() => appModule.homeUseCases);
     gh.factory<_i276.EdoCtaService>(() => appModule.edoCtaService);
     gh.factory<_i57.EdoCtaRepository>(() => appModule.edoCtaRepository);
     gh.factory<_i869.EdoCtaUseCases>(() => appModule.edoCtaUseCases);

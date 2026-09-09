@@ -44,15 +44,7 @@ class AppLogger {
     _log('NETWORK', tag ?? _tag, message);
   }
 
-  /// Log de BLoC - eventos y estados
-  static void bloc(String message, {String? tag}) {
-    _log('BLOC', tag ?? _tag, message);
-  }
 
-  /// Log de navegación
-  static void navigation(String message, {String? tag}) {
-    _log('NAV', tag ?? _tag, message);
-  }
 
   // ============================================================================
   // HELPERS ESPECÍFICOS
@@ -69,27 +61,9 @@ class AppLogger {
     network('$emoji [$statusCode] $url');
   }
 
-  /// Log para error HTTP
-  static void httpError(String url, Object error) {
-    network('✗ ERROR $url: $error');
-  }
 
-  /// Log para cambio de estado en BLoC
-  static void blocTransition(String blocName, String event, String fromState, String toState) {
-    bloc('$blocName: $event');
-    bloc('  From: $fromState');
-    bloc('  To: $toState');
-  }
 
-  /// Log para navegación a nueva pantalla
-  static void navigateTo(String routeName) {
-    navigation('→ Navegando a: $routeName');
-  }
 
-  /// Log para pop de pantalla
-  static void navigateBack() {
-    navigation('← Volviendo');
-  }
 
   // ============================================================================
   // IMPLEMENTACIÓN INTERNA

@@ -11,6 +11,10 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "build/**"
+    # `otros/` es el almacén local: respaldos y material fuera del repo. No es
+    # código de la app y no debe analizarse (sus imports apuntan a rutas que ya
+    # no existen, y eso llenaría el analizador de errores falsos).
+    - otros/**
     - android/**
     - ios/**
     - web/**

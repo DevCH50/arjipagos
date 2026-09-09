@@ -4400,3 +4400,206 @@ temporadas por los dos temas** comprobando que ningún motivo revienta al pintar
   versión.
 - El arreglo de la selección por concepto (sesión anterior) corre más prisa que esto y debería
   publicarse antes o por separado.
+
+---
+
+## 2026-09-09 — Se retira el bloque Home: la pantalla que nadie podía abrir
+
+`HomesPage` estaba dada de alta como ruta `'Homes'` en `main.dart` y **ningún sitio de la app
+navegaba a ella**. Detrás colgaba la cadena entera —`HomeBloc`, `HomeUseCases`,
+`GetAlumnosUseCase`, `HomeRepository`, `HomeRepositoryImpl` y `HomeService`— que no usaba nadie
+más, y que aun así **pedía `/api/v1/alumnos/{userId}` al arrancar la app y otra vez en cada
+login**, para no pintarlo en ninguna parte. El menú principal la había sustituido hacía tiempo.
+
+Carlos autorizó retirar el bloque completo el 2026-09-08.
+
+### Qué se fue, y qué se quedó
+
+| Se retira | Se conserva |
+| --- | --- |
+| `pages/home/` entero: `HomePage`, `HomeBloc`/`Event`/`State` y sus seis widgets | `UserAvatar.dart` y `CloseSession.dart`, **movidos** a `lib/src/presentation/widgets/` |
+| `HomeService`, `HomeRepositoryImpl`, `HomeRepository`, `GetAlumnosUseCase`, `HomeUseCases` | El modelo `AlumnoResponse` — ver «Pendiente» |
+| La ruta `'Homes'` de `main.dart` y el `Endpoints.alumnos` que solo llamaba ese service | |
+| Sus tres tests: `home_bloc_test`, `home_service_test`, `get_alumnos_usecase_test` | |
+
+`UserAvatar` lo usan Estados de Cuenta, Carrito y Pagos Realizados; `CloseSession`, el drawer del
+menú. Por eso salieron de `home/widget/` en vez de borrarse.
+
+**El respaldo está en `otros/home_borrado_2026-09-08/`**, con su `LEEME.md`. Es por comodidad: la
+copia buena está en el historial de git, en el commit anterior al del borrado
+(`git log --diff-filter=D --name-only`).
+
+### Lo que faltaba por conectar, y que se hizo hoy
+
+El borrado estaba a medias: el árbol compilaba `lib/` pero la inyección y los tests seguían
+apuntando al bloque retirado.
+
+- **`AppModule`**: fuera los tres `@injectable` (`homeService`, `homeRepository`, `homeUseCases`)
+  y sus cinco imports. `injection.config.dart` regenerado con `build_runner` — ya no queda ni una
+  mención a Home.
+- **`test/helpers/mocks.dart`**: fuera `MockHomeRepository`, `MockGetAlumnosUseCase` y
+  `createMockHomeUseCases`.
+- **`test/unit/respuesta_sin_datos_test.dart`**: fuera el grupo `HomeService`. Los otros tres
+  services siguen cubiertos por los dos lados —el `404` con `success: false` y el `404` de ruta
+  inexistente—, que es lo que ese test vigila.
+- **`test/widget_test.dart`**: fuera los dos imports y las dos llamadas a los tests borrados.
+- **`test/unit/sesion_no_arrastra_usuario_anterior_test.dart`**: `HomeLimpiarSesionEvent` sale de
+  la lista de eventos obligatorios, con la nota de por qué. El test **fallaba** hasta ese cambio,
+  que es justo lo que se le pide a un guardián.
+
+### `otros/` deja de pasar por el analizador
+
+El respaldo tiene imports a rutas que ya no existen, así que `flutter analyze` sacaba **157
+errores** de una carpeta que no es código de la app. `analysis_options.yaml` excluye ahora
+`otros/**`, y con eso el analizador vuelve a hablar solo del proyecto.
+
+### Documentación
+
+En `CLAUDE.md` se corrigieron las dos frases que nombraban lo retirado: la lista de services que
+usan `esRespuestaSinDatos()` y la de BLoCs que vacía `cerrarSesionCompleta`.
+
+### Verificado
+
+Analizador **limpio** y **953 tests en verde**. No se probó en dispositivo: no hay nada nuevo que
+mirar —lo que se fue era inalcanzable—, y lo único observable es que la app deja de hacer dos
+peticiones inútiles a `/api/v1/alumnos/{userId}`.
+
+### Pendiente
+
+- **`AlumnoResponse` se retiró también**, el mismo día y con el mismo criterio: era el modelo que
+  devolvía `HomeService` y nada de `lib/` lo leía. Con él se fueron su test
+  (`test/unit/models/alumno_response_test.dart`, 20 casos) y la clase `TestAlumnoResponse` de
+  `test/helpers/test_data.dart`. Respaldo en `otros/home_borrado_2026-09-08/`. **La entidad
+  `Alumno` sigue viva** y la usa media app: llega dentro de `EstadosDeCuentaResponse`.
+- Sin commitear.
+
+---
+
+## 2026-09-09 — El vivo de navidad: se arregla el degradado y se rehace la guirnalda
+
+Carlos: «los vivos de Navidad no se ven tan chidos». Tenía razón por partida doble, y eran dos
+fallos distintos con dos causas distintas.
+
+### 1. El degradado pasaba por café
+
+La paleta era `[verde pino, rojo, dorado]` y `FranjaEstacional` interpola de un color al
+siguiente. **Verde y rojo son complementarios: su punto medio es un café sucio**, así que el
+vivo de 3 px iba de verde a lodo y de lodo a naranja. No parecía navidad, parecía otoño mal
+impreso.
+
+**Arreglo: el dorado se pone en medio** —`[verde, dorado, rojo]`, en las dos paletas—. Las dos
+transiciones quedan limpias: verde→dorado por oliva, dorado→rojo por naranja. Es un cambio de
+orden, ni un color nuevo.
+
+El verde **sigue siendo el primero** porque `MotivoEstacionalPainter` pinta con `colores.first`
+el follaje de la guirnalda. Hay test guardián nuevo, `test/unit/paleta_navidad_test.dart`, que
+vigila las dos cosas —el de en medio separa a los otros dos, y el primero es verde— **por tono y
+no por valor exacto**, para que los colores se puedan afinar sin tocar el test.
+
+### 2. La «rama con esferas» era una sierra
+
+`_ramaNavidad` dibujaba un eje horizontal con **una púa por nodo**, inclinada a un lado y al otro
+alternándose. A 15 px de alto los pares se juntaban formando uves perfectas: se leía como una
+**sierra dentada**. Encima las esferas eran círculos planos flotando debajo, sin nada que las
+sujetara.
+
+Se rehízo entera. El camino no fue directo y las dos versiones intermedias están documentadas en
+el código, porque explican por qué la solución es la que es:
+
+| Intento | Qué salió |
+| --- | --- |
+| Agujas hacia arriba y abajo desde el eje | **Equis regulares.** Dos rectas que salen del mismo punto en direcciones opuestas siempre forman una equis, y una tira de equis es un patrón geométrico |
+| Desfasar media celda + rayas claras encima | Mejor, pero las rayas se leían como **suciedad** cruzando la guirnalda |
+| **Dos siluetas de follaje superpuestas** | El bueno |
+
+Lo que hay ahora es `_follaje()`: una cinta con el contorno en **picos irregulares** arriba y
+abajo, dibujada **dos veces** —la de atrás más grande y oscura, la de delante más corta, clara y
+desfasada media celda—. Eso da la profundidad sin ninguna raya suelta.
+
+Tres detalles que costaron y no se deben deshacer:
+
+- **Los dos bordes usan senos distintos.** Sincronizados, la silueta se convierte en una hilera
+  de **rombos**. Y son senos, no azar: el dibujo tiene que ser idéntico en cada repintado para
+  que `shouldRepaint` signifique algo.
+- **La cintura del follaje es del 14 % del alto.** Casi a cero, los dos bordes se tocan entre
+  pico y pico y la masa se parte en rombos sueltos.
+- **`_oscurecer` no vale para el verde pino.** Resta 0.3 de luminosidad y `0xFF1B5E20` ya está en
+  0.24, así que el `clamp` lo dejaba en **negro puro**: el eje salía como un alambre y las agujas
+  como púas. Para esto está `_sombraDe()`, con suelo en 0.16.
+
+Las esferas ahora **cuelgan de un hilo** que arranca dentro del follaje, llevan un **punto de
+brillo** —lo que convierte un círculo plano en una esfera— y alternan dos profundidades, porque
+colgadas todas a la misma altura parecen un metrónomo. **Nunca usan el primer color**, que es el
+verde de las agujas: una esfera verde sobre follaje verde no se ve.
+
+### Verificado
+
+Analizador limpio y **957 tests en verde** (4 nuevos). Revisado en claro y en oscuro renderizando
+el listón a 6x, y en el Oppo CPH2639 con la temporada forzada.
+
+**`kTemporadaForzada` volvió a `null`.** Solo se tocó para mirar diciembre en septiembre.
+
+---
+
+## 2026-09-09 — Limpieza: se va lo que nadie usaba, y el Registro con ello
+
+Carlos pidió revisar si quedaba más basura, y de paso qué campos del JSON no usa la app para
+pedirle al backend que deje de mandarlos. Dos revisiones en paralelo.
+
+### El Registro era inalcanzable
+
+`main.dart` declaraba la ruta `'register'` y **ningún `pushNamed` de toda la app navegaba a
+ella**: `NoTienesCuentaAun` abre un diálogo informativo y nada más. Aun así, `RegisterBloc` se
+creaba **en cada arranque** desde `blocProviders`.
+
+Autorizado retirarlo entero. Se fue la cadena completa: la carpeta `pages/auth/register/`,
+`RegisterUseCase`, `AuthRepository.registerUser()` con su implementación, `AuthService.register()`,
+`Endpoints.register`, el campo `register` de `AuthUseCases`, el `BlocProvider`, los mocks y los
+dos bloques de test. Respaldo y explicación en `otros/registro_retirado_2026-09-09/`.
+
+**Antes de que el backend retire `POST /api/v1/register`, confirmar que no lo use el portal web.**
+
+### Lo demás
+
+| Qué | Cuánto |
+| --- | --- |
+| `DefaultIconBack.dart` y `PagoResponse.dart` | archivos que nadie importaba |
+| `AppStrings` | **67 constantes** sin una sola referencia (26 eran restos de Home) |
+| `AppDurations` | 12 de 14; solo se usaban `httpTimeout` e `intervaloRevisionVersion` |
+| `AppColors` | el bloque `homeHeader*` con sus 3 getters, y la sección de diálogos |
+| `AppLogger` | 6 métodos sin llamador |
+| `pubspec.yaml` | `rxdart`, cero imports |
+| `Endpoints.alumnos` | resto del bloque Home |
+
+**`Endpoints.alumnos` seguía ahí.** El `LEEME` del borrado de Home decía que se había retirado y
+se dio por bueno sin comprobarlo —la comprobación de entonces ni siquiera llegó a ejecutarse—.
+Estaba en `endpoints.dart:23` sin que nadie lo llamara. Lección: **un grep que no se ejecuta no
+es una comprobación**.
+
+**Lo que NO se tocó, aunque salga sin uso:** los cuatro temas de alto y medio contraste
+(`AppTheme.lightHighContrast` y compañía) porque son accesibilidad, `ExtendedColor`/`ColorFamily`
+porque son código generado por Material Theme Builder, y `cupertino_icons`.
+
+**Y uno que hubo que devolver:** `AppConstants.maxLongitudReferencia` se borró por venir marcado
+como muerto, pero lo usan los tests de la referencia. Está de vuelta con su valor de 30 — el que
+manda en producción sigue siendo `PoliticaEmisor.maxLongitudReferencia`, que es por emisor.
+
+### Campos del JSON que la app no usa
+
+El encargo quedó en `/home/carlos/Projects/Laravel/ArjiApp/CAMPOS_JSON_QUE_LA_APP_NO_USA.md`, con
+las tres advertencias por delante:
+
+1. **`success` no se puede quitar**: la app distingue «no hay nada» de «error» con `404` +
+   `success: false`. Quitarlo devuelve los «Error al cargar» de agosto.
+2. **`campania` no se puede quitar del push**: en el listado REST no lo lee nadie, pero en FCM es
+   lo que dispara el refresco tras pagar.
+3. Los datos de perfil del login son decisión de producto.
+
+Lo que sí sobra: las cuatro becas, `factura_pdf`/`factura_xml`, `nivel_id`, `num_pago_activo` y
+`esta_disponible_en_la_app_movil` **por cada renglón de cada alumno** —ahí está el peso—, más
+`ap_paterno`/`ap_materno`/`grupo_id`/`familia_id` por alumno y varios de la raíz.
+
+### Verificado
+
+Analizador limpio y **927 tests en verde**. Bajó desde 937 porque se fueron los tests del
+Registro, no porque falle nada. DI regenerado.

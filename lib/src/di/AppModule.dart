@@ -12,7 +12,6 @@ import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosServi
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
-import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dart';
@@ -23,7 +22,6 @@ import 'package:arjipagos/src/data/repository/BiometriaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaPagadosRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/EdoCtaRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/FacturaRepositoryImpl.dart';
-import 'package:arjipagos/src/data/repository/HomeRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/NotificacionRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/TicketRepositoryImpl.dart';
 import 'package:arjipagos/src/data/repository/ResenaRepositoryImpl.dart';
@@ -34,20 +32,16 @@ import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaPagadosRepository.dart';
 import 'package:arjipagos/src/domain/repository/EdoCtaRepository.dart';
 import 'package:arjipagos/src/domain/repository/FacturaRepository.dart';
-import 'package:arjipagos/src/domain/repository/HomeRepository.dart';
 import 'package:arjipagos/src/domain/repository/TicketRepository.dart';
 import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
 import 'package:arjipagos/src/domain/repository/VersionRepository.dart';
 import 'package:arjipagos/src/domain/repository/NotificacionRepository.dart';
-import 'package:arjipagos/src/domain/useCases/alumnos/GetAlumnosUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/alumnos/HomeUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/auth/CambiarContrasenaUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/GetUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LoginUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/LogoutUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/RecuperarContrasenaUseCase.dart';
-import 'package:arjipagos/src/domain/useCases/auth/RegisterUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/auth/SaveUserSessionUseCase.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/biometria/AutenticarBiometriaUseCase.dart';
@@ -124,20 +118,9 @@ abstract class AppModule {
     saveUserSession: SaveUserSessionUseCase(authRepository),
     getUserSession: GetUserSessionUseCase(authRepository),
     logout: LogoutUseCase(authRepository),
-    register: RegisterUseCase(authRepository),
     cambiarContrasena: CambiarContrasenaUseCase(authRepository),
     recuperarContrasena: RecuperarContrasenaUseCase(authRepository),
   );
-
-  @injectable
-  HomeService get homeService => HomeService(sharedPref, authUseCases);
-
-  @injectable
-  HomeRepository get homeRepository => HomeRepositoryImpl(homeService);
-
-  @injectable
-  HomeUseCases get homeUseCases =>
-      HomeUseCases(getAlumnos: GetAlumnosUseCase(homeRepository));
 
   // ============================================================================
   // ESTADOS DE CUENTA (EDO CTA)

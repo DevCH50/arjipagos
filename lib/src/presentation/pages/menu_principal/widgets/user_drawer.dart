@@ -1,6 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/biometria/widgets/InterruptorBiometria.dart';
-import 'package:arjipagos/src/presentation/pages/home/widget/CloseSession.dart';
+import 'package:arjipagos/src/presentation/widgets/CloseSession.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/copyable_list_tile.dart';

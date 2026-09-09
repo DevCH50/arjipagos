@@ -37,7 +37,6 @@ dependencies:
   flutter_bloc: ^9.1.1
   injectable: ^3.0.0
   equatable: ^2.0.5
-  rxdart: ^0.28.0
   http: ^1.6.0
   shared_preferences: ^2.4.0
   flutter_secure_storage: ^10.1.0

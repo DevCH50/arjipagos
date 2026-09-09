@@ -46,4 +46,3 @@ class LoginState extends Equatable {
 }
 
 // class LoginInitial extends LoginState {}
-// class RegisterInitial extends LoginState {}

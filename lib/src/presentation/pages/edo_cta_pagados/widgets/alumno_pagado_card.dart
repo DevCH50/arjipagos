@@ -2,7 +2,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/widgets/pagos_realizados_list.dart';
-import 'package:arjipagos/src/presentation/pages/home/widget/UserAvatar.dart';
+import 'package:arjipagos/src/presentation/widgets/UserAvatar.dart';
 import 'package:flutter/material.dart';
 
 /// Tarjeta expandible de un alumno con sus pagos ya realizados.

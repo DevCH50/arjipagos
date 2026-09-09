@@ -10,14 +10,12 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
-import 'package:arjipagos/src/presentation/pages/auth/register/RegisterPage.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/EdoCtaPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/EdoCtaPagadosPage.dart';
 import 'package:arjipagos/src/presentation/pages/ticket/TicketPage.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/CarritoPage.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/PagoWebViewPage.dart';
-import 'package:arjipagos/src/presentation/pages/home/HomePage.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/MenuPrincipalPage.dart';
 import 'package:arjipagos/src/presentation/pages/aviso_de_privacidad/AvisoDePrivacidadPage.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/FacturasPage.dart';
@@ -150,8 +148,6 @@ class MyApp extends StatelessWidget {
         themeMode: ThemeMode.system,
         routes: {
           'login': (BuildContext context) => const LoginPage(),
-          'register': (BuildContext context) => const RegisterPage(),
-          'Homes': (BuildContext context) => const HomesPage(),
           'menu_principal': (BuildContext context) => const MenuPrincipalPage(),
           'splash': (BuildContext context) => const SplashPage(),
           'edo_cta': (BuildContext context) => const EdoCtaPage(),

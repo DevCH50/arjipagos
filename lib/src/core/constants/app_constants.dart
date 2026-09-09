@@ -5,16 +5,19 @@ import 'package:flutter/foundation.dart';
 /// Centraliza valores enteros y de configuración que no son strings
 /// para facilitar el mantenimiento y evitar números mágicos en el código.
 abstract final class AppConstants {
-  // ============================================================================
-  // PAGO — REFERENCIA
-  // ============================================================================
-
-  /// Longitud máxima permitida para la referencia de pago enviada a Adquira México.
+  /// Tope de caracteres de la referencia de pago.
   ///
   /// La referencia se forma concatenando los IDs de EstadoDeCuenta con 'D':
   /// `"5358D5359D5360"`. Si la referencia supera este límite, Adquira rechaza
   /// la transacción. Los IDs deben ir completos — nunca se truncan.
+  ///
+  /// **El que manda en producción es `PoliticaEmisor.maxLongitudReferencia`**,
+  /// que es por emisor fiscal. Éste lo usan los tests de la referencia.
   static const int maxLongitudReferencia = 30;
+
+  // ============================================================================
+  // PAGO — REFERENCIA
+  // ============================================================================
 
   /// Separador de referencia según plataforma: 'I' en iOS, 'A' en Android.
   static const String _sepIOS = 'I';

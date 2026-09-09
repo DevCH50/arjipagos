@@ -12,8 +12,6 @@ import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPaga
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaEvent.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeBloc.dart';
-import 'package:arjipagos/src/presentation/pages/home/bloc/HomeEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:flutter/material.dart';
@@ -77,7 +75,6 @@ class LoginResponse extends StatelessWidget {
     // esperar, este widget puede haber dejado de estar montado.
     final NavigatorState navigator = Navigator.of(context);
     final MenuPrincipalBloc menuBloc = context.read<MenuPrincipalBloc>();
-    final HomeBloc homeBloc = context.read<HomeBloc>();
     final EdoCtaPagadosBloc pagadosBloc = context.read<EdoCtaPagadosBloc>();
     final FacturaBloc facturaBloc = context.read<FacturaBloc>();
 
@@ -86,7 +83,6 @@ class LoginResponse extends StatelessWidget {
     // Ya hay sesión escrita: cada BLoC puede pedir sus datos con el usuario
     // nuevo. `MenuPrincipalInitialEvent` registra además el token de FCM.
     menuBloc.add(const MenuPrincipalInitialEvent());
-    homeBloc.add(const RefreshHomesList());
     // Una recarga por emisor fiscal: cada uno tiene su lista y su almacén.
     for (final EdoCtaListBloc bloc in locator<EdoCtaListBlocPorEmisor>().todos) {
       bloc.add(const EdoCtaListRefreshEvent());

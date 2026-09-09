@@ -3,7 +3,7 @@ import 'package:arjipagos/src/core/utils/formato_monto.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_pago_item.dart';
-import 'package:arjipagos/src/presentation/pages/home/widget/UserAvatar.dart';
+import 'package:arjipagos/src/presentation/widgets/UserAvatar.dart';
 import 'package:flutter/material.dart';
 
 /// Tarjeta de un alumno con sus pagos en el carrito.

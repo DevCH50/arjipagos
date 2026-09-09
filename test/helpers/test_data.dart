@@ -1,12 +1,11 @@
 /// Datos de prueba para los tests unitarios.
 ///
-/// Contiene factories y datos mock para User, Alumno, AuthResponse, AlumnoResponse
+/// Contiene factories y datos mock para User, Alumno, AuthResponse
 /// y Notificacion.
 library;
 
 import 'package:arjipagos/src/domain/models/Alumno.dart';
 import 'package:arjipagos/src/domain/models/notificacion/notificacion.dart';
-import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/domain/models/User.dart';
@@ -371,44 +370,6 @@ class TestAuthResponse {
   };
 }
 
-/// Datos de prueba para AlumnoResponse.
-class TestAlumnoResponse {
-  static AlumnoResponse get valid => AlumnoResponse(
-    familiaId: 1,
-    familia: 'Familia López García',
-    roleId: 2,
-    cicloPredeterminadoId: 2024,
-    cicloPredeterminado: '2024-2025',
-    alumnos: TestAlumno.lista,
-  );
-
-  static AlumnoResponse get empty => AlumnoResponse(
-    familiaId: 1,
-    familia: 'Familia López García',
-    roleId: 2,
-    cicloPredeterminadoId: 2024,
-    cicloPredeterminado: '2024-2025',
-    alumnos: [],
-  );
-
-  static Map<String, dynamic> get validJson => {
-    'familia_id': 1,
-    'familia': 'Familia López García',
-    'role_id': 2,
-    'ciclo_predeterminado_id': 2024,
-    'ciclo_predeterminado': '2024-2025',
-    'alumnos': TestAlumno.listaJson,
-  };
-
-  static Map<String, dynamic> get emptyJson => {
-    'familia_id': 1,
-    'familia': 'Familia López García',
-    'role_id': 2,
-    'ciclo_predeterminado_id': 2024,
-    'ciclo_predeterminado': '2024-2025',
-    'alumnos': [],
-  };
-}
 
 /// Datos de prueba para Notificacion.
 class TestNotificacion {

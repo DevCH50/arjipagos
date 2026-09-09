@@ -25,7 +25,6 @@ void main() {
   late MockSaveUserSessionUseCase mockSaveUserSessionUseCase;
   late MockGetUserSessionUseCase mockGetUserSessionUseCase;
   late MockLogoutUseCase mockLogoutUseCase;
-  late MockRegisterUseCase mockRegisterUseCase;
   late MockRecuperarContrasenaUseCase mockRecuperarContrasenaUseCase;
   late AuthUseCases authUseCases;
 
@@ -34,7 +33,6 @@ void main() {
     mockSaveUserSessionUseCase = MockSaveUserSessionUseCase();
     mockGetUserSessionUseCase = MockGetUserSessionUseCase();
     mockLogoutUseCase = MockLogoutUseCase();
-    mockRegisterUseCase = MockRegisterUseCase();
     mockRecuperarContrasenaUseCase = MockRecuperarContrasenaUseCase();
 
     authUseCases = AuthUseCases(
@@ -42,7 +40,6 @@ void main() {
       saveUserSession: mockSaveUserSessionUseCase,
       getUserSession: mockGetUserSessionUseCase,
       logout: mockLogoutUseCase,
-      register: mockRegisterUseCase,
       cambiarContrasena: MockCambiarContrasenaUseCase(),
       recuperarContrasena: mockRecuperarContrasenaUseCase,
     );

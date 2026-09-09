@@ -23,8 +23,6 @@ import 'package:arjipagos/src/data/api/RespuestaSinDatos.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
-import 'package:arjipagos/src/data/dataSource/remote/services/HomeService.dart';
-import 'package:arjipagos/src/domain/models/AlumnoResponse.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/models/FacturaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
@@ -187,36 +185,6 @@ void main() {
       );
 
       expect(result, isA<Error<FacturaResponse>>());
-    });
-  });
-
-  group('HomeService', () {
-    late HomeService service;
-
-    setUp(() {
-      service = HomeService(
-        MockSharedPref(),
-        createMockAuthUseCases(getUserSession: mockGetUserSession),
-      );
-    });
-
-    test('el 404 de «sin alumnos» da Success sin alumnos', () async {
-      final result = await http.runWithClient(
-        () => service.getAlumnos(),
-        () => _responde(_sinDatos, 404),
-      );
-
-      expect(result, isA<Success<AlumnoResponse>>());
-      expect((result as Success<AlumnoResponse>).data.alumnos, isEmpty);
-    });
-
-    test('el 404 de ruta inexistente sigue siendo Error', () async {
-      final result = await http.runWithClient(
-        () => service.getAlumnos(),
-        () => _responde(_rutaInexistente, 404),
-      );
-
-      expect(result, isA<Error<AlumnoResponse>>());
     });
   });
 }
