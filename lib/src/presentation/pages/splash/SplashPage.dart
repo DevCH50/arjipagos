@@ -3,6 +3,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashBloc.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashEvent.dart';
 import 'package:arjipagos/src/presentation/pages/splash/bloc/SplashState.dart';
+import 'package:arjipagos/src/presentation/widgets/estacional/adorno_estacional.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,19 +57,24 @@ class _SplashView extends StatelessWidget {
                   ],
                 ),
               ),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _SpinningLogo(),
-                    SizedBox(height: 48),
-                    _SplashTitle(),
-                    SizedBox(height: 8),
-                    _SplashSubtitle(),
-                    SizedBox(height: 32),
-                    _MatrixPercent(),
-                  ],
-                ),
+              child: const Stack(
+                children: [
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _SpinningLogo(),
+                        SizedBox(height: 48),
+                        _SplashTitle(),
+                        SizedBox(height: 8),
+                        _SplashSubtitle(),
+                        SizedBox(height: 32),
+                        _MatrixPercent(),
+                      ],
+                    ),
+                  ),
+                  _AdornoSplash(),
+                ],
               ),
             ),
           );
@@ -224,6 +230,37 @@ class _MatrixPercent extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Adorno de la temporada
+// ---------------------------------------------------------------------------
+
+/// El motivo del mes, al pie del splash.
+///
+/// **Muy transparente a propósito.** El splash dura dos segundos y lo que el
+/// usuario mira es el logo y el porcentaje; el adorno está para que se note el
+/// mes de reojo, no para competir. A opacidad plena, sobre el degradado marrón,
+/// se comía la pantalla.
+///
+/// Va como widget aparte, igual que `_SpinningLogo` o `_MatrixPercent`, para no
+/// añadir otro nivel de anidación dentro del `Stack`.
+///
+/// Fuera de temporada `AdornoEstacional` no ocupa nada, así que siete meses al
+/// año el splash queda exactamente como estaba.
+class _AdornoSplash extends StatelessWidget {
+  const _AdornoSplash();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 28),
+        child: AdornoEstacional(alto: 30, opacidad: 0.3),
+      ),
     );
   }
 }

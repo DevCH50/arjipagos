@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:arjipagos/src/core/theme/estacional/decoracion_estacional.dart';
 import 'package:arjipagos/src/core/theme/theme.dart';
 
 /// Tema centralizado de la aplicación ArjiPagos.
@@ -63,6 +64,19 @@ class AppTheme {
       textTheme: _buildTextTheme(colorScheme),
       scaffoldBackgroundColor: colorScheme.surface,
       canvasColor: colorScheme.surface,
+
+      // Decoración estacional. Va aquí, en el constructor común, para que la
+      // reciban los SEIS temas —claro, oscuro y sus variantes de contraste— sin
+      // repetir la línea en cada getter, y con la paleta que le toca a cada
+      // brillo. Los widgets la leen con
+      // `Theme.of(context).extension<DecoracionEstacional>()`, así que ninguno
+      // necesita saber en qué mes está.
+      //
+      // Se resuelve al construir el tema, es decir al arrancar la app: ver
+      // `DecoracionEstacional` para por qué eso basta.
+      extensions: <ThemeExtension<dynamic>>[
+        DecoracionEstacional.deHoy(brillo: colorScheme.brightness),
+      ],
 
       // AppBar — systemOverlayStyle adapta la barra de estado según el tema.
       // En claro: iconos oscuros (superficie cálida clara).

@@ -16,6 +16,7 @@ import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/Notificacio
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionState.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/widgets/notificacion_badge_button.dart';
 import 'package:arjipagos/src/presentation/utils/RutaActualObserver.dart';
+import 'package:arjipagos/src/presentation/widgets/estacional/liston_estacional.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -170,7 +171,10 @@ class _MenuPrincipalBody extends StatelessWidget {
               nombre: state.nombreUsuario ?? AppStrings.loginUsername,
               email: state.emailUsuario,
             ),
-            const Divider(height: 1),
+            // Ocupa el hueco del `Divider` que había aquí, y fuera de temporada
+            // devuelve ese mismo `Divider`: en octubre esta pantalla se ve
+            // exactamente igual que antes de existir la decoración.
+            const ListonEstacional(),
             // Lista de items del menú
             Expanded(
               child: MenuItemsList(items: state.menuItems),

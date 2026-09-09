@@ -619,6 +619,66 @@ instanciar `MyApp` fuera de `lib/main.dart`, y
 `test/unit/sesion_no_arrastra_usuario_anterior_test.dart` falla si vuelve el temporizador, si
 se deja de esperar el guardado, o si aparece un BLoC de datos nuevo sin vaciar.
 
+## Decoración estacional — el icono del lanzador NO se toca
+
+**La app se decora por dentro según el mes. El icono del lanzador se queda fijo, y es una
+decisión tomada, no un pendiente.**
+
+Cambiar el icono instalado exige en Android `<activity-alias>` y habilitar/deshabilitar
+componentes; al deshabilitar uno, **muchos lanzadores borran el acceso directo del escritorio**
+—ColorOS entre los peores— y un padre se queda sin forma de entrar a pagar, sin aviso. En iOS,
+`setAlternateIconName` dispara una alerta del sistema que **no se puede silenciar**. No volver a
+plantearlo sin leer esto.
+
+### Cómo funciona
+
+Es una **`ThemeExtension`**, la única del proyecto: `DecoracionEstacional`, adjuntada dentro de
+`AppTheme._buildTheme` para que la reciban los seis temas con la paleta de su brillo.
+
+**Ningún widget pregunta qué mes es.** Se lee con
+`Theme.of(context).extension<DecoracionEstacional>()`. Si hace falta decorar una pantalla nueva,
+se monta `AdornoEstacional` o `FranjaEstacional` y ya: fuera de temporada no ocupan nada.
+
+| Archivo | Qué hay |
+| --- | --- |
+| `core/theme/estacional/temporada.dart` | El calendario. **No importa Flutter**: es la regla pura, y por eso se puede probar sin montar widgets |
+| `core/theme/estacional/decoracion_estacional.dart` | La `ThemeExtension` y las paletas, clara y oscura |
+| `presentation/widgets/estacional/` | `ListonEstacional`, `FranjaEstacional`, `AdornoEstacional` y el painter |
+
+`temporadaDe(fecha)` **recibe la fecha, no la lee**. El único `DateTime.now()` está en
+`DecoracionEstacional.deHoy()`. Si eso se rompe, los tests empiezan a pasar o fallar según el mes
+en que se ejecuten.
+
+La temporada se resuelve **al arrancar la app**, no en vivo: quien la deje abierta durante la
+medianoche del 30 de septiembre verá el cambio al reabrirla. Es aceptable y no merece un
+temporizador.
+
+### Las dos palancas de marcha atrás
+
+1. **`kDecoracionEstacionalActivada = false`** en `temporada.dart`. La app vuelve **exactamente**
+   a como estaba: el listón del menú devuelve el `Divider` que ocupaba ese hueco, «Avisos» pierde
+   la cinta y el splash su motivo. Comprobado en dispositivo. Hay un test que verifica que
+   apagarlo deja los doce meses sin decorar.
+2. `git reset --hard antes-decoracion-estacional` tira el trabajo entero.
+
+**`kTemporadaForzada` tiene que quedar en `null`.** Sirve para mirar diciembre en septiembre
+durante el desarrollo y solo funciona en depuración, pero dejarlo puesto haría que quien arranque
+la app viera un mes que no es. Hay test guardián.
+
+### Lo que no se debe deshacer
+
+- **El banderín del papel picado lleva contorno.** Sin él, **el blanco del mes patrio desaparece**
+  sobre el fondo crema: se ven el verde y el rojo con un hueco en medio.
+- **El festón va en zigzag, no en arcos.** Con arcos, a 15 px, cada banderín parecía un par de
+  flechas enfrentadas.
+- **Nada se dibuja sobre las tarjetas de avisos.** Son contenido del colegio; un motivo encima se
+  leería como parte del aviso. El acento va junto al rótulo de la sección.
+- **Ningún color de la decoración toca `primary`, `error` ni `success`.** Son colores propios, así
+  que ningún estado de la app puede volverse ilegible por culpa del mes.
+- **Todo se dibuja con `CustomPainter`; no hay ni un asset.** Añadir PNG obligaría a darlos de
+  alta en `pubspec.yaml` y en `assets_declarados_test.dart`, y a multiplicarlos por tema y
+  densidad.
+
 ## Arquitectura
 
 Clean Architecture con BLoC pattern:

@@ -6,6 +6,7 @@ import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerEvent.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerState.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banner_card.dart';
+import 'package:arjipagos/src/presentation/widgets/estacional/franja_estacional.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banner_detalle_sheet.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banners_skeleton.dart';
 import 'package:arjipagos/src/presentation/pages/banners/widgets/banners_indicador.dart';
@@ -183,16 +184,35 @@ class _BannersStripState extends State<BannersStrip>
 
   /// Título de sección: sin él, un carrusel de fotos en un menú de pagos
   /// desconcierta más de lo que informa.
+  ///
+  /// El acento de la temporada va **aquí, junto a la etiqueta, y nunca sobre
+  /// las tarjetas**. Las tarjetas son contenido del colegio: un motivo encima
+  /// se leería como parte del aviso, y un aviso de pagos no puede prestarse a
+  /// eso. Al lado del rótulo queda claro que decora la sección, no el mensaje.
+  ///
+  /// Es la **franja**, no el motivo. Con el motivo aquí solo cabían dos
+  /// banderines y parecía un recorte de otra cosa; la franja corta y redondeada
+  /// se lee como una cinta puesta a propósito.
   Widget _buildEncabezado(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _margenLateral),
-      child: Text(
-        AppStrings.bannersSeccion,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-            ),
+      child: Row(
+        children: <Widget>[
+          Text(
+            AppStrings.bannersSeccion,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+          ),
+          const SizedBox(width: 10),
+          const FranjaEstacional(
+            alto: 4,
+            ancho: 46,
+            radio: BorderRadius.all(Radius.circular(2)),
+          ),
+        ],
       ),
     );
   }

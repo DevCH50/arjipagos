@@ -4274,3 +4274,129 @@ navega a ella.** Su botón usa `HomeBloc`, que sí cuelga de la raíz, así que 
 para que Carlos decida si la pantalla sigue haciendo falta; no se toca sin preguntar.
 
 Analizador limpio y **972 tests en verde**.
+
+---
+
+## Sesión 2026-09-08 (b) — Decoración estacional dentro de la app
+
+### El icono del lanzador se descartó, y por qué
+
+Carlos pidió que el icono de la app cambiara según el mes. Se estudió y **se decidió no
+hacerlo**:
+
+- **Android** obliga a `<activity-alias>`, uno por icono, habilitando y deshabilitando
+  componentes. Al deshabilitar uno, **muchos lanzadores borran el acceso directo del
+  escritorio** en vez de actualizarlo —ColorOS, el del Oppo, entre los peores—. En una app de
+  pagos eso significa que un padre pierde la forma de entrar a pagar, en silencio.
+- **iOS** tiene `setAlternateIconName`, pero dispara una alerta del sistema en cada cambio que
+  **no se puede silenciar** con API pública. Seis avisos al año que el usuario no pidió.
+- Además cada alias necesita su propio icono adaptativo hecho a mano, que
+  `flutter_launcher_icons` ni conoce ni regenera: cualquier cambio futuro del icono habría que
+  repetirlo siete veces.
+
+**La alternativa acordada fue decorar dentro de la app**, que da casi todo el efecto sin tocar
+el manifest, sin alertas y sin accesos directos perdidos.
+
+### Punto de retorno
+
+Etiqueta **`antes-decoracion-estacional`** sobre `0ab4f11`, creada y subida antes de empezar.
+`git reset --hard antes-decoracion-estacional` deshace todo esto.
+
+### El calendario
+
+| Mes | Temporada | Motivo |
+| --- | --- | --- |
+| Febrero | Amor y amistad | Corazones |
+| Marzo | Primavera | Flores |
+| Abril | Día del niño | Papalotes |
+| Mayo | Madres y maestros | Flores con tallo |
+| Septiembre | Mes patrio | Papel picado |
+| Noviembre | Día de muertos | Cempasúchil |
+| Diciembre | Navidad | Rama con esferas |
+| Ene · Jun · Jul · Ago · Oct | Ninguna | — |
+
+Marzo lo eligió Carlos: la bienvenida a la primavera, que es la fiesta grande en preescolar,
+por encima del natalicio de Juárez, que cae el mismo día.
+
+### Cómo está montado: una `ThemeExtension`
+
+**Es la primera `ThemeExtension` del proyecto**, y se eligió por tres razones concretas:
+
+1. **Ningún widget pregunta qué mes es.** Piden
+   `Theme.of(context).extension<DecoracionEstacional>()` y pintan lo que se les diga. Cero
+   condicionales de fecha repartidos por la app.
+2. **Claro y oscuro salen solos.** Se adjunta dentro de `AppTheme._buildTheme`, por donde pasan
+   los seis temas, y cada uno recibe la paleta de su brillo. Las paletas oscuras **no son las
+   claras aclaradas**: el verde bandera y el morado de altar se pierden sobre negro.
+3. **Los tests fuerzan la temporada sin tocar el reloj**, con
+   `copyWith(extensions: [DecoracionEstacional.de(Temporada.navidad)])`. Sin esto habría que
+   mockear `DateTime.now()` y los tests pasarían o fallarían según el mes en que se ejecutaran.
+
+**Archivos nuevos:**
+
+```
+lib/src/core/theme/estacional/temporada.dart              <- la regla, sin importar Flutter
+lib/src/core/theme/estacional/decoracion_estacional.dart  <- la ThemeExtension y las paletas
+lib/src/presentation/widgets/estacional/liston_estacional.dart
+lib/src/presentation/widgets/estacional/franja_estacional.dart
+lib/src/presentation/widgets/estacional/adorno_estacional.dart
+lib/src/presentation/widgets/estacional/motivo_estacional_painter.dart
+```
+
+**Modificados:** `app_theme.dart`, `MenuPrincipalPage.dart`, `banners_strip.dart`,
+`SplashPage.dart`, `app_strings.dart`.
+
+### Todo se dibuja, no hay ni un asset
+
+`MotivoEstacionalPainter` es **el primer `CustomPainter` del proyecto**. Siete motivos por dos
+temas y cinco densidades serían setenta PNG que dar de alta uno a uno en `pubspec.yaml` y en
+`assets_declarados_test.dart`. Dibujándolos: **cero peso en el APK**, nítidos en cualquier
+pantalla, y el color sale del tema.
+
+El bucle de repetición está una sola vez (`_repetir`): reparte el ancho para que **ninguna copia
+quede cortada al borde**, que es lo que delata a un patrón mal hecho.
+
+### Dos cosas que costaron y no se deben deshacer
+
+**El borde del banderín.** Sin contorno, **el banderín blanco del mes patrio desaparece** sobre
+el fondo crema de la app: se veían el verde y el rojo con un hueco en medio. El borde es el
+propio color oscurecido, así que en el blanco sale gris y en los demás ni se nota.
+
+**El festón va en zigzag, no en arcos.** Con arcos, a 15 px de alto, los entrantes se comían el
+cuerpo y cada banderín parecía **un par de flechas enfrentadas**. Comprobado en el Oppo.
+
+### Dónde aparece
+
+| Superficie | Qué lleva |
+| --- | --- |
+| Cabecera del Menú Principal | Franja de 3 px + motivo de 15 px, **en el hueco del `Divider` que ya había** |
+| Rótulo de «Avisos» | Solo la franja, corta y redondeada. **Nunca sobre las tarjetas**: son contenido del colegio y un motivo encima se leería como parte del aviso |
+| Splash | El motivo al pie, a opacidad 0.3, para que se note de reojo sin competir con el logo |
+
+En «Avisos» se probó primero el motivo y solo cabían dos banderines: parecía un recorte. La
+franja se lee como una cinta puesta a propósito.
+
+### Marcha atrás en una línea
+
+`kDecoracionEstacionalActivada = false` en `temporada.dart`. **Comprobado en el Oppo:** la
+pantalla queda idéntica a la de antes de todo esto —el `Divider` vuelve, «Avisos» pierde la
+cinta— y el código se queda en su sitio por si se quiere reactivar.
+
+Hay además `kTemporadaForzada`, que solo funciona en depuración, para mirar diciembre en
+septiembre. **Tiene que quedar en `null` en el repositorio y hay un test que lo vigila.**
+
+### Verificado en el Oppo CPH2639
+
+Septiembre en tema claro y oscuro, navidad y día de muertos forzadas, el splash en arranque en
+frío, y el interruptor apagado. Todo con captura.
+
+Analizador limpio y **991 tests en verde** (19 nuevos: `test/unit/temporada_test.dart` y
+`test/widgets/estacional/liston_estacional_test.dart`). Uno de ellos recorre **las siete
+temporadas por los dos temas** comprobando que ningún motivo revienta al pintarse.
+
+### Pendiente
+
+- **Sin publicar y sin aprobar.** Carlos tiene que verlo con calma antes de que salga en una
+  versión.
+- El arreglo de la selección por concepto (sesión anterior) corre más prisa que esto y debería
+  publicarse antes o por separado.

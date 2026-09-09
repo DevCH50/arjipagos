@@ -442,6 +442,24 @@ class AppStrings {
   static const String bannersNuevo = 'Nuevo';
 
   // ============================================================================
+  // DECORACIÓN ESTACIONAL
+  // ============================================================================
+
+  /// Cómo anuncia un lector de pantalla el adorno de cada temporada.
+  ///
+  /// Estas cadenas **no se ven**: son la etiqueta `Semantics` del motivo. Van
+  /// redactadas como «adorno de…» a propósito, para que quien navegue con
+  /// TalkBack o VoiceOver entienda que es decoración y no información que se
+  /// esté perdiendo.
+  static const String decoracionPatria = 'Adorno del mes patrio';
+  static const String decoracionMuertos = 'Adorno del día de muertos';
+  static const String decoracionNavidad = 'Adorno navideño';
+  static const String decoracionAmistad = 'Adorno del día del amor y la amistad';
+  static const String decoracionPrimavera = 'Adorno de primavera';
+  static const String decoracionNinez = 'Adorno del día del niño';
+  static const String decoracionMadres = 'Adorno del día de las madres';
+
+  // ============================================================================
   // TICKET DE PAGO
   // ============================================================================
 
