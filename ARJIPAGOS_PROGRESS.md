@@ -11,6 +11,35 @@
 
 _(ninguno)_
 
+### 2026-09-09 — Limpieza completa en la Mac y la 1.0.30+39 verificada en dispositivo
+
+Se trajeron del remoto los seis commits pendientes (hasta `083040c`) y se corrió entera la
+secuencia obligatoria de iOS: `flutter clean`, `flutter pub get`, `pod install` y
+`./scripts/build_ios.sh`. **927 tests en verde** y `Runner.app` construido (26.6 MB, 179 s de
+compilación Xcode).
+
+Los blindajes aguantaron sin intervención: el `post_install` del Podfile ya había dejado
+`LastUpgradeCheck` en 2630, así que el `sed` del script no tuvo que corregir nada y el árbol de
+git quedó limpio tras el build. Verificados además `LaunchAction` y `ArchiveAction` en Release,
+`Package.swift` en `.iOS("15.0")`, el appiconset con 0 huérfanos y 0 fantasmas, y
+`ApiConfig.isProduction = true`.
+
+**La app arrancó y navegó bien en el iPhone 17.** En la consola salió un aviso nuevo, el
+*Thread Performance Checker* apuntando a `third_party/skia/include/private/SkSemaphore.h:79`.
+Es del engine, no del proyecto: el hilo principal —fusionado con el de UI desde Flutter 3.47—
+espera en un semáforo de Skia, cuyos hilos de trabajo no declaran QoS. Lo inyecta
+`libRPAC.dylib`, que solo actúa al lanzar desde Xcode y no viaja en el binario de App Store.
+Quedó documentado en la tabla de ruido conocido del `CLAUDE.md`, junto con el
+`Message from debugger: killed`, que es el botón Stop y no un crash.
+
+A petición de Carlos se apagó el checker en el scheme
+(`disablePerformanceAntipatternChecker = "YES"` en el `LaunchAction`). **Solo afecta al botón
+Run**: el `ArchiveAction` no lo lleva, así que el Archive y la subida a App Store Connect se
+comportan igual que siempre.
+
+La versión en `pubspec.yaml` es **1.0.30+39**, que llegó con el pull y aún no está publicada.
+Por la regla 2 de versionado se usa esa para el release, sin incrementar.
+
 ### 2026-08-28 — La 1.0.29+38 está en revisión en las dos tiendas
 
 **Enviada a las dos el mismo día**, como ya pasó con la 1.0.28: el Archive salió de la Mac

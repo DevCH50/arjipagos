@@ -266,8 +266,9 @@ Estos mensajes salen en cada arranque y **no hay nada que corregir**. Verificado
 en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23, ampliados el 2026-08-24 tras
 recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 (las cinco últimas filas). La fila de `xpc_user_sessions_get_foreground_uid` se añadió el
-2026-08-28 con la 1.0.29+38, al entrar a pagar. Ninguno de estos símbolos aparece en `lib/`,
-`ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
+2026-08-28 con la 1.0.29+38, al entrar a pagar. Las dos últimas filas se añadieron el
+2026-09-09 con la 1.0.30+39, al arrancar en el iPhone 17. Ninguno de estos símbolos aparece en
+`lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
 | --- | --- |
@@ -289,6 +290,8 @@ recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 | `xpc_user_sessions_get_foreground_uid() failed with error 1 - Operation not permitted` | El proceso `WebContent` de WebKit preguntándole a XPC qué sesión de usuario está en primer plano. Su sandbox —más estrecho que el de la app— no tiene ese permiso: la consulta falla, WebKit sigue adelante y no usa el dato para nada. Sale al abrir el `WKWebView` del pago, una línea por proceso. **Ver dos PID distintos de `WebContent` es normal**: es el *process swap* de WebKit al navegar a otro origen (la pasarela mandando del sitio de Adquira al del banco) |
 | `Failed to terminate process … RBSRequestErrorDomain Code=3 "No such process found"` | WebKit cerrando un proceso `WebContent` que ya había salido solo. Llega tarde y no encuentra a quién matar |
 | `-- LLDB integration loaded --` | El depurador de Xcode adjuntándose. Solo sale al correr desde Xcode, nunca en la app instalada |
+| `Thread Performance Checker … waiting on a thread without a QoS class` con traza a `third_party/skia/include/private/SkSemaphore.h:79` | Inversión de prioridades **dentro del engine**. El hilo principal espera en un semáforo de Skia, cuyos hilos de trabajo (`SkTaskGroup`/`SkExecutor`) se crean sin QoS. Es `user-interactive` porque desde Flutter 3.47 el hilo de UI va **fusionado con el de plataforma** en iOS: por eso el backtrace enseña frames de Dart (`App`, `kDartSnapshotText`) colgando de `UIApplicationMain`. Lo detecta `libRPAC.dylib`, que **solo inyecta Xcode al lanzar desde el IDE** — no viaja en el binario que sube a App Store. Que aparezca Skia con Impeller activo no es contradicción: Impeller dibuja, pero Skia sigue haciendo trabajo de CPU como decodificar imágenes, y de ahí que salga en el arranque. **Ningún frame sale de `lib/` ni de `ios/Runner/`**, así que no hay nada que corregir. Se puede apagar en Edit Scheme → Run → Diagnostics, pero eso escribe en `Runner.xcscheme`, que es archivo blindado: desmarcarlo sin commitear no rompe nada. Comprobado el 2026-09-09 en iPhone 17: la app arrancó y navegó con normalidad |
+| `Message from debugger: killed` | **No es un crash.** Es el depurador terminando el proceso: sale al pulsar Stop en Xcode o al relanzar. Un crash de verdad trae otra firma —una señal (`EXC_BAD_ACCESS`, `SIGABRT`) o una línea `Fatal error:`— y ninguna de las dos aparece aquí |
 
 **Con el botón Run no sale NI UNA línea de la app, y es lo esperado**
 
