@@ -11,6 +11,56 @@
 
 _(ninguno)_
 
+### 2026-09-17 — Release 1.0.31+40: Flutter 3.47.4, dependencias al día y el recorte del JSON, auditado
+
+**La 1.0.30+39 ya está publicada en las dos tiendas.** Apple la publicó el 2026-09-10
+(comprobado con `itunes.apple.com/lookup`), Play Store la muestra, y `/api/v1/app/version` devuelve
+`version_minima: 1.0.30` para android e ios. Por la regla 1 de versionado, esta release es la
+**`1.0.31+40`**.
+
+| Versión | Play Store | App Store |
+| --- | --- | --- |
+| `1.0.30+39` | Publicada | Publicada |
+| `1.0.31+40` | APK y AAB generados aquí, **sin subir** | **Sin Archive** (Mac) |
+
+**Verificación antes de tocar nada.** 927 tests en verde y `flutter analyze` sin incidencias.
+
+**Qué se actualizó:**
+
+- **Flutter 3.47.1 → 3.47.4** (Dart 3.13.x). Solo *cherry-picks* de estabilidad del mismo minor.
+- **55 paquetes** subidos de parche o versión menor, sin tocar ninguna restricción del `pubspec`:
+  `firebase_core` 4.15.0, `firebase_messaging` 16.7.0 (Firebase iOS SDK 12.17.0 → 12.19.0),
+  `flutter_secure_storage` 10.3.4, `local_auth_android` 2.2.0, `webview_flutter_*`,
+  `url_launcher_*`, `sqflite_*`, `build_runner` 2.16.1…
+- `injection.config.dart` regenerado: solo una línea en blanco, por el `dart_style` nuevo.
+- **No se subieron** `equatable` 3 ni `cached_network_image` 4, y `flutter_secure_storage` 11 sigue
+  bloqueado. Motivo en CLAUDE.md, «Dependencias bloqueadas».
+- Revisado el mínimo de iOS de cada plugin actualizado: ninguno pide más de 15.0.
+
+**Después de actualizar:** 936 tests en verde (los 927 más los 9 del test nuevo), `analyze`
+limpio, APK 65.4 MB y AAB 64.1 MB en `1.0.31` / `40`, con `INTERNET` y `targetSdk 36`. El APK falló
+al compilar a la vez que el AAB y salió bien relanzado solo (anotado en CLAUDE.md).
+`ApiConfig.isProduction = true`.
+
+**No verificado en dispositivo.** No había ningún teléfono conectado por adb, y el build de iOS
+necesita la Mac. **La Mac tiene que pasar a Flutter 3.47.4** (`flutter upgrade`) antes de la
+limpieza obligatoria, porque el `pubspec.lock` se resolvió con esa versión.
+
+#### Recorte del JSON (`CAMPOS_JSON_QUE_LA_APP_NO_USA.md`, en ArjiApp): todavía no
+
+Nuevo test guardián `test/unit/models/respuesta_recortada_test.dart`: parsea cada respuesta
+—estados de cuenta, pagados, facturas, notificaciones y login— con y sin los campos del documento,
+y exige que la app vea lo mismo. `lib/` no ha cambiado desde `083040c`, el commit con el que se
+compiló la 1.0.30, así que **el test cubre la versión que está en las tiendas.** Resultado:
+
+- **La 1.0.30 aguanta el recorte entero**, incluidos `token_type` y todos los datos de perfil.
+- **Excepción: el `id` de cada factura NO se puede quitar.** `Factura.id` es `int` no nulable; sin
+  él, la pantalla de Facturas revienta. El documento del backend solo dice «yo lo dejaría».
+- **Las 1.0.25 a 1.0.29** consultan `version_minima` y les sale la actualización obligatoria.
+- **Las 1.0.24 y anteriores no tienen esa comprobación**, y la 1.0.23 llegó a publicarse en las dos
+  tiendas. Quien siga ahí se quedaría sin poder entrar y sin ningún aviso. La app no manda su
+  versión al backend, así que ese número solo lo dan Play Console y App Store Connect.
+
 ### 2026-09-09 — La 1.0.30+39: publicada en Play Store, en Espera de Revisión en App Store
 
 **Archive hecho y subido desde la Mac, sin incidencias.** El scheme con el Thread Performance

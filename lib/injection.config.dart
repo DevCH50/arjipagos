@@ -9,6 +9,7 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+
 import 'package:arjipagos/src/data/dataSource/local/AutenticadorBiometrico.dart'
     as _i1069;
 import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart'

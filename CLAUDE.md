@@ -128,6 +128,11 @@ flutter build apk --release
 flutter build appbundle --release
 ```
 
+**Si uno de los dos acaba en `BUILD FAILED`, relanzarlo solo antes de buscar la causa.** Los dos
+Gradle comparten `build/` y a veces chocan. Pasó el 2026-09-17 con la 1.0.31+40: el
+`assembleRelease` falló en paralelo y compiló a la primera cuando se lanzó solo. Si solo tampoco
+compila, entonces sí es un fallo de verdad.
+
 **Después de los builds: PREGUNTAR antes de instalar en el dispositivo.**
 
 El Oppo es el teléfono de diario de Carlos, no un banco de pruebas. Y la instalación no es
@@ -727,6 +732,19 @@ Reintentar solo cuando AGP estable soporte API 37 **y** el plugin declare la ver
 
 **`injectable_generator` se queda en 3.0.2** — no puede subir a 3.1.x porque el SDK fija
 `test_api` en 0.7.11. No forzar con `dependency_overrides`.
+
+**`equatable` se queda en 2.x y `cached_network_image` en 3.x.** Revisado el 2026-09-17, al
+actualizar a Flutter 3.47.4. Ninguno de los dos saltos aporta nada a la app, y los dos cambian
+cosas que los tests no ven:
+
+- **`equatable` 3.0.0** quita `EquatableMixin` y el `toString` propio, y su changelog anuncia que
+  la igualdad deja de comparar `runtimeType`. En un proyecto BLoC eso es peligroso **sin avisar**:
+  dos estados o eventos distintos con las mismas `props` —hay 12 con `props => []`— pasarían a ser
+  iguales, y `emit` descarta el estado que considera repetido.
+- **`cached_network_image` 4.0.0** cambia `flutter/material.dart` por el paquete desacoplado
+  `material_ui`. Mezclarlo con la app, que usa el Material del SDK, solo se valida en dispositivo.
+
+Reconsiderar cuando haya un motivo de verdad, y probándolo en el Oppo y en el iPhone.
 
 ## Reglas del código
 
