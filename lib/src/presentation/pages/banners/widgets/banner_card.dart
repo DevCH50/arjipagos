@@ -1,7 +1,7 @@
 import 'package:arjipagos/src/core/constants/app_colors.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/banner/BannerInfo.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:arjipagos/src/presentation/widgets/imagen_remota.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -94,30 +94,19 @@ class BannerCard extends StatelessWidget {
   }
 
   /// Portada, decodificada al ancho real de la tarjeta.
+  ///
+  /// El hueco mientras baja —silueta más aro de progreso— y el aviso de que no
+  /// se pudo cargar los pone [ImagenRemota], que es la misma pieza que usa la
+  /// hoja de detalle: así el aviso se ve igual en los dos sitios.
   Widget _buildImagen(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final dpr = MediaQuery.devicePixelRatioOf(context);
 
-    return CachedNetworkImage(
-      imageUrl: banner.imagenUrl,
-      fit: BoxFit.cover,
+    return ImagenRemota(
+      url: banner.imagenUrl,
       // Clave para la memoria: sin esto, un JPEG de 1200 px se decodifica
       // completo en RAM aunque se pinte a 322. Se multiplica por el ratio de
       // píxeles para no perder nitidez en pantallas Retina.
-      memCacheWidth: (ancho * dpr).round(),
-      fadeInDuration: const Duration(milliseconds: 200),
-      placeholder: (context, url) =>
-          ColoredBox(color: colorScheme.surfaceContainerHighest),
-      // Si la imagen no carga, la tarjeta no se rompe: el título y la fecha
-      // viven abajo, sobre superficie sólida, y siguen leyéndose igual.
-      errorWidget: (context, url, error) => ColoredBox(
-        color: colorScheme.surfaceContainerHighest,
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          color: colorScheme.onSurfaceVariant,
-          semanticLabel: AppStrings.bannersImagenNoDisponible,
-        ),
-      ),
+      anchoEnCache: (ancho * dpr).round(),
     );
   }
 

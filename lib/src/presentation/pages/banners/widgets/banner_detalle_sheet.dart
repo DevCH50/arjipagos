@@ -1,6 +1,6 @@
 import 'package:arjipagos/src/core/utils/contenido_a_html.dart';
 import 'package:arjipagos/src/domain/models/banner/BannerInfo.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:arjipagos/src/presentation/widgets/imagen_remota.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
@@ -105,23 +105,18 @@ class _BannerDetalleContenido extends StatelessWidget {
   /// Portada con relación de aspecto fija: el alto no salta al cargar y el
   /// encuadre es el mismo en todos los dispositivos.
   Widget _buildPortada(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final double ancho = MediaQuery.sizeOf(context).width;
     final double dpr = MediaQuery.devicePixelRatioOf(context);
 
     return AspectRatio(
       aspectRatio: relacionPortada,
-      child: CachedNetworkImage(
-        imageUrl: banner.imagenUrl,
-        fit: BoxFit.cover,
+      // El hueco y el fallo los pinta [ImagenRemota]. Antes los dos eran el
+      // mismo rectángulo de color liso, así que una portada que tardaba —la del
+      // último aviso pesa 300 KB— no se distinguía de una rota.
+      child: ImagenRemota(
+        url: banner.imagenUrl,
         // Se decodifica al ancho de pantalla, no al de la imagen original.
-        memCacheWidth: (ancho * dpr).round(),
-        fadeInDuration: const Duration(milliseconds: 200),
-        placeholder: (context, url) =>
-            ColoredBox(color: colorScheme.surfaceContainerHighest),
-        // Si la portada falla, el aviso se lee igual.
-        errorWidget: (context, url, error) =>
-            ColoredBox(color: colorScheme.surfaceContainerHighest),
+        anchoEnCache: (ancho * dpr).round(),
       ),
     );
   }

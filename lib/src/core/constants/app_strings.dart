@@ -364,6 +364,7 @@ class AppStrings {
   static const String bannersSeccion = 'Avisos';
   static const String bannersVerAviso = 'Ver aviso';
   static const String bannersImagenNoDisponible = 'Imagen no disponible';
+  static const String bannersImagenCargando = 'Cargando imagen';
   static const String bannersNuevo = 'Nuevo';
 
   // ============================================================================

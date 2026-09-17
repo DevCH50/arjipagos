@@ -56,6 +56,36 @@ que lee el código nativo y falla si vuelve el override (comprobado restaurando 
 **Pendiente en la Mac:** compilar con Xcode 27 y probar en un iPhone con iOS 27 las notificaciones
 en primer y segundo plano, la webview del pago, el share sheet y Face ID.
 
+#### Las portadas de los avisos: sin indicador de carga y con el fallo disfrazado
+
+Lo reportó Carlos: en la tirilla de avisos no se veía ningún preloader mientras cargaba la imagen,
+y la última «se veía rota». Eran dos caras del mismo descuido:
+
+1. El `placeholder` de `BannerCard` era un **rectángulo de color liso**, sin forma ni movimiento.
+   La portada del último aviso pesa **300 KB** (las otras, de 36 a 89 KB), así que el hueco se
+   quedaba vacío varios segundos y parecía una imagen rota.
+2. En la hoja de detalle, el `errorWidget` era **otro rectángulo idéntico** al del placeholder: una
+   portada que fallaba y una que tardaba se veían exactamente igual.
+
+Comprobado antes de tocar nada que el servidor no tiene la culpa: las cuatro imágenes responden
+`200` y son JPEG válidos (`1200x800`, salvo la última a `1024x687` y 298 KB).
+
+**Arreglo:** widget compartido `ImagenRemota` (`lib/src/presentation/widgets/imagen_remota.dart`),
+que usan la tarjeta y el detalle. Mientras baja pinta la **silueta de una imagen** y un **aro de
+progreso** —con el porcentaje real cuando el servidor manda el tamaño total—, y si falla, un icono
+distinto con etiqueta para lectores de pantalla. Tests: `test/unit/widgets/imagen_remota_test.dart`,
+con un guardián que falla si alguna de las dos pantallas vuelve a montar un `CachedNetworkImage`
+suelto.
+
+**Verificado en el Oppo**, en claro y en oscuro, capturando el momento de la carga: se ven silueta
+y aro, y la foto entra por detrás.
+
+> **Aviso para futuras pruebas en el Oppo:** durante esta sesión **Play Store reinstaló sola la
+> 1.0.30 de la tienda** encima del build de debug. El `adb install -r` siguiente falla con
+> `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, y si no se lee esa línea se acaba probando la versión
+> vieja creyendo que es la nueva —que fue justo lo que pasó—. Comprobar siempre `pkgFlags`: el
+> debug trae `DEBUGGABLE`.
+
 #### Cierre del día: verificación completa y binarios
 
 `flutter pub upgrade` sin cambios y Flutter ya en la última estable (3.47.4). **941 tests en
