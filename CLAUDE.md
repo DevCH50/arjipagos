@@ -193,8 +193,43 @@ Luego abrir `Runner.xcworkspace` (NO `Runner.xcodeproj`).
 4. Menú: **Product → Archive**
 5. En Organizer: **Distribute App → App Store Connect**
 
-Si Xcode ofrece **"Update to recommended settings"**, rechazarlo: reescribe
-`LastUpgradeCheck` y tira abajo el blindaje de 2630.
+Si Xcode ofrece **"Update to recommended settings"**, rechazarlo: toca ajustes del proyecto
+blindados. Lo único que ya no importa es que suba `LastUpgradeCheck`: desde el 2026-09-17 el
+Podfile solo pone un **suelo** (`LAST_UPGRADE_MINIMO`), así que un valor mayor se respeta.
+
+### iOS 27 — qué hacía falta y qué está hecho
+
+Revisado el 2026-09-17, con iOS 27 ya publicado (14-sep-2026) y Xcode 27 admitiendo envíos.
+**Compilar con el SDK de iOS 27 no es obligatorio hasta abril de 2027**, pero lo que rompe al
+compilar con él ya está resuelto:
+
+| Requisito | Estado |
+| --- | --- |
+| Ciclo de vida **UIScene** (sin él la app **no arranca**, no es un aviso) | Hecho: `UIApplicationSceneManifest` en `Info.plist` y `FlutterImplicitEngineDelegate` en el `AppDelegate` |
+| Flutter con soporte de Xcode 27 | Hecho: 3.47.4, que además trae el arreglo de la pantalla blanca al depurar (#189284) |
+| Deployment target ≥ 15.0 (por debajo, el build falla con "Target Integrity") | Hecho: 15.0 en el proyecto y forzado en los pods por el `post_install` |
+| Plugins compatibles con escenas | Hecho: `firebase_messaging` 16.7.0, `local_auth_darwin` 2.0.4, `url_launcher_ios` 6.4.2, `webview_flutter_wkwebview` 3.26.1 |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | 2700 (Xcode 27) |
+
+**La Mac necesita Xcode 27 y macOS Tahoe 26.6**; un iPhone con iOS 27 no se depura desde
+Xcode 26.3.
+
+**Queda por probar en un iPhone con iOS 27**, que no se puede hacer desde la Linux: las
+notificaciones push en primer y segundo plano, la webview del pago, el share sheet y Face ID.
+En iOS 27 el sistema aplica Liquid Glass a lo nativo (share sheet, diálogo de Face ID, webview);
+la interfaz de Flutter la pinta la app y no cambia.
+
+**Pendiente permanente: revisar en CADA actualización de Flutter si ya trae Liquid Glass de
+verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
+tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
+
+Ese día se montó una maqueta imitándolo con `BackdropFilter` y se vio en el Oppo. **Descartada**,
+por tres motivos que siguen valiendo mientras no haya soporte oficial: (1) por la barra inferior
+translúcida se leían los renglones de la lista que pasaban por detrás, justo donde el usuario
+compara importes, y en oscuro era peor; (2) las pantallas tienen **fondo liso**, así que no hay
+nada que desenfocar —para que se notara habría que meterles una imagen de fondo, que es un
+rediseño mayor—; y (3) era una imitación que habría que tirar después. Cuando haya soporte
+oficial, proponerlo con la misma maqueta comparativa y medir el scroll en modo `profile`.
 
 ### Apariencias del icono (iOS 18) — decidido: NO se usan
 
@@ -256,8 +291,9 @@ Para deshacer cualquier cambio del catálogo: `git checkout ios/Runner/Assets.xc
 
 | Archivo           | Valor fijo                                    | Motivo                                           |
 | ----------------- | --------------------------------------------- | ------------------------------------------------ |
-| `project.pbxproj` | `LastUpgradeCheck = 2630`                     | Valor correcto para Xcode 26.3 estable           |
-| `Runner.xcscheme` | `LastUpgradeVersion = "2630"`                 | Mismo motivo                                     |
+| `project.pbxproj` | `LastUpgradeCheck = 2700`                     | Xcode 27, el que pide iOS 27. Es un **suelo**: si Xcode lo sube, se respeta |
+| `Runner.xcscheme` | `LastUpgradeVersion = "2700"`                 | Mismo motivo                                     |
+| `AppDelegate.swift` | el delegate de `UNUserNotificationCenter` lo pone el **plugin** | Con `self` de delegate, `onMessage` no llega a Dart. Ver abajo |
 | `Runner.xcscheme` | `LaunchAction buildConfiguration = "Release"`  | El botón Run instala un build AOT autónomo en el iPhone físico (sobrevive cerrar/reabrir). Flujo solo-dispositivo; no se usan simuladores |
 | `Runner.xcscheme` | `ArchiveAction buildConfiguration = "Release"` | El Archive/Distribute usa ESTA acción (no LaunchAction) |
 | `Podfile`         | `objective_c` usa `dwarf`                     | XCFramework precompilado — no puede generar dSYM |
@@ -340,12 +376,32 @@ Para verlo dispararse hace falta `flutter run`, que fuerza Debug. Comprobado el 
 - Solución permanente (automática): el `post_install` del `Podfile` fuerza la plataforma a `.iOS("15.0")` en cada `pod install`. Como `pod install` es parte del flujo manual (`flutter clean && flutter pub get && pod install`) y de todo `flutter build`, la corrección es automática.
 - NO borrar ese bloque del Podfile. Si el error reaparece, correr `pod install` desde `ios/` y verificar que `Package.swift` quede en `.iOS("15.0")`. NO editar el `Package.swift` a mano (es efímero y se regenera).
 
-**Nota: `flutter build ios` resetea `LastUpgradeCheck` / `LastUpgradeVersion` a `1510`**
+**Nota: `LastUpgradeCheck` / `LastUpgradeVersion` ya no los degrada Flutter**
 
-- Causa: Flutter 3.x no reconoce Xcode 26.3 (2630) y lo degrada a su versión conocida más reciente
-- Solución permanente (automática): el `post_install` del `Podfile` restaura ambos valores a **2630** en cada `pod install`. Como `flutter build ios` / `flutter run` ejecutan `pod install` DESPUÉS de degradarlos, la corrección es automática y no requiere pasos manuales. El bloque responsable en el Podfile fija `LastUpgradeCheck` en `project.pbxproj` (vía `root_object.attributes`) y `LastUpgradeVersion` en `Runner.xcscheme` (por texto).
-- NO borrar ese bloque del Podfile. Si se toca, verificar con un `pod install` que ambos valores queden en 2630.
-- `./scripts/build_ios.sh` sigue siendo válido como capa extra, pero ya no es imprescindible para este fix.
+- Flutter los bajaba a `1510` en cada build porque no reconocía el Xcode instalado. **Flutter 3.47
+  ya no lo hace**: su migración se salta cualquier valor igual o superior a 1510 (comprobado en
+  `xcode_project_object_version_migration.dart`, "Skip if the value is already at or above").
+- El `post_install` del `Podfile` mantiene el blindaje como red de seguridad, pero desde el
+  2026-09-17 **solo sube**: `LAST_UPGRADE_MINIMO` (hoy `2700`) es un suelo, y un valor mayor
+  escrito por Xcode se respeta. Bajárselo a la fuerza dejaría el aviso "Update to recommended
+  settings" para siempre.
+- Al cambiar de versión de Xcode, tocar **solo** `LAST_UPGRADE_MINIMO` en el `Podfile` y
+  `TARGET_VERSION` en `scripts/build_ios.sh`.
+
+**Las notificaciones en primer plano dependen de quién sea el delegate — no tocar el AppDelegate**
+
+`AppDelegate.swift` llama a `FLTFirebaseMessagingPlugin.configureNotificationCenterDelegate()`
+y **no** implementa `willPresent`. Es lo que pide el README del plugin para apps con UIScene: los
+plugins se registran después de `didFinishLaunching` y Apple exige el delegate antes.
+
+**No volver a `UNUserNotificationCenter.current().delegate = self` con un `willPresent` propio.**
+El plugin ve que `self` es un `FlutterAppDelegate`, decide no ponerse de delegate y confía en que
+Flutter le reenvíe la llamada; un `willPresent` sobrescrito corta ese reenvío y
+`FirebaseMessaging.onMessage` **no llega nunca a Dart** con la app abierta. Estuvo así desde el
+2026-04-17: en iPhone, el push de pago no refrescaba el estado de cuenta ni metía el aviso en la
+lista. Los push silenciosos (la tirilla de avisos) sí funcionaban, porque entran por
+`didReceiveRemoteNotification`. Cómo se ve el banner lo decide Dart, en
+`FcmService.configurarHandlers`. Test guardián: `test/unit/ios_delegate_notificaciones_test.dart`.
 
 ## Bloqueo biométrico (Face ID / huella) — tres cosas que no se pueden tocar
 

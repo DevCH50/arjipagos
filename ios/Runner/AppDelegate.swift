@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import FirebaseCore
-import FirebaseMessaging
 import UserNotifications
 
 @main
@@ -11,9 +10,19 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     FirebaseApp.configure()
-    // Asignar delegate de UNUserNotificationCenter antes de registrar para APNS.
-    // Requerido para recibir notificaciones en foreground y que FCM dispare onMessage.
-    UNUserNotificationCenter.current().delegate = self
+    // El delegate de UNUserNotificationCenter es el propio plugin de Firebase Messaging, no esta
+    // clase. Es lo que pide su README para apps con UIScene: los plugins se registran DESPUÉS de
+    // este método y Apple exige el delegate antes de que termine.
+    //
+    // NO volver a `UNUserNotificationCenter.current().delegate = self` con un `willPresent`
+    // propio. El plugin ve que `self` es un `FlutterAppDelegate`, no se pone de delegate y confía
+    // en que Flutter le reenvíe la llamada; un `willPresent` sobrescrito corta ese reenvío y
+    // `FirebaseMessaging.onMessage` no llega nunca a Dart con la app abierta. Así estuvo hasta el
+    // 2026-09-17: en iPhone el push de pago no refrescaba el estado de cuenta ni añadía el aviso.
+    //
+    // Cómo se presenta el banner en primer plano lo decide Dart con
+    // `setForegroundNotificationPresentationOptions` (`FcmService.configurarHandlers`).
+    FLTFirebaseMessagingPlugin.configureNotificationCenterDelegate()
     application.registerForRemoteNotifications()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -60,16 +69,6 @@ import UserNotifications
       }
       result(nil)
     }
-  }
-
-  // Muestra notificaciones como banner cuando la app está en foreground
-  // y garantiza que FCM dispare FirebaseMessaging.onMessage en Dart.
-  override func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification,
-    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-  ) {
-    completionHandler([.banner, .sound, .badge])
   }
 
   // Maneja errores de registro APNS para diagnóstico.

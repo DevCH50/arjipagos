@@ -11,6 +11,105 @@
 
 _(ninguno)_
 
+### 2026-09-17 (b) — iOS 27: listo para compilar, y un fallo de notificaciones que llevaba desde abril
+
+**iOS 27 salió el 14-sep-2026 y Xcode 27 ya admite envíos.** Compilar con su SDK no es obligatorio
+hasta abril de 2027, pero lo que rompería al hacerlo ya está resuelto. Lo que **no** se puede
+comprobar desde la Linux es el build; queda para la Mac, que necesita **Xcode 27 y macOS Tahoe
+26.6** (un iPhone con iOS 27 no se depura desde Xcode 26.3).
+
+| Requisito | Estado |
+| --- | --- |
+| UIScene (sin él la app **no arranca** al compilar con el SDK nuevo) | Ya estaba: manifest en `Info.plist` y `FlutterImplicitEngineDelegate` |
+| Flutter con soporte de Xcode 27 | 3.47.4, que además trae el arreglo de la pantalla blanca al depurar |
+| Deployment target ≥ 15.0 | Ya estaba, y el `post_install` lo fuerza en los pods |
+| Plugins compatibles con escenas | Todos al día tras la actualización de esta mañana |
+| `LastUpgradeCheck` / `LastUpgradeVersion` | **2630 → 2700** (Xcode 27) |
+
+**El blindaje de `LastUpgradeCheck` ahora solo sube, nunca baja.** El motivo que lo justificaba ya
+no existe: Flutter 3.47 dejó de degradarlo —su migración se salta cualquier valor ≥ 1510, se
+comprobó en `xcode_project_object_version_migration.dart`—. Y forzarlo a la baja con Xcode 27
+dejaría el aviso "Update to recommended settings" para siempre. El Podfile usa ahora
+`LAST_UPGRADE_MINIMO` como **suelo**; al cambiar de Xcode se toca ese número y el
+`TARGET_VERSION` de `scripts/build_ios.sh`, nada más.
+
+#### El fallo: `onMessage` no llegaba a Dart en iPhone
+
+Salió al revisar el README de `firebase_messaging` para apps con UIScene. `AppDelegate.swift`
+hacía `UNUserNotificationCenter.current().delegate = self` y sobrescribía `willPresent`
+devolviendo `[.banner, .sound, .badge]` sin llamar a `super`.
+
+El plugin, al registrarse, **ve que el delegate es un `FlutterAppDelegate` y decide no
+reemplazarlo**: confía en que Flutter le reenvíe la llamada. El override cortaba ese reenvío, así
+que el plugin nunca emitía `Messaging#onMessage`. Consecuencia en iPhone, con la app abierta: el
+push de pago **no refrescaba el estado de cuenta** y el aviso **no entraba en la lista**. Los push
+silenciosos (la tirilla de avisos) sí funcionaban, porque entran por `didReceiveRemoteNotification`.
+Viene del `fc98cda` (2026-04-17), y no está registrada ninguna prueba de push en primer plano en
+iPhone que lo hubiera cazado.
+
+Arreglado como en el ejemplo oficial del plugin: `configureNotificationCenterDelegate()` en
+`didFinishLaunching`, sin `willPresent` propio, y el bridging header expone el plugin a Swift con
+las dos rutas (SPM y CocoaPods). La presentación del banner ya la fijaba Dart en
+`FcmService.configurarHandlers`. Test guardián: `test/unit/ios_delegate_notificaciones_test.dart`,
+que lee el código nativo y falla si vuelve el override (comprobado restaurando el archivo viejo).
+
+**Pendiente en la Mac:** compilar con Xcode 27 y probar en un iPhone con iOS 27 las notificaciones
+en primer y segundo plano, la webview del pago, el share sheet y Face ID.
+
+#### El recorte del JSON se puede hacer casi entero ya: va en dos fases
+
+Al revisarlo de nuevo salió un dato que lo cambia todo: **`version_minima` lo aplica la app, no el
+backend.** `AppVersionAPIController` solo devuelve el valor; no hay middleware que rechace
+peticiones de versiones viejas, y la app **nunca manda la suya**, así que el servidor no puede
+saber quién le habla. Cada app pregunta y se bloquea sola, y esa comprobación **llegó con la
+1.0.25**: una 1.0.24 o anterior nunca pregunta y hoy entra con normalidad.
+
+Comparando campo por campo contra el código de la 1.0.24 (`git show 083040c^`), **solo cuatro
+campos la romperían**, porque los lee en campos obligatorios:
+
+| Campo | Qué rompe en ≤ 1.0.24 |
+| --- | --- |
+| `token_type` | El login entero |
+| `directorio`, `pdf`, `xml` (facturas) | La pantalla de Facturas |
+
+Todo lo demás —las cuatro becas, `nivel_id`, `num_pago_activo`,
+`esta_disponible_en_la_app_movil`, `factura_pdf`, `factura_xml`, `familia_id`, `grupo_id`,
+`ap_paterno`, `ap_materno`, `ciclo_predeterminado_id`, `tags`, `user_id`— ya se leía con valor por
+defecto en aquella versión. **Y es justo lo que pesa**, porque se repite en cada renglón de cada
+alumno.
+
+El encargo del backend quedó reescrito en dos fases: la **fase 1** (todo lo anterior) se puede
+aplicar ya sin riesgo para ninguna versión, y la **fase 2** (los cuatro campos) espera a que Play
+Console y App Store Connect digan que no queda nadie por debajo de la 1.0.25. El `id` de factura
+pasó de «dudoso» a prohibido: es un `int` obligatorio y sin él se cae Facturas **en la versión que
+está hoy en las tiendas**.
+
+#### Maqueta del estilo cristal (Liquid Glass): vista y descartada
+
+Carlos pidió verla antes de decidir. Se montó una pantalla de muestra **aparte de la app** —su
+propio `main`, sin DI ni Firebase—, copiando Estados de Cuenta con los mismos datos y el mismo
+tema, y un interruptor para alternar cristal ↔ Material y claro ↔ oscuro en el propio teléfono.
+Se vio en el Oppo, se capturaron los cuatro estados y **se borró**: eran tres archivos sin
+trackear (`lib/muestra_cristal.dart` y las carpetas `muestra/` de pages y widgets).
+
+**Descartado**, por tres motivos: la barra inferior translúcida dejaba leer los renglones que
+pasaban por detrás —justo donde se comparan importes, y en oscuro peor—; las pantallas reales
+tienen **fondo liso**, así que el cristal solo luce si se les mete una imagen de fondo, que es un
+rediseño mucho mayor; y es una imitación a mano que habría que tirar cuando Flutter lo traiga de
+serie (hoy el SDK 3.47.4 no tiene ninguna clase de Liquid Glass). Queda como **pendiente
+permanente** revisarlo en cada actualización de Flutter — anotado en `CLAUDE.md`.
+
+#### La 1.0.31 verificada en el Oppo
+
+Con el build de **debug** (`flutter run`), tras desinstalar la de Play Store con permiso de Carlos.
+941 tests en verde y `analyze` limpio. Revisadas con captura: **Login, Menú principal, Estados de
+Cuenta, Otros pagos, Pagos Realizados, Facturas, Notificaciones, selección y Carrito**, en **claro
+y en oscuro**. La decoración de mes patrio sale bien en los dos temas y el papel picado conserva su
+contorno. «Otros pagos» pinta el estado **vacío**, no el de error. La selección desbloquea solo el
+pago siguiente, el carrito suma y el botón de quitar lo vacía. Los 24 `ERROR` del log son del GPU
+del Oppo (`gralloc`, formatos), ninguno de la app. El teléfono quedó como estaba: tema claro y sin
+selección guardada.
+
 ### 2026-09-17 — Release 1.0.31+40: Flutter 3.47.4, dependencias al día y el recorte del JSON, auditado
 
 **La 1.0.30+39 ya está publicada en las dos tiendas.** Apple la publicó el 2026-09-10

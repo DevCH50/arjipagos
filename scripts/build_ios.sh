@@ -9,7 +9,7 @@
 #   ./scripts/build_ios.sh --no-codesign      # Build sin firma de código
 #
 # Este script envuelve `flutter build ios --release` y restaura
-# automáticamente LastUpgradeCheck/LastUpgradeVersion a 2630 (Xcode 26.3),
+# automáticamente LastUpgradeCheck/LastUpgradeVersion a 2700 (Xcode 27),
 # ya que Flutter los resetea a 1510 en cada build.
 # ============================================================================
 
@@ -27,7 +27,7 @@ cd "$PROJECT_DIR"
 
 PBXPROJ="ios/Runner.xcodeproj/project.pbxproj"
 XCSCHEME="ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme"
-TARGET_VERSION="2630"
+TARGET_VERSION="2700"
 
 echo -e "${BLUE}============================================${NC}"
 echo -e "${BLUE}   Arjipagos - Build iOS${NC}"

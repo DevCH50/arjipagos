@@ -4,6 +4,11 @@ platform :ios, '15.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Suelo de LastUpgradeCheck / LastUpgradeVersion. 2700 = Xcode 27, el que hace falta para
+# iOS 27. El `post_install` de más abajo solo SUBE hasta aquí: si Xcode deja un valor mayor,
+# se respeta. Al cambiar de Xcode, este número es lo único que hay que tocar.
+LAST_UPGRADE_MINIMO = '2700'
+
 install! 'cocoapods', :warn_for_unused_master_specs_repo => false
 
 project 'Runner', {
@@ -140,27 +145,39 @@ post_install do |installer|
     # "Run script phase will be run during every build because it does not specify any outputs"
     phase.always_out_of_date = '1'
 
-    # --- Blindaje permanente de LastUpgradeCheck = 2630 ---
-    # `flutter build ios` / `flutter run` degradan LastUpgradeCheck a 1510 porque
-    # Flutter 3.x no reconoce Xcode 26.3 (2630). Como `pod install` corre DESPUÉS
-    # de esa degradación, aquí lo restauramos al valor correcto en cada build.
-    runner_project.root_object.attributes['LastUpgradeCheck'] = '2630'
+    # --- Blindaje de LastUpgradeCheck: SOLO SUBE, NUNCA BAJA ---
+    # Versiones antiguas de Flutter degradaban LastUpgradeCheck a 1510 en cada build
+    # porque no reconocían el Xcode instalado. Flutter 3.47 ya no lo hace —su migración
+    # se salta cualquier valor igual o superior a 1510—, pero el blindaje se queda como
+    # red de seguridad.
+    #
+    # **Solo sube.** Si Xcode escribe un valor MAYOR (al aceptar "Update to recommended
+    # settings", o simplemente por ser más nuevo), se respeta: bajárselo a la fuerza deja
+    # el aviso amarillo de Xcode para siempre. LAST_UPGRADE_MINIMO es el suelo, no el
+    # valor fijo, y hoy vale 2700 (Xcode 27), que es el que necesita iOS 27.
+    actual = runner_project.root_object.attributes['LastUpgradeCheck'].to_i
+    if actual < LAST_UPGRADE_MINIMO.to_i
+      runner_project.root_object.attributes['LastUpgradeCheck'] = LAST_UPGRADE_MINIMO
+      puts "✔ LastUpgradeCheck subido a #{LAST_UPGRADE_MINIMO} (project.pbxproj)"
+    else
+      puts "✔ LastUpgradeCheck se queda en #{actual} (project.pbxproj)"
+    end
 
     runner_project.save
     puts "✔ Run Script '#{phase_name}' configurado en Runner"
-    puts "✔ LastUpgradeCheck fijado en 2630 (project.pbxproj)"
   end
 
-  # --- Blindaje permanente de LastUpgradeVersion = "2630" en el scheme ---
-  # El scheme es un XML aparte que Flutter también degrada a 1510. Se corrige
-  # por texto porque no lo gestiona el objeto de proyecto de xcodeproj.
+  # --- Blindaje de LastUpgradeVersion en el scheme, con la misma regla ---
+  # El scheme es un XML aparte que no gestiona el objeto de proyecto de xcodeproj, así
+  # que se corrige por texto.
   scheme_path = File.join(runner_project.path.to_s, 'xcshareddata', 'xcschemes', 'Runner.xcscheme')
   if File.exist?(scheme_path)
     original = File.read(scheme_path)
-    fixed = original.gsub(/LastUpgradeVersion = "\d+"/, 'LastUpgradeVersion = "2630"')
-    if fixed != original
+    actual_scheme = original[/LastUpgradeVersion = "(\d+)"/, 1].to_i
+    if actual_scheme < LAST_UPGRADE_MINIMO.to_i
+      fixed = original.gsub(/LastUpgradeVersion = "\d+"/, %(LastUpgradeVersion = "#{LAST_UPGRADE_MINIMO}"))
       File.write(scheme_path, fixed)
-      puts "✔ LastUpgradeVersion fijado en 2630 (Runner.xcscheme)"
+      puts "✔ LastUpgradeVersion subido a #{LAST_UPGRADE_MINIMO} (Runner.xcscheme)"
     end
   end
 
