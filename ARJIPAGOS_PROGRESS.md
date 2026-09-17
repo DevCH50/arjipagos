@@ -56,6 +56,19 @@ que lee el código nativo y falla si vuelve el override (comprobado restaurando 
 **Pendiente en la Mac:** compilar con Xcode 27 y probar en un iPhone con iOS 27 las notificaciones
 en primer y segundo plano, la webview del pago, el share sheet y Face ID.
 
+#### Cierre del día: verificación completa y binarios
+
+`flutter pub upgrade` sin cambios y Flutter ya en la última estable (3.47.4). **941 tests en
+verde**, `analyze` limpio, y la app reabierta en el Oppo conserva la sesión y carga el menú
+entero. APK (65.4 MB) y AAB (64.1 MB) de la **1.0.31+40** verificados con `aapt2`: versionName
+`1.0.31`, versionCode `40`, permiso `INTERNET`, `targetSdk 36` y `ApiConfig.isProduction = true`.
+
+El AAB conserva la marca de tiempo del build de la mañana porque Gradle lo dio por actualizado:
+desde entonces solo cambiaron `ios/`, documentación y un test, nada que entre en el bundle de
+Android.
+
+**Sigue sin subirse a las tiendas**, y el Archive de iOS sigue pendiente en la Mac.
+
 #### El recorte del JSON se puede hacer casi entero ya: va en dos fases
 
 Al revisarlo de nuevo salió un dato que lo cambia todo: **`version_minima` lo aplica la app, no el
