@@ -214,6 +214,23 @@ compilar con él ya está resuelto:
 **La Mac necesita Xcode 27 y macOS Tahoe 26.6**; un iPhone con iOS 27 no se depura desde
 Xcode 26.3.
 
+**Al 2026-09-17 la Mac sigue en Xcode 26.3 y el App Store no le ofrece Xcode 27**, porque oculta
+las versiones que el macOS instalado no admite. Primero va la actualización del sistema
+(`sw_vers -productVersion` para ver en cuál está), y después ya aparece Xcode 27.
+
+Lo que eso bloquea y lo que no, porque no es lo mismo:
+
+- **Bloqueado:** depurar en el iPhone 17 de pruebas, que va a ir con **iOS 27**. Xcode 26.3 no trae
+  su soporte de dispositivo, así que el teléfono sale como no disponible y no llegan ni el botón
+  Run ni `flutter run`. No hay ajuste del proyecto que lo evite.
+- **No bloqueado:** el Archive y la subida. Compilar con el SDK de iOS 26 desde Xcode 26.3 vale
+  hasta abril de 2027, y la app resultante corre bien en iOS 27. El blindaje de
+  `LastUpgradeCheck = 2700` tampoco estorba: el `post_install` del Podfile **solo sube**.
+- **Las cuatro pruebas pendientes no necesitan depurador.** El botón Run ya usa Release y
+  `AppLogger` solo habla en Debug, así que hoy el iPhone no da ni una línea de la app. Push,
+  webview del pago, share sheet y Face ID se comprueban mirando la pantalla: sirve una build por
+  **TestFlight**. Lo único que exige `flutter run` es ver el aviso del contrato 2 provisional.
+
 **Queda por probar en un iPhone con iOS 27**, que no se puede hacer desde la Linux: las
 notificaciones push en primer y segundo plano, la webview del pago, el share sheet y Face ID.
 En iOS 27 el sistema aplica Liquid Glass a lo nativo (share sheet, diálogo de Face ID, webview);

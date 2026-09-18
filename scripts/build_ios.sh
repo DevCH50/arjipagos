@@ -8,9 +8,11 @@
 #   ./scripts/build_ios.sh                    # Build release standard
 #   ./scripts/build_ios.sh --no-codesign      # Build sin firma de código
 #
-# Este script envuelve `flutter build ios --release` y restaura
-# automáticamente LastUpgradeCheck/LastUpgradeVersion a 2700 (Xcode 27),
-# ya que Flutter los resetea a 1510 en cada build.
+# Este script envuelve `flutter build ios --release` y deja
+# LastUpgradeCheck/LastUpgradeVersion en 2700 (Xcode 27).
+#
+# Es una red de seguridad, no un arreglo que haga falta hoy: Flutter 3.47 ya NO
+# degrada esos valores. Ver el bloque de abajo.
 # ============================================================================
 
 set -e
@@ -39,9 +41,17 @@ echo -e "\n${BLUE}► Versión: $CURRENT_VERSION${NC}"
 echo -e "\n${YELLOW}► Construyendo iOS release...${NC}"
 flutter build ios --release "$@"
 
-# Flutter resetea LastUpgradeCheck y LastUpgradeVersion a 1510 en cada build.
-# Los restauramos inmediatamente para mantener la compatibilidad con Xcode 26.3.
-echo -e "\n${YELLOW}► Restaurando LastUpgradeCheck/LastUpgradeVersion a $TARGET_VERSION...${NC}"
+# Las versiones antiguas de Flutter bajaban estos dos valores a 1510 en cada
+# build, porque no reconocían el Xcode instalado. Flutter 3.47 ya NO lo hace: su
+# migración se salta cualquier valor igual o superior a 1510 (comprobado en
+# `xcode_project_object_version_migration.dart`). Con el toolchain de hoy estos
+# `sed` no encuentran nada que cambiar, y se conservan por si algún día se vuelve
+# a una versión de Flutter que sí los degrade.
+#
+# 2700 es Xcode 27. El `post_install` del Podfile aplica el mismo suelo en cada
+# `pod install`; al cambiar de versión de Xcode hay que tocar TARGET_VERSION aquí
+# y LAST_UPGRADE_MINIMO en `ios/Podfile`.
+echo -e "\n${YELLOW}► Asegurando LastUpgradeCheck/LastUpgradeVersion en $TARGET_VERSION...${NC}"
 
 sed -i '' "s/LastUpgradeCheck = 1510/LastUpgradeCheck = $TARGET_VERSION/g" "$PBXPROJ"
 sed -i '' "s/LastUpgradeVersion = \"1510\"/LastUpgradeVersion = \"$TARGET_VERSION\"/g" "$XCSCHEME"

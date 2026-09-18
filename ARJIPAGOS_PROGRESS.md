@@ -11,6 +11,60 @@
 
 _(ninguno)_
 
+### 2026-09-17 (c) — Verificada la fase 1 del recorte del JSON contra el servidor real
+
+El backend avisó de que ya aplicó la **fase 1** de `CAMPOS_JSON_QUE_LA_APP_NO_USA.md`. Se comprobó
+contra producción (`arjipagos.moriah.mx`) con la cuenta de pruebas `CATutorP701`, endpoint por
+endpoint, y luego en el Oppo con el build debug de la 1.0.31.
+
+**Todo lo prometido se fue, y nada de lo prohibido.**
+
+| Qué se pidió quitar | Estado en el JSON real |
+| --- | --- |
+| Raíz: `ciclo_predeterminado_id`, `familia_id` (sin pagar, pagados y facturas) | Fuera. Quedan `success`, `message`, `familia` |
+| Por alumno: `ap_paterno`, `ap_materno`, las cuatro becas, `familia_id` | Fuera |
+| Por renglón: `nivel_id`, `num_pago_activo`, `esta_disponible_en_la_app_movil`, `factura_pdf`, `factura_xml` | Fuera |
+| Notificaciones: `tags`, `user_id` | Fuera |
+
+**Los cuatro avisos, respetados:** `success` sigue en el `404` de los tres endpoints
+(`FamiliaAPIController` líneas 178, 416 y 561), `campania` sigue en cada notificación, el `id` de
+cada factura sigue, y `grupo_id` se conservó como pidió Carlos. La **fase 2 sigue sin tocar**:
+`token_type` sigue en el login y `directorio`, `pdf` y `xml` en cada factura, que es lo correcto
+mientras quede gente por debajo de la 1.0.25.
+
+**Cómo se verificó, además de mirar las claves:** se parsearon las respuestas reales de los seis
+casos (sin pagar y pagados × sin emisor, EF1 y EF2), login, facturas y notificaciones con los
+modelos de la app, en un test temporal que se borró al terminar. Suite completa en verde (949).
+En el dispositivo se recorrieron Estados de Cuenta, Otros pagos, Pagos Realizados, Facturas y
+Notificaciones: todas pintan igual que antes, y "Otros pagos" saca su estado vacío, no un error.
+
+**Lo que se encontró de más** —no es un fallo del backend, es lo que el análisis original avisaba
+que no cubría: campos que la app ni intenta leer—:
+
+- **`familia` y `familia_id` viajan en CADA renglón de pago** (66 veces en esta cuenta, ~1.4 KB de
+  los 13 KB de la respuesta: un **10 %**). `EstadoDeCuenta.fromJson` no lee ninguno de los dos, y
+  el apellido ya viene una vez en la raíz.
+- **`ticket_uuid` y `fecha_de_pago_iso`**, en cada renglón de Pagos Realizados: tampoco los lee
+  nadie.
+- `grupo_id` **no se lee en ninguna parte de `lib/`** (0 apariciones). Se conserva por decisión de
+  Carlos, pero el comentario que decía que la app lo usaba para navegar no era cierto.
+
+**De paso, los comentarios de `scripts/build_ios.sh`.** Decían que el script restaura
+`LastUpgradeCheck` *"ya que Flutter los resetea a 1510 en cada build"* y que lo hace *"para
+mantener la compatibilidad con Xcode 26.3"*, cuando `TARGET_VERSION="2700"` es Xcode 27 y Flutter
+3.47 ya no degrada esos valores. Ahora dicen lo que de verdad pasa: los dos `sed` son una red de
+seguridad que hoy no encuentra nada que cambiar, y al cambiar de Xcode hay que tocar
+`TARGET_VERSION` aquí y `LAST_UPGRADE_MINIMO` en el `Podfile`. **Solo comentarios y un texto en
+pantalla; la lógica no se tocó.**
+
+**Contexto de la Mac ese mismo día:** sigue con Xcode 26.3 y el App Store no le ofrece Xcode 27,
+que pide macOS Tahoe 26.6. El iPhone 17 de pruebas va a ir con **iOS 27**, así que desde esa Mac
+**no se puede depurar en él** hasta actualizar. Lo que sí se puede es archivar y subir la 1.0.31+40
+con Xcode 26.3: el SDK de iOS 26 vale hasta abril de 2027 y la app corre bien en iOS 27. Las cuatro
+pruebas pendientes (push en primer y segundo plano, webview del pago, share sheet y Face ID) no
+necesitan depurador —el botón Run ya usa Release y `AppLogger` solo habla en Debug—, así que se
+pueden hacer por TestFlight en ese iPhone.
+
 ### 2026-09-17 (b) — iOS 27: listo para compilar, y un fallo de notificaciones que llevaba desde abril
 
 **iOS 27 salió el 14-sep-2026 y Xcode 27 ya admite envíos.** Compilar con su SDK no es obligatorio
