@@ -11,6 +11,32 @@
 
 _(ninguno)_
 
+### 2026-09-18 (c) — Verificación completa, commit `ba510f7` y binarios de la 1.0.31+40
+
+`flutter analyze` sin avisos y **981 tests en verde**, guardianes de iOS incluidos. Comprobaciones de
+release en orden: `isProduction = true`, INTERNET y `POST_NOTIFICATIONS`, `NSFaceIDUsageDescription`,
+`kTemporadaForzada = null` y el `AppIcon.appiconset` con 0 huérfanos y 0 fantasmas. **Ningún cambio
+toca `ios/` ni `android/`.** La versión sigue en **1.0.31+40**: en las tiendas está la 1.0.30
+(`version_minima` y `version_recomendada` en las dos), así que se reutiliza.
+
+**iOS, revisado en el código porque no se puede compilar desde aquí:** el aviso en primer plano
+sale sin hacer nada en iOS (`Platform.isAndroid`), el camino de segundo plano en iOS retorna antes de
+resolver el texto, y el `device_id` va al Keychain con `first_unlock_this_device`. La carga única es
+Dart puro. Queda pendiente, como siempre, el Archive en la Mac.
+
+Commit `ba510f7` en `origin/main`. Binarios **regenerados** desde ese commit, a la primera y en
+paralelo:
+
+| Binario | Tamaño | Ruta |
+| --- | --- | --- |
+| APK | 65.4 MB | `build/app/outputs/flutter-apk/app-release.apk` |
+| AAB | 64.1 MB | `build/app/outputs/bundle/release/app-release.aab` |
+
+`aapt2` sobre el APK: `mx.moriah.arjipagos`, `versionCode=40`, `versionName=1.0.31`, INTERNET y
+`POST_NOTIFICATIONS` dentro, y **no depurable**. **Sustituyen a los del 2026-09-17**, que no llevaban
+el `device_id`, los avisos en primer plano ni la carga única. **No se instaló en el Oppo**: tiene el
+build de depuración con la sesión de `CATutorP701`.
+
 ### 2026-09-18 (b) — El primer login ya no pide nada dos veces
 
 **Antes / después**, medido en el Oppo con `CATutorP701` (estados de cuenta / Pagos Realizados /
