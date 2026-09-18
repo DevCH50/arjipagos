@@ -96,7 +96,12 @@ void main() async {
   // requestPermission() necesita la UI renderizada para mostrar el diálogo.
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     try {
-      await FcmService().configurarHandlers();
+      final FcmService fcm = FcmService();
+      await fcm.configurarHandlers();
+      // Con la app abierta, Android no pinta el push por su cuenta y el aviso
+      // se perdía. Va después de `configurarHandlers` porque necesita el canal
+      // ya creado. En iOS no hace nada: allí el banner ya lo saca el sistema.
+      fcm.mostrarAvisosEnPrimerPlano();
     } catch (e) {
       AppLogger.error('Error al configurar FCM: $e', tag: 'Main');
     }

@@ -3,6 +3,7 @@
 /// Define los mocks de repositorios y use cases utilizando mocktail.
 library;
 
+import 'package:arjipagos/src/data/dataSource/local/DispositivoStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
@@ -57,6 +58,9 @@ class MockResenaRepository extends Mock implements ResenaRepository {}
 
 /// Mock del servicio de Firebase Cloud Messaging.
 class MockFcmService extends Mock implements FcmService {}
+
+/// Mock del almacén del identificador estable del teléfono.
+class MockDispositivoStorage extends Mock implements DispositivoStorage {}
 
 /// Mock del repositorio del bloqueo biométrico.
 ///

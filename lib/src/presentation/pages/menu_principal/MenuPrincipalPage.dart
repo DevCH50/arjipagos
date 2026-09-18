@@ -7,6 +7,7 @@ import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPaga
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
+import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/menu_items_list.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/widgets/user_drawer.dart';
@@ -50,6 +51,9 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       if (!mounted) {
         return;
       }
+      // Lo primero, antes de los `return` de la navegación por push de abajo.
+      _cargarSiHaceFalta(context);
+
       final notificacionBloc = context.read<NotificacionBloc>();
       if (notificacionBloc.state.debeNavegar) {
         notificacionBloc.add(const ResetDebeNavegarEvent());
@@ -62,6 +66,32 @@ class _MenuPrincipalPageState extends State<MenuPrincipalPage> {
       // abrió la app es uno solo, y cada BLoC ya filtra por `campania`.
       _irAPagosRealizados(context);
     });
+  }
+
+  /// Carga el menú y Pagos Realizados **solo si están vacíos y no cargando**.
+  ///
+  /// Sus BLoC nacen vacíos en `blocProviders`. Tras un login ya los está
+  /// cargando `LoginResponse` —sus handlers emiten `isLoading` en cuanto
+  /// arrancan, un frame antes de este callback—, así que aquí no se repite
+  /// nada. Esto es para cuando se llega al menú **sin** pasar por el login:
+  /// al arrancar con la sesión guardada, o cuando Android restaura la app
+  /// directamente en esta pantalla.
+  ///
+  /// Pagados Realizados se carga aquí y no al abrir su pantalla porque así
+  /// era antes —el menú ya leía ese BLoC—, y porque [_irAPagosRealizados] la
+  /// empuja desde este mismo callback cuando un push abre la app en frío.
+  ///
+  /// Mismo patrón que `EdoCtaPage._cargarSiHaceFalta`.
+  void _cargarSiHaceFalta(BuildContext context) {
+    final MenuPrincipalBloc menu = context.read<MenuPrincipalBloc>();
+    if (menu.state.user == null && !menu.state.isLoading) {
+      menu.add(const MenuPrincipalInitialEvent());
+    }
+
+    final EdoCtaPagadosBloc pagados = context.read<EdoCtaPagadosBloc>();
+    if (pagados.state.alumnos == null && !pagados.state.isLoading) {
+      pagados.add(const EdoCtaPagadosInitialEvent());
+    }
   }
 
   /// Abre Pagos Realizados si hay un push de pago esperando, con dos guardas.

@@ -11,6 +11,126 @@
 
 _(ninguno)_
 
+### 2026-09-18 (b) — El primer login ya no pide nada dos veces
+
+**Antes / después**, medido en el Oppo con `CATutorP701` (estados de cuenta / Pagos Realizados /
+Facturas; los 3 de estados de cuenta son menú + un emisor cada uno):
+
+| Escenario | Antes | Después |
+| --- | --- | --- |
+| Primer login tras abrir la app | **4 / 2 / 2** | **3 / 1 / 1** |
+| Cerrar sesión y volver a entrar | 3 / 1 / 1 | 3 / 1 / 1 |
+| Arrancar con sesión guardada | menú 1, pagados 1, facturas 0 | igual |
+| Abrir Facturas tras arrancar con sesión | 1 | 1, y reabrirla no pide nada |
+| Cerrar sesión sin haber abierto Facturas | podía pedir facturas en pleno cierre | ninguna |
+
+**Causa:** `blocProviders` es perezoso, y `MenuPrincipalBloc`, `EdoCtaPagadosBloc` y `FacturaBloc`
+nacían en el `context.read` de `LoginResponse._entrar`. Su `create` hacía `..add(InitialEvent)` y
+`_entrar` recargaba después: dos cargas, la primera compitiendo con el guardado de la sesión. De
+ahí salía también el doble registro del dispositivo que veía el backend: ahora el token se pide
+**una** vez por login, sin necesitar la guarda.
+
+**Arreglo:** los tres nacen vacíos. Los carga `LoginResponse` tras el login; y su pantalla con
+`_cargarSiHaceFalta()` cuando se llega sin login (`MenuPrincipalPage` carga menú y Pagos Realizados,
+como antes; `FacturasPage`, que pasa a `StatefulWidget`, carga al abrirse, como antes). En Facturas,
+«nunca cargado» se pinta como cargando: si no, el primer frame decía «Sin facturas».
+
+**El guardián de la sesión tenía dos agujeros**, y se cerraron: reconocía los BLoC de datos por el
+`..add(` del `create` —con este cambio habría dejado de vigilar los tres sin avisar—, y su expresión
+se comía el `BlocProvider` siguiente si había un comentario en medio. Ahora exige clasificar a
+**todos** los de `blocProviders`. Guardián nuevo, `carga_unica_por_login_test.dart`, comprobado
+rompiendo el código a propósito: falla.
+
+`flutter analyze` limpio, **981 tests en verde**.
+
+**Visto de paso, sin tocar:** al arrancar con sesión guardada salen **dos** peticiones a
+`/banners`. Ya pasaba antes de este cambio (arranque de las 10:03 con el código anterior).
+
+### 2026-09-18 — Los avisos ya se ven con la app abierta, y cada teléfono tiene su `device_id`
+
+Dos encargos de Carlos. **Sin dependencias nuevas**: `flutter_local_notifications` ya estaba.
+
+**1. Avisos en primer plano (Android).** Se perdían: `configurarHandlers()` no escuchaba
+`onMessage` pese al nombre, y los cuatro BLoC que sí lo escuchan solo refrescan datos. Con la app
+abierta Android **nunca** pinta el push por su cuenta, ni con bloque `notification`.
+
+- `FcmService.mostrarAvisosEnPrimerPlano()`, arrancado en `main.dart` después de
+  `configurarHandlers()`. Reutiliza el canal y la notificación local del camino de background.
+- **No exige data-only**, a diferencia del background: allí el sistema ya pintó el aviso y otro
+  sería un duplicado; aquí no pintó nada.
+- La resolución de título y cuerpo se sacó a `textoVisibleDelPush()` y la usan los dos caminos.
+  **Cambio que alcanza también al background:** antes el título caía en `'ArjiPagos'` y nunca
+  estaba vacío, así que un push de puro refresco data-only pintaba una notificación **vacía con el
+  nombre de la app**. Ahora `TextoPush.hayContenido` mira el contenido antes del relleno y ese
+  push no pinta nada, en ninguno de los dos caminos.
+- **Solo Android**, decidido con Carlos: en iOS el banner ya lo saca
+  `setForegroundNotificationPresentationOptions`. No se tocó nada de iOS.
+
+**2. `device_id` estable.** Quedaban 27 tokens de sobra, 11 de CATutorM641. La app no forzaba
+tokens nuevos —`deleteToken()` no se llama— y el doble registro ya estaba corregido desde el
+2026-08-25: el problema era que **el token era la única clave** y cada rotación natural creaba una
+fila.
+
+- `generarUuidV4()` (`core/utils/uuid_v4.dart`): `Random.secure()` y los bits de versión y
+  variante de la RFC 4122. Sin el paquete `uuid`.
+- `DispositivoStorage`, calcado de `BiometriaStorage`: se genera una vez y **nunca** se regenera.
+  En `SecureStorage`, **no** en `SharedPref`, porque el logout hace `sharedPref.clear()`. En iOS
+  va con `first_unlock_this_device`, así que no viaja al iCloud Keychain: dos iPhone no pueden
+  compartirlo, y la columna del backend es **única**.
+- `registrarToken` lo manda siempre. **El `DELETE` no cambia**: da de baja por `user_id` + token, y
+  el siguiente registro encuentra la fila por `device_id` —con `withTrashed`— y la reactiva.
+- **Carrera cerrada:** `_registrarTokenFcm` y `_onFcmTokenRefresh` podían registrar el mismo token
+  casi a la vez (el SDK emite `onTokenRefresh` también en la primera generación).
+  `_ultimoTokenRegistrado`, **en memoria**, se marca antes de la petición, se suelta si falla y se
+  limpia al cerrar sesión para que el siguiente usuario del teléfono sí se registre.
+
+**El backend ya lo tiene**, solo en desarrollo: acepta `device_id` **opcional** (la 1.0.30 no lo
+manda) y hace *upsert*. El contrato y lo pendiente están en `ENCARGO_DEVICE_ID.md`, en la raíz de
+ArjiApp.
+
+**Verificado:** `flutter analyze` limpio y **975 tests en verde** (26 nuevos: UUID, guardián de
+`SharedPref`, almacén sobre el `SecureStorage` real, texto del push, body con `device_id` y los
+cinco casos de la carrera).
+
+**Verificado en el Oppo contra producción el 2026-09-18** (build debug, `CATutorP701`). Antes, sin
+tocar datos, se confirmó que producción ya tiene el cambio: un registro sin token y con un
+`device_id` de 300 caracteres devuelve 422 quejándose **también** del `device_id`.
+
+| Paso | Resultado |
+| --- | --- |
+| Primer login tras instalar | Dos disparos del registro; la guarda frena el segundo → **un solo `POST`**, `200` |
+| Arranque con sesión guardada | Un `POST`, dispositivo `b13d5cd4…`, `200` |
+| Cerrar sesión | `DELETE` por token, `200` |
+| Volver a entrar | **Mismo `b13d5cd4…`**, un `POST`, `200` |
+
+**El doble registro que veía el backend era real, y el `Explore` no lo encontró.** `BlocProvider`
+es perezoso: `MenuPrincipalBloc` no nace al arrancar, sino la primera vez que alguien lo lee, y eso
+pasa en `LoginResponse`, con la sesión ya guardada. Su `create` manda un `MenuPrincipalInitialEvent`
+y `LoginResponse` otro justo después. Pasa **en el primer login tras abrir la app**; en los
+siguientes el BLoC ya existe y solo llega uno. La guarda de `_ultimoTokenRegistrado` lo deja en un
+solo `POST`, pero **el menú se sigue cargando dos veces** en ese primer login (dos
+`getEstadosDeCuenta`). No se ha tocado: pendiente de decisión de Carlos.
+
+El `FcmService` escribe ahora en el log `Registrando dispositivo xxxxxxxx…` (solo el prefijo, y solo
+en Debug) para poder comprobar que el id no cambia.
+
+**Lo que no se puede comprobar desde aquí:** que el servidor **actualizó** la fila en vez de crear
+otra —la respuesta es la misma en los dos casos— lo tiene que confirmar el backend en su base
+(`user_id` 4515).
+
+**Cambio de dueño, probado:** se cerró sesión y se entró con `Admin`. El `DELETE` dio `200` (tardó
+5,6 s el servidor) y el registro salió con **el mismo `b13d5cd4…`** y `200`. `Admin` no tiene
+familia: los `404` con `success: false` pintaron estados vacíos, como deben.
+
+**Aviso en primer plano, probado con un push real** («Prueba de campanita», `campania: manual`,
+enviado por comando del backend) con la app al frente como `Admin`. `NotificacionBloc` lo recibió
+(punto rojo en la campana) y `mostrarAvisosEnPrimerPlano` publicó la notificación **36 ms después**:
+canal `arjipagos_notif`, importancia alta, `isInterruptive=true`, título y texto correctos y **una
+sola**, sin duplicado. Se ve en la cortina. El banner flotante no salía en una captura hecha 3 s
+después: o ya se había recogido, o ColorOS no lo enseña con la propia app al frente. El aviso ya no se
+pierde en ningún caso. ⚠️ **El APK y el AAB de la 1.0.31+40 generados el 2026-09-17 NO llevan esto.** Hay que
+regenerarlos antes de publicar.
+
 ### 2026-09-17 (c) — Verificada la fase 1 del recorte del JSON contra el servidor real
 
 El backend avisó de que ya aplicó la **fase 1** de `CAMPOS_JSON_QUE_LA_APP_NO_USA.md`. Se comprobó

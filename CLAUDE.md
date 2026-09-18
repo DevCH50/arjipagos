@@ -405,6 +405,28 @@ Para verlo dispararse hace falta `flutter run`, que fuerza Debug. Comprobado el 
 - Al cambiar de versión de Xcode, tocar **solo** `LAST_UPGRADE_MINIMO` en el `Podfile` y
   `TARGET_VERSION` en `scripts/build_ios.sh`.
 
+**En Android, el aviso con la app abierta lo pinta `mostrarAvisosEnPrimerPlano()` — y no exige data-only**
+
+Con la app en primer plano Android **no pinta el push por su cuenta**, ni siquiera con bloque
+`notification`. Lo tapa `FcmService.mostrarAvisosEnPrimerPlano()`, desde el 2026-09-18.
+
+**No copiarle la condición `esDataOnly` del background.** Allí sí hace falta —el sistema ya pintó el
+aviso antes de que Dart arrancara y otro sería un duplicado—; aquí volvería a perder todos los
+avisos normales. Y **no activarlo en iOS**: el banner ya lo saca
+`setForegroundNotificationPresentationOptions`, y saldría dos veces.
+
+Qué se enseña lo decide `textoVisibleDelPush()`, el mismo en los dos caminos. **`hayContenido` no es
+`titulo.isNotEmpty`**: el título siempre cae en `'ArjiPagos'` si falta, así que mirarlo haría que
+cada push de puro refresco pintara una notificación vacía. Test: `test/unit/services/fcm_primer_plano_test.dart`.
+
+**El `device_id` vive en `SecureStorage`, JAMÁS en `SharedPref`.** Mismo motivo que la biometría:
+`logout()` hace `sharedPref.clear()`, y el id tiene que sobrevivir al cierre de sesión para que el
+siguiente login actualice la fila del aparato en vez de crear otra. Lo genera y guarda
+`DispositivoStorage`, una vez y para siempre. La columna del backend es **única**; que en iOS vaya
+con `first_unlock_this_device` es lo que impide que el iCloud Keychain lo copie a otro iPhone. Test
+guardián: `test/unit/dispositivo_id_no_en_sharedpref_test.dart`. El contrato con el servidor está en
+`ENCARGO_DEVICE_ID.md`, en la raíz de ArjiApp.
+
 **Las notificaciones en primer plano dependen de quién sea el delegate — no tocar el AppDelegate**
 
 `AppDelegate.swift` llama a `FLTFirebaseMessagingPlugin.configureNotificationCenterDelegate()`
@@ -687,6 +709,25 @@ dos lados, y hacen falta los dos:
 
 **Si se añade un BLoC de datos a `blocProviders`, hay que vaciarlo en `cerrarSesionCompleta` y
 recargarlo en `LoginResponse`.**
+
+**Y su `create` NO dispara ninguna carga.** `MenuPrincipalBloc`, `EdoCtaPagadosBloc` y `FacturaBloc`
+nacen vacíos. `blocProviders` es **perezoso**: en el primer login tras abrir la app esos BLoC nacen
+dentro de `LoginResponse._entrar`, en el `context.read`. Hasta el 2026-09-18 su `create` hacía
+`..add(InitialEvent)`, así que se pedía todo dos veces —la carga del `create` y la recarga de
+`_entrar`— y la primera competía además con el guardado de la sesión. Medido en el Oppo: 4/2/2
+peticiones (estados de cuenta / pagados / facturas) donde tocan 3/1/1.
+
+Quién carga, entonces:
+
+- **Tras el login**, `LoginResponse`, y es la única carga.
+- **Al llegar sin pasar por el login** —arrancar con sesión guardada, o Android restaurando la app—,
+  la pantalla, con un `_cargarSiHaceFalta()` que solo pide si el BLoC está vacío y no cargando:
+  `MenuPrincipalPage` (menú y Pagos Realizados) y `FacturasPage`. Es el patrón de `EdoCtaPage`.
+
+No choca con `LoginResponse` porque los handlers emiten `isLoading: true` en cuanto arrancan, un
+frame antes de que la pantalla mire. Test guardián: `test/unit/carga_unica_por_login_test.dart`.
+El de `sesion_no_arrastra_usuario_anterior_test.dart` ya no reconoce los BLoC de datos por el
+`..add(` del `create`: exige clasificar **todos** los de `blocProviders`.
 
 **No volver al `Future.delayed(500 ms)`.** Hasta el 2026-08-25 la recarga se lanzaba con un
 temporizador a ojo, sin ninguna garantía de que la sesión nueva estuviera guardada. Cuando

@@ -1,5 +1,6 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/local/DispositivoStorage.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/banners/BannerUseCases.dart';
@@ -17,11 +18,8 @@ import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/Cambiar
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/bloc/CambiarContrasenaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosBloc.dart';
-import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/bloc/EdoCtaPagadosEvent.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
-import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalEvent.dart';
 import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaBloc.dart';
-import 'package:arjipagos/src/presentation/pages/facturas/bloc/FacturaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionBloc.dart';
 import 'package:arjipagos/src/presentation/pages/notificaciones/bloc/NotificacionEvent.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,12 +47,23 @@ List<BlocProvider> blocProviders = [
     create: (context) =>
         LoginBloc(locator<AuthUseCases>())..add(const LoginInitialEvent()),
   ),
+  // MenuPrincipalBloc, EdoCtaPagadosBloc y FacturaBloc nacen VACÍOS: su
+  // `create` no dispara ninguna carga. Los carga `LoginResponse` después de
+  // guardar la sesión, y su pantalla si los encuentra vacíos (el mismo
+  // `_cargarSiHaceFalta` de `EdoCtaPage`).
+  //
+  // Hasta el 2026-09-18 cada `create` hacía `..add(InitialEvent)`. Como
+  // `blocProviders` es perezoso, en el primer login tras abrir la app estos
+  // BLoC nacían dentro de `LoginResponse._entrar`: el `create` lanzaba una
+  // carga —compitiendo además con el guardado de la sesión— y `_entrar` otra.
+  // Resultado: menú, Pagos Realizados y Facturas pedidos dos veces.
   BlocProvider<MenuPrincipalBloc>(
     create: (context) => MenuPrincipalBloc(
       locator<AuthUseCases>(),
       locator<EdoCtaUseCases>(),
       locator<FcmService>(),
-    )..add(const MenuPrincipalInitialEvent()),
+      locator<DispositivoStorage>(),
+    ),
   ),
   // EdoCtaListBloc y CarritoBloc NO están aquí: hay una instancia por emisor
   // fiscal y viven en `RegistroEmisores`, de donde las toma cada pantalla. Con
@@ -66,10 +75,9 @@ List<BlocProvider> blocProviders = [
   BlocProvider<BannerBloc>(
     create: (context) => BannerBloc(locator<BannerUseCases>()),
   ),
+  // Nace vacío: ver MenuPrincipalBloc arriba.
   BlocProvider<EdoCtaPagadosBloc>(
-    create: (context) =>
-        EdoCtaPagadosBloc(locator<EdoCtaPagadosUseCases>())
-          ..add(const EdoCtaPagadosInitialEvent()),
+    create: (context) => EdoCtaPagadosBloc(locator<EdoCtaPagadosUseCases>()),
   ),
   BlocProvider<CambiarContrasenaBloc>(
     create: (context) =>
@@ -81,9 +89,10 @@ List<BlocProvider> blocProviders = [
         NotificacionBloc(locator<NotificacionUseCases>())
           ..add(const NotificacionInicialEvent()),
   ),
+  // Nace vacío: ver MenuPrincipalBloc arriba. Además, `CierreDeSesion` lo lee
+  // para vaciarlo; con la carga en el `create`, cerrar sesión sin haber abierto
+  // Facturas lo creaba y pedía las facturas en pleno cierre.
   BlocProvider<FacturaBloc>(
-    create: (context) =>
-        FacturaBloc(locator<FacturaUseCases>())
-          ..add(const FacturaInicialEvent()),
+    create: (context) => FacturaBloc(locator<FacturaUseCases>()),
   ),
 ];

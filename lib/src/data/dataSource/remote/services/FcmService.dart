@@ -71,39 +71,86 @@ Future<void> handleFcmBackgroundMessage(RemoteMessage message) async {
     return;
   }
 
-  // Los campos `data` tienen PRIORIDAD sobre `notification`.
-  // El backend puede enviar un título genérico (ej: nombre de la app) en
-  // notification.title y el contenido real en data.title / data.message.
-  final dataTitle = message.data['title']?.toString() ?? '';
-  // El campo `message` puede contener HTML; se elimina para mostrar texto plano.
-  final dataBody = stripHtml(
-    message.data['message']?.toString() ??
-    message.data['body']?.toString() ?? '',
-  );
-
-  final systemTitle = message.notification?.title ?? '';
-  final systemBody = message.notification?.body ?? '';
-
-  // Si el backend usa el nombre de la app como título genérico, ignorarlo.
-  final titulo = (dataTitle.isNotEmpty && dataTitle != 'ArjiPagos')
-      ? dataTitle
-      : (systemTitle.isNotEmpty && systemTitle != 'ArjiPagos')
-          ? systemTitle
-          : 'ArjiPagos';
-  final cuerpo = dataBody.isNotEmpty ? dataBody : systemBody;
+  final TextoPush texto = textoVisibleDelPush(message);
 
   // Solo mostrar notificación local cuando el mensaje es data-only (sin campo
   // `notification`). Si el mensaje tiene campo `notification`, Android ya lo
   // mostró automáticamente antes de que Dart arrancara — mostrar otra aquí
   // causaría un duplicado visible al usuario.
   final esDataOnly = message.notification == null;
-  if (esDataOnly && (titulo.isNotEmpty || cuerpo.isNotEmpty)) {
+  if (esDataOnly && texto.hayContenido) {
     await _mostrarNotificacionLocalAndroid(
       id: message.hashCode,
-      titulo: titulo,
-      cuerpo: cuerpo,
+      titulo: texto.titulo,
+      cuerpo: texto.cuerpo,
     );
   }
+}
+
+// ============================================================================
+// TEXTO VISIBLE DE UN PUSH
+// ============================================================================
+
+/// Título y cuerpo ya resueltos de un push, listos para enseñar.
+class TextoPush {
+  /// Lo que se pone como título. Nunca vacío: si el push no trae uno propio,
+  /// cae en el nombre de la app, porque una notificación sin título se ve rara.
+  final String titulo;
+
+  /// Lo que se pone como cuerpo. Puede ser vacío.
+  final String cuerpo;
+
+  /// Si el push trae algo que de verdad merezca enseñarse.
+  ///
+  /// **No es `titulo.isNotEmpty`**: [titulo] siempre tiene algo por el relleno
+  /// de arriba. Esto mira el contenido *antes* del relleno, y por eso distingue
+  /// un aviso de verdad de un push de puro refresco —los que solo traen
+  /// `accion` o `campania` para que la app recargue—, que no debe pintar una
+  /// notificación vacía con el nombre de la app.
+  final bool hayContenido;
+
+  const TextoPush({
+    required this.titulo,
+    required this.cuerpo,
+    required this.hayContenido,
+  });
+}
+
+/// Resuelve qué texto enseñarle al usuario a partir del payload del push.
+///
+/// Las reglas, que valen igual en segundo plano y en primer plano:
+///  - Los campos `data` tienen PRIORIDAD sobre `notification`: el backend puede
+///    mandar un título genérico en `notification.title` y el contenido real en
+///    `data.title` / `data.message`.
+///  - `data.message` puede traer HTML, así que se limpia con [stripHtml].
+///  - Un título igual al nombre de la app no cuenta como título propio.
+TextoPush textoVisibleDelPush(RemoteMessage message) {
+  const String generico = 'ArjiPagos';
+
+  final String dataTitle = message.data['title']?.toString() ?? '';
+  final String dataBody = stripHtml(
+    message.data['message']?.toString() ??
+        message.data['body']?.toString() ??
+        '',
+  );
+
+  final String systemTitle = message.notification?.title ?? '';
+  final String systemBody = message.notification?.body ?? '';
+
+  // Título propio: el primero que exista y no sea el nombre de la app.
+  final String tituloPropio = (dataTitle.isNotEmpty && dataTitle != generico)
+      ? dataTitle
+      : (systemTitle.isNotEmpty && systemTitle != generico)
+          ? systemTitle
+          : '';
+
+  final String cuerpo = dataBody.isNotEmpty ? dataBody : systemBody;
+
+  return TextoPush(
+    titulo: tituloPropio.isNotEmpty ? tituloPropio : generico,
+    cuerpo: cuerpo,
+    hayContenido: tituloPropio.isNotEmpty || cuerpo.isNotEmpty,
+  );
 }
 
 /// Muestra una notificación local en Android con alta importancia (heads-up).
@@ -234,11 +281,15 @@ class FcmService {
   /// [authToken] es el Bearer token de la sesión activa.
   /// [fcmToken] es el token FCM del dispositivo a registrar.
   /// [mobileType] indica la plataforma ('android' o 'ios').
+  /// [deviceId] identifica **la instalación**, no el token: es lo que permite al
+  /// backend reconocer el mismo teléfono cuando Firebase rota el token y
+  /// actualizar su fila en vez de crear otra. Ver `DispositivoStorage`.
   /// Retorna [Success] con `true` si la operación fue exitosa o [Error].
   Future<Resource<bool>> registrarToken({
     required String authToken,
     required String fcmToken,
     required String mobileType,
+    required String deviceId,
   }) async {
     try {
       if (authToken.isEmpty) {
@@ -253,6 +304,12 @@ class FcmService {
 
       final Uri url = ApiConfig.buildUri(Endpoints.dispositivoRegistrar);
 
+      // Solo el prefijo: basta para comprobar en el log que el id no cambia
+      // entre arranques y sesiones, que es todo su sentido.
+      AppLogger.info(
+        'Registrando dispositivo ${deviceId.length > 8 ? deviceId.substring(0, 8) : deviceId}…',
+        tag: 'FCM',
+      );
       AppLogger.httpRequest('POST', url.toString());
 
       final response = await http
@@ -266,6 +323,9 @@ class FcmService {
             body: json.encode({
               'token': fcmToken,
               'mobile_type': mobileType,
+              // El backend lo trata como opcional a propósito, para no romper a
+              // las versiones publicadas que aún no lo mandan. Aquí siempre va.
+              'device_id': deviceId,
             }),
           )
           .timeout(AppDurations.httpTimeout);
@@ -361,10 +421,16 @@ class FcmService {
   }
 
   // ============================================================================
-  // CONFIGURACIÓN DE HANDLERS
+  // CONFIGURACIÓN DE PERMISOS Y CANAL
   // ============================================================================
 
-  /// Configura los permisos y handlers de Firebase Messaging.
+  /// Prepara los permisos, el canal de Android y la presentación de iOS.
+  ///
+  /// **No suscribe ningún listener de mensajes, pese al nombre histórico.** Los
+  /// push entrantes los escuchan `NotificacionBloc`, `BannerBloc`,
+  /// `EdoCtaPagadosBloc` y `EdoCtaListBloc`, cada uno por su cuenta y solo para
+  /// refrescar sus datos; el aviso visible con la app abierta lo pone
+  /// [mostrarAvisosEnPrimerPlano].
   ///
   /// Pasos:
   /// 1. Solicita permisos de notificación (obligatorio en iOS, Android 13+).
@@ -424,5 +490,65 @@ class FcmService {
     } catch (e) {
       AppLogger.error('Error al configurar handlers de FCM: $e', tag: 'FCM');
     }
+  }
+
+  // ============================================================================
+  // AVISOS CON LA APP ABIERTA (primer plano)
+  // ============================================================================
+
+  /// Enseña el aviso cuando llega un push **con la app en primer plano**.
+  ///
+  /// ## Por qué hace falta
+  ///
+  /// Con la app abierta, Android **no pinta nada** por su cuenta: ni siquiera
+  /// cuando el push trae bloque `notification`. Y los cuatro BLoC que escuchan
+  /// `onMessage` solo refrescan datos y encienden el punto rojo de la campana.
+  /// Resultado: el aviso se perdía. Esto lo tapa, reutilizando el mismo canal y
+  /// la misma notificación local que ya se usan en segundo plano.
+  ///
+  /// ## La diferencia con [handleFcmBackgroundMessage] es deliberada
+  ///
+  /// Allí se exige que el mensaje sea data-only, porque si traía bloque
+  /// `notification` el sistema **ya** lo pintó antes de que Dart arrancara y una
+  /// segunda notificación sería un duplicado visible. Aquí ese riesgo no existe
+  /// —el sistema no pintó nada—, así que la condición desaparece y se muestra
+  /// siempre que haya algo que enseñar.
+  ///
+  /// Los push de puro refresco siguen callados sin necesidad de una lista de
+  /// excepciones: no traen texto, y sin texto [TextoPush.hayContenido] es
+  /// `false`. Ver esa propiedad.
+  ///
+  /// **Solo Android.** En iOS el banner en primer plano ya lo saca el sistema,
+  /// gracias a `setForegroundNotificationPresentationOptions` en
+  /// [configurarHandlers]; duplicarlo aquí pondría dos avisos por push.
+  ///
+  /// Devuelve la suscripción por si algún día hay que cancelarla. Hoy vive lo
+  /// que vive la app.
+  StreamSubscription<RemoteMessage>? mostrarAvisosEnPrimerPlano() {
+    if (!Platform.isAndroid) {
+      return null;
+    }
+
+    return FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      try {
+        final TextoPush texto = textoVisibleDelPush(message);
+        if (!texto.hayContenido) {
+          return;
+        }
+
+        await _mostrarNotificacionLocalAndroid(
+          id: message.hashCode,
+          titulo: texto.titulo,
+          cuerpo: texto.cuerpo,
+        );
+      } catch (e) {
+        // Un fallo al pintar el aviso no puede tumbar la app ni impedir que los
+        // BLoC refresquen sus datos con ese mismo push.
+        AppLogger.warning(
+          'No se pudo mostrar el aviso en primer plano: $e',
+          tag: 'FCM',
+        );
+      }
+    });
   }
 }

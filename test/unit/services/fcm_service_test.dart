@@ -11,6 +11,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:arjipagos/src/core/constants/app_strings.dart';
@@ -35,14 +36,14 @@ void main() {
   group('FcmService.registrarToken', () {
     test('devuelve Error(errorNoToken) si authToken está vacío', () async {
       final result = await service.registrarToken(
-          authToken: '', fcmToken: 'fcm', mobileType: 'android');
+          authToken: '', fcmToken: 'fcm', mobileType: 'android', deviceId: 'dev-1');
 
       expect((result as Error).msg, AppStrings.errorNoToken);
     });
 
     test('devuelve Error si el fcmToken está vacío', () async {
       final result = await service.registrarToken(
-          authToken: 'jwt', fcmToken: '', mobileType: 'android');
+          authToken: 'jwt', fcmToken: '', mobileType: 'android', deviceId: 'dev-1');
 
       expect(result, isA<Error>());
     });
@@ -50,7 +51,7 @@ void main() {
     test('devuelve Success(true) en 200', () async {
       final result = await http.runWithClient(
         () => service.registrarToken(
-            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'android'),
+            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'android', deviceId: 'dev-1'),
         () => _responde(200),
       );
 
@@ -60,7 +61,7 @@ void main() {
     test('devuelve Error(errorUnauthorized) ante 401', () async {
       final result = await http.runWithClient(
         () => service.registrarToken(
-            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'ios'),
+            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'ios', deviceId: 'dev-1'),
         () => _responde(401),
       );
 
@@ -70,11 +71,35 @@ void main() {
     test('mapea SocketException a Error(errorConnection)', () async {
       final result = await http.runWithClient(
         () => service.registrarToken(
-            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'android'),
+            authToken: 'jwt', fcmToken: 'fcm', mobileType: 'android', deviceId: 'dev-1'),
         () => _lanza(const SocketException('x')),
       );
 
       expect((result as Error).msg, AppStrings.errorConnection);
+    });
+
+    test('manda el device_id en el body, junto a token y mobile_type', () async {
+      Map<String, dynamic>? body;
+
+      await http.runWithClient(
+        () => service.registrarToken(
+            authToken: 'jwt',
+            fcmToken: 'fcm',
+            mobileType: 'android',
+            deviceId: 'dev-1'),
+        () => MockClient((http.Request request) async {
+          body = json.decode(request.body) as Map<String, dynamic>;
+          return http.Response('{}', 200);
+        }),
+      );
+
+      // Es lo que deja al backend reconocer el aparato cuando Firebase rota el
+      // token y actualizar su fila en vez de crear otra.
+      expect(body, <String, dynamic>{
+        'token': 'fcm',
+        'mobile_type': 'android',
+        'device_id': 'dev-1',
+      });
     });
   });
 

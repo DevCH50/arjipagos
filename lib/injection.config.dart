@@ -14,6 +14,8 @@ import 'package:arjipagos/src/data/dataSource/local/AutenticadorBiometrico.dart'
     as _i1069;
 import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart'
     as _i241;
+import 'package:arjipagos/src/data/dataSource/local/DispositivoStorage.dart'
+    as _i12;
 import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart' as _i667;
 import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart'
     as _i518;
@@ -89,6 +91,7 @@ extension GetItInjectableX on _i174.GetIt {
     final appModule = _$AppModule();
     gh.factory<_i64.SharedPref>(() => appModule.sharedPref);
     gh.factory<_i260.SecureStorage>(() => appModule.secureStorage);
+    gh.factory<_i12.DispositivoStorage>(() => appModule.dispositivoStorage);
     gh.factory<_i424.AuthService>(() => appModule.authService);
     gh.factory<_i1009.AuthRepository>(() => appModule.authRepository);
     gh.factory<_i887.AuthUseCases>(() => appModule.authUseCases);

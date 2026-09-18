@@ -7,6 +7,8 @@
 /// - Getter resumenAlumnos del estado
 library;
 
+import 'dart:async';
+
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadosDeCuentaResponse.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
@@ -26,6 +28,7 @@ void main() {
   late MockGetEstadosDeCuentaUseCase mockGetEstadosDeCuenta;
   late MockLogoutUseCase mockLogout;
   late MockFcmService mockFcmService;
+  late MockDispositivoStorage mockDispositivoStorage;
 
   final testAuthResponse = TestAuthResponse.valid;
   final testAlumnoActivo = TestAlumno.activo;
@@ -42,6 +45,7 @@ void main() {
         getEstadosDeCuenta: mockGetEstadosDeCuenta,
       ),
       mockFcmService,
+      mockDispositivoStorage,
     );
   }
 
@@ -51,6 +55,9 @@ void main() {
     mockGetEstadosDeCuenta = MockGetEstadosDeCuentaUseCase();
     mockLogout = MockLogoutUseCase();
     mockFcmService = MockFcmService();
+    mockDispositivoStorage = MockDispositivoStorage();
+    when(() => mockDispositivoStorage.obtenerDeviceId())
+        .thenAnswer((_) async => 'dev-1');
     // Stub obtenerToken para que _registrarTokenFcm no lance MissingStubError
     when(() => mockFcmService.obtenerToken()).thenAnswer((_) async => null);
     // Stub del stream de renovación de token: el BLoC lo escucha en su
@@ -405,6 +412,124 @@ void main() {
         act: (bloc) => bloc.add(const MenuPrincipalLimpiarSesion()),
         expect: () => [const MenuPrincipalState()],
       );
+    });
+
+    // ========================================================================
+    // REGISTRO DEL DISPOSITIVO EN EL BACKEND
+    // ========================================================================
+
+    group('registro del dispositivo', () {
+      late StreamController<String> renovaciones;
+      late MenuPrincipalBloc blocRegistro;
+
+      /// Deja correr los `Future` sin `await` que lanza el BLoC.
+      Future<void> dejarCorrer() async {
+        for (int i = 0; i < 20; i++) {
+          await Future<void>.delayed(Duration.zero);
+        }
+      }
+
+      /// Las llamadas a `registrarToken`, con cualquier argumento.
+      dynamic llamadasARegistrar() => verify(
+            () => mockFcmService.registrarToken(
+              authToken: any(named: 'authToken'),
+              fcmToken: any(named: 'fcmToken'),
+              mobileType: any(named: 'mobileType'),
+              deviceId: any(named: 'deviceId'),
+            ),
+          );
+
+      setUp(() {
+        renovaciones = StreamController<String>();
+        when(() => mockFcmService.onTokenRefresh)
+            .thenAnswer((_) => renovaciones.stream);
+        when(() => mockFcmService.obtenerToken())
+            .thenAnswer((_) async => 'token-1');
+        when(() => mockFcmService.obtenerTipoDispositivo())
+            .thenReturn('android');
+        when(
+          () => mockFcmService.registrarToken(
+            authToken: any(named: 'authToken'),
+            fcmToken: any(named: 'fcmToken'),
+            mobileType: any(named: 'mobileType'),
+            deviceId: any(named: 'deviceId'),
+          ),
+        ).thenAnswer((_) async => Success(true));
+        when(() => mockGetUserSession.run())
+            .thenAnswer((_) async => testAuthResponse);
+        when(() => mockGetEstadosDeCuenta.run())
+            .thenAnswer((_) async => Error('sin red'));
+        blocRegistro = createBloc();
+      });
+
+      tearDown(() async {
+        await blocRegistro.close();
+        await renovaciones.close();
+      });
+
+      test('manda el device_id del almacén', () async {
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        await dejarCorrer();
+
+        verify(
+          () => mockFcmService.registrarToken(
+            authToken: any(named: 'authToken'),
+            fcmToken: 'token-1',
+            mobileType: 'android',
+            deviceId: 'dev-1',
+          ),
+        ).called(1);
+      });
+
+      test('login y onTokenRefresh con el mismo token registran UNA vez',
+          () async {
+        // El SDK emite onTokenRefresh también en la primera generación del
+        // token, así que tras un login pueden coincidir los dos caminos.
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        renovaciones.add('token-1');
+        await dejarCorrer();
+
+        llamadasARegistrar().called(1);
+      });
+
+      test('un token nuevo de verdad sí se registra', () async {
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        await dejarCorrer();
+        renovaciones.add('token-2');
+        await dejarCorrer();
+
+        llamadasARegistrar().called(2);
+      });
+
+      test('tras cerrar sesión, el siguiente usuario vuelve a registrarse',
+          () async {
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        await dejarCorrer();
+        blocRegistro.add(const MenuPrincipalLimpiarSesion());
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        await dejarCorrer();
+
+        llamadasARegistrar().called(2);
+      });
+
+      test('si el registro falla, el siguiente intento no se lo salta',
+          () async {
+        when(
+          () => mockFcmService.registrarToken(
+            authToken: any(named: 'authToken'),
+            fcmToken: any(named: 'fcmToken'),
+            mobileType: any(named: 'mobileType'),
+            deviceId: any(named: 'deviceId'),
+          ),
+        ).thenAnswer((_) async => Error('sin red'));
+
+        blocRegistro.add(const MenuPrincipalInitialEvent());
+        await dejarCorrer();
+        renovaciones.add('token-1');
+        await dejarCorrer();
+
+        llamadasARegistrar().called(2);
+      });
     });
   });
 }

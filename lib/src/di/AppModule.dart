@@ -1,5 +1,6 @@
 import 'package:arjipagos/src/data/dataSource/local/AutenticadorBiometrico.dart';
 import 'package:arjipagos/src/data/dataSource/local/BiometriaStorage.dart';
+import 'package:arjipagos/src/data/dataSource/local/DispositivoStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaNativa.dart';
 import 'package:arjipagos/src/data/dataSource/local/ResenaStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SecureStorage.dart';
@@ -79,6 +80,15 @@ abstract class AppModule {
   /// Almacenamiento seguro para tokens y datos sensibles.
   @injectable
   SecureStorage get secureStorage => SecureStorage();
+
+  /// Identificador estable de este teléfono, para el registro de FCM.
+  ///
+  /// Va en SecureStorage y NO en SharedPref por el mismo motivo que la
+  /// preferencia biométrica: `logout()` hace `sharedPref.clear()`, y el id
+  /// tiene que sobrevivir al cierre de sesión para que el siguiente login
+  /// actualice la fila del dispositivo en vez de crear otra.
+  @injectable
+  DispositivoStorage get dispositivoStorage => DispositivoStorage(secureStorage);
 
   /// Almacenes de selección de pagos: **uno por emisor fiscal**.
   ///

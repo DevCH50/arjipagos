@@ -59,9 +59,15 @@ void main() {
     });
 
     test('no se olvida ningún BLoC de datos nuevo de blocProviders', () {
-      // Los BLoCs que piden datos nada más crearse (`..add(...)`) son los que
-      // acumulan información del usuario. Si aparece uno nuevo, hay que
-      // vaciarlo en `cerrarSesionCompleta` — o justificarlo aquí.
+      // TODO BLoC de `blocProviders` tiene que vaciarse en
+      // `cerrarSesionCompleta` o estar justificado aquí abajo como exento.
+      //
+      // Hasta el 2026-09-18 solo se miraban los que cargaban al crearse
+      // (`..add(...)` en su `create`). Tenía dos agujeros: desde ese día
+      // MenuPrincipalBloc, EdoCtaPagadosBloc y FacturaBloc nacen vacíos y ya no
+      // llevan `..add(`, así que habrían dejado de vigilarse sin avisar; y la
+      // expresión que recortaba cada `BlocProvider` se comía el siguiente si
+      // había un comentario entre los dos. Ahora se exige clasificar a todos.
       const exentos = {
         // No guardan datos del usuario: son formularios o vigilantes.
         'ActualizacionBloc': 'solo comprueba la versión instalada',
@@ -75,18 +81,18 @@ void main() {
         'NotificacionBloc': 'se recarga en el initState de NotificacionesPage',
       };
 
-      final patron = RegExp(
-        r'BlocProvider<(\w+)>\s*\(\s*create:.*?\)\s*,\s*(?=BlocProvider|\])',
-        dotAll: true,
-      );
+      final nombres = RegExp(r'BlocProvider<(\w+)>')
+          .allMatches(blocProvider)
+          .map((m) => m.group(1)!)
+          .toSet();
+
+      // Si esto falla, el archivo cambió de forma y la búsqueda ya no ve nada:
+      // mejor enterarse que dar el test por bueno con una lista vacía.
+      expect(nombres.length, greaterThanOrEqualTo(9),
+          reason: 'No se encontraron los BlocProvider de blocProvider.dart.');
 
       final olvidados = <String>[];
-      for (final entrada in patron.allMatches(blocProvider)) {
-        final nombre = entrada.group(1)!;
-        final cuerpo = entrada.group(0)!;
-        if (!cuerpo.contains('..add(')) {
-          continue; // No carga nada al crearse.
-        }
+      for (final nombre in nombres) {
         if (exentos.containsKey(nombre)) {
           continue;
         }
@@ -98,7 +104,7 @@ void main() {
       expect(
         olvidados,
         isEmpty,
-        reason: 'Estos BLoCs cargan datos al crearse pero no se vacían en '
+        reason: 'Estos BLoCs viven en blocProviders pero no se vacían en '
             'cerrarSesionCompleta: $olvidados. Añádelos a '
             '_limpiarBlocsDeSesion, o a la lista de exentos si de verdad no '
             'guardan nada del usuario.',

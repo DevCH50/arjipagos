@@ -11,8 +11,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Muestra la lista de facturas del usuario con opción de compartir
 /// el archivo ZIP de cada una. El ZIP viene en base64 desde el servidor
 /// y se decodifica de forma lazy solo al presionar compartir.
-class FacturasPage extends StatelessWidget {
+class FacturasPage extends StatefulWidget {
   const FacturasPage({super.key});
+
+  @override
+  State<FacturasPage> createState() => _FacturasPageState();
+}
+
+class _FacturasPageState extends State<FacturasPage> {
+  @override
+  void initState() {
+    super.initState();
+    _cargarSiHaceFalta();
+  }
+
+  /// Pide las facturas **solo si nunca se cargaron y no se están cargando**.
+  ///
+  /// `FacturaBloc` nace vacío en `blocProviders`: tras un login lo carga
+  /// `LoginResponse`, y aquí se cubre el resto —arrancar con la sesión
+  /// guardada y abrir Facturas—. Volver a entrar no vuelve a pedir nada; para
+  /// releer del servidor están el botón de recargar y el deslizar hacia abajo.
+  ///
+  /// Mismo patrón que `EdoCtaPage._cargarSiHaceFalta`.
+  void _cargarSiHaceFalta() {
+    final FacturaBloc bloc = context.read<FacturaBloc>();
+    if (_nuncaCargado(bloc.state) && !bloc.state.isLoading) {
+      bloc.add(const FacturaInicialEvent());
+    }
+  }
+
+  /// Ni una respuesta buena ni un error: todavía no se ha pedido nada.
+  static bool _nuncaCargado(FacturaState state) =>
+      state.response == null && state.errorMessage == null;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +69,10 @@ class FacturasPage extends StatelessWidget {
       ),
       body: BlocBuilder<FacturaBloc, FacturaState>(
         builder: (context, state) {
-          // Estado de carga
-          if (state.isLoading) {
+          // Estado de carga. «Nunca cargado» cuenta como cargando: es el primer
+          // frame, antes de que el handler emita `isLoading`, y sin esto se
+          // vería un instante «Sin facturas» que no es verdad.
+          if (state.isLoading || _nuncaCargado(state)) {
             return const FacturaLoadingWidget();
           }
 
