@@ -57,6 +57,23 @@ seguridad que hoy no encuentra nada que cambiar, y al cambiar de Xcode hay que t
 `TARGET_VERSION` aquí y `LAST_UPGRADE_MINIMO` en el `Podfile`. **Solo comentarios y un texto en
 pantalla; la lógica no se tocó.**
 
+**Verificación completa y binarios de Android (misma sesión).** `flutter analyze` sin un solo
+aviso, **949 tests en verde**, `ApiConfig.isProduction = true`, permiso INTERNET presente,
+`kTemporadaForzada = null`, `kDecoracionEstacionalActivada = true` y el `AppIcon.appiconset` con
+**0 huérfanos y 0 fantasmas**. Se mantiene la **1.0.31+40**, que sigue sin publicar: la regla de
+versionado dice que una versión pendiente se reutiliza, no se incrementa.
+
+Los dos builds salieron **a la primera y en paralelo**, sin el choque de Gradle del 2026-09-17:
+
+| Binario | Tamaño | Ruta |
+| --- | --- | --- |
+| APK | 65.4 MB | `build/app/outputs/flutter-apk/app-release.apk` |
+| AAB | 64.1 MB | `build/app/outputs/bundle/release/app-release.aab` |
+
+Comprobado con `aapt2` sobre el APK: `mx.moriah.arjipagos`, `versionCode=40`, `versionName=1.0.31`
+y el permiso INTERNET dentro. **No se instaló en el Oppo**: el release exige desinstalar antes y
+eso borra la sesión, así que solo se instala si Carlos lo pide.
+
 **Contexto de la Mac ese mismo día:** sigue con Xcode 26.3 y el App Store no le ofrece Xcode 27,
 que pide macOS Tahoe 26.6. El iPhone 17 de pruebas va a ir con **iOS 27**, así que desde esa Mac
 **no se puede depurar en él** hasta actualizar. Lo que sí se puede es archivar y subir la 1.0.31+40
