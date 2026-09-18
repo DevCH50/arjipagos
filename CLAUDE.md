@@ -211,18 +211,27 @@ compilar con él ya está resuelto:
 | Plugins compatibles con escenas | Hecho: `firebase_messaging` 16.7.0, `local_auth_darwin` 2.0.4, `url_launcher_ios` 6.4.2, `webview_flutter_wkwebview` 3.26.1 |
 | `LastUpgradeCheck` / `LastUpgradeVersion` | 2700 (Xcode 27) |
 
-**La Mac necesita Xcode 27 y macOS Tahoe 26.6**; un iPhone con iOS 27 no se depura desde
-Xcode 26.3.
+**Xcode 27 pide macOS Tahoe 26.6.** Pero **un iPhone con iOS 27 SÍ se depura desde Xcode 26.3**:
+comprobado el 2026-09-18 en el iPhone 17 Pro Max con iOS 27.0 (24A437). Se daba por imposible y no
+lo es.
 
-**Al 2026-09-17 la Mac sigue en Xcode 26.3 y el App Store no le ofrece Xcode 27**, porque oculta
-las versiones que el macOS instalado no admite. Primero va la actualización del sistema
-(`sw_vers -productVersion` para ver en cuál está), y después ya aparece Xcode 27.
+**La primera vez tarda, y no está colgado.** Al conectar un iPhone con una versión de iOS que la Mac
+no ha visto, Xcode muestra *"Copying shared cache symbols from iPhone…"* y se trae unos **5.7 GB** a
+`~/Library/Developer/Xcode/iOS DeviceSupport/`. En esta Mac, Intel, fue más de una hora **por
+cable** (`xcrun devicectl device info details` → `transportType: wired`). El cuello de botella es el
+propio teléfono, no el transporte: quitarle el WiFi o cambiar de cable no lo acelera. Sí ayuda
+tenerlo desbloqueado y sin Modo de bajo consumo. **No desconectar ni cerrar Xcode a medias.** Solo
+pasa una vez por versión de iOS; las carpetas de versiones que ya no lleva ningún aparato se pueden
+borrar (pesan lo mismo cada una).
 
-Lo que eso bloquea y lo que no, porque no es lo mismo:
+**Al 2026-09-18 la Mac sigue en macOS 15.8 y Xcode 26.3, y el App Store no le ofrece Xcode 27**,
+porque oculta las versiones que el macOS instalado no admite. Primero va la actualización del
+sistema (`sw_vers -productVersion` para ver en cuál está), y después ya aparece Xcode 27.
 
-- **Bloqueado:** depurar en el iPhone 17 de pruebas, que va a ir con **iOS 27**. Xcode 26.3 no trae
-  su soporte de dispositivo, así que el teléfono sale como no disponible y no llegan ni el botón
-  Run ni `flutter run`. No hay ajuste del proyecto que lo evite.
+Lo que eso bloquea y lo que no:
+
+- **Nada de lo que se hace hoy.** El botón Run en el iPhone 17 con iOS 27 funciona (ver arriba).
+  Xcode 27 solo hará falta para compilar con el SDK de iOS 27, obligatorio desde abril de 2027.
 - **No bloqueado:** el Archive y la subida. Compilar con el SDK de iOS 26 desde Xcode 26.3 vale
   hasta abril de 2027, y la app resultante corre bien en iOS 27. El blindaje de
   `LastUpgradeCheck = 2700` tampoco estorba: el `post_install` del Podfile **solo sube**.
@@ -231,8 +240,16 @@ Lo que eso bloquea y lo que no, porque no es lo mismo:
   webview del pago, share sheet y Face ID se comprueban mirando la pantalla: sirve una build por
   **TestFlight**. Lo único que exige `flutter run` es ver el aviso del contrato 2 provisional.
 
-**Queda por probar en un iPhone con iOS 27**, que no se puede hacer desde la Linux: las
-notificaciones push en primer y segundo plano, la webview del pago, el share sheet y Face ID.
+**Probado en el iPhone 17 con iOS 27 el 2026-09-18**, con la 1.0.31+40 lanzada desde Xcode 26.3:
+
+| Qué | Resultado |
+| --- | --- |
+| Push con la app **minimizada** | Llega; al tocarlo abre la app y refresca el estado de cuenta |
+| Push con la app **abierta** | Sale el banner y se actualiza la lista de avisos — lo que estaba roto desde abril |
+| Webview del pago | Abre y navega |
+| Ticket PDF y factura ZIP, share sheet | Abren y se comparten |
+| **Face ID** | **Sin probar todavía** |
+
 En iOS 27 el sistema aplica Liquid Glass a lo nativo (share sheet, diálogo de Face ID, webview);
 la interfaz de Flutter la pinta la app y no cambia.
 
@@ -325,7 +342,10 @@ en iPhone 17 Pro Max con iOS 26.6.1 el 2026-08-23, ampliados el 2026-08-24 tras
 recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 (las cinco últimas filas). La fila de `xpc_user_sessions_get_foreground_uid` se añadió el
 2026-08-28 con la 1.0.29+38, al entrar a pagar. Las dos últimas filas se añadieron el
-2026-09-09 con la 1.0.30+39, al arrancar en el iPhone 17. Ninguno de estos símbolos aparece en
+2026-09-09 con la 1.0.30+39, al arrancar en el iPhone 17. Las filas a partir de
+`non-launching port` se añadieron el 2026-09-18 con la 1.0.31+40 en **iOS 27**, recorriendo pago,
+tickets, facturas y los push en los dos planos; se buscaron también en los paquetes SPM y en los
+plugins de `~/.pub-cache`. Ninguno de estos símbolos aparece en
 `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
@@ -349,6 +369,17 @@ recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 | `Failed to terminate process … RBSRequestErrorDomain Code=3 "No such process found"` | WebKit cerrando un proceso `WebContent` que ya había salido solo. Llega tarde y no encuentra a quién matar |
 | `-- LLDB integration loaded --` | El depurador de Xcode adjuntándose. Solo sale al correr desde Xcode, nunca en la app instalada |
 | `Thread Performance Checker … waiting on a thread without a QoS class` con traza a `third_party/skia/include/private/SkSemaphore.h:79` | Inversión de prioridades **dentro del engine**. El hilo principal espera en un semáforo de Skia, cuyos hilos de trabajo (`SkTaskGroup`/`SkExecutor`) se crean sin QoS. Es `user-interactive` porque desde Flutter 3.47 el hilo de UI va **fusionado con el de plataforma** en iOS: por eso el backtrace enseña frames de Dart (`App`, `kDartSnapshotText`) colgando de `UIApplicationMain`. Lo detecta `libRPAC.dylib`, que **solo inyecta Xcode al lanzar desde el IDE** — no viaja en el binario que sube a App Store. Que aparezca Skia con Impeller activo no es contradicción: Impeller dibuja, pero Skia sigue haciendo trabajo de CPU como decodificar imágenes, y de ahí que salga en el arranque. **Ningún frame sale de `lib/` ni de `ios/Runner/`**, así que no hay nada que corregir. Se puede apagar en Edit Scheme → Run → Diagnostics, pero eso escribe en `Runner.xcscheme`, que es archivo blindado: desmarcarlo sin commitear no rompe nada. Comprobado el 2026-09-09 en iPhone 17: la app arrancó y navegó con normalidad |
+| `non-launching port is incompatible with service identifier "com.apple.PointerUI…"` | El sistema de puntero de iOS 27 (trackpad o ratón). Sale al arrancar |
+| `WebContent[…] Couldn't open <private> due to No such file or directory` / `Permission denied` | El proceso aislado de WebKit tanteando archivos del sistema que su sandbox no alcanza. Una tanda por cada apertura de la webview del pago |
+| `Error acquiring assertion … web-browser-engine.rendering/networking/webcontent` y `Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog'` | WebKit pidiendo un permiso reservado a los navegadores (BrowserEngineKit). Se lo niegan y la webview sigue igual |
+| `Only support loading options for CKShare and SWY types` / `error fetching file provider domain` | El share sheet preguntando por iCloud y «Compartido contigo» al abrir un PDF o ZIP |
+| `Plugin query method called` | El share sheet buscando las extensiones instaladas |
+| `Starting a zoom transition from a nil view will trigger a fallback transition` | La vista previa del archivo se abre sin vista de origen y usa la animación normal. Solo estética |
+| `cannot add handler to 0 from 0 - dropping` | Ruido interno de iOS, a ráfagas durante el uso normal |
+| `… may only be set for UIKBDynamicRenderFactory, changes not saved` | El teclado de iOS configurándose. Cinco líneas cada vez que aparece |
+| `Unable to simultaneously satisfy constraints` con `TUIPredictionViewCell` / `TUICandidateGradientContentLabel` | Como el de `_UIModernBarButton`, pero en la barra de predicciones del teclado. UIKit se autorepara |
+| `Conversion error! {{0, 956}, {440, 320}} was converted to …` | UIKit recalculando el marco del teclado (`440 × 956` es la pantalla del 17 Pro Max) mientras la ventana se encoge al minimizar, o con alto `0` si el teclado ya estaba oculto. Una línea por fotograma |
+| `Client not entitled … com.apple.runningboard.process-state` / `elapsedCPUTimeForFrontBoard couldn't generate a task port` | iOS intentando medir la CPU de la app con un permiso que una app normal no tiene |
 | `Message from debugger: killed` | **No es un crash.** Es el depurador terminando el proceso: sale al pulsar Stop en Xcode o al relanzar. Un crash de verdad trae otra firma —una señal (`EXC_BAD_ACCESS`, `SIGABRT`) o una línea `Fatal error:`— y ninguna de las dos aparece aquí |
 
 **Con el botón Run no sale NI UNA línea de la app, y es lo esperado**

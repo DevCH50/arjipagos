@@ -11,6 +11,33 @@
 
 _(ninguno)_
 
+### 2026-09-18 (d) — iOS 27 probado en el iPhone 17: los push ya funcionan con la app abierta
+
+En la **Mac**, con la 1.0.31+40 recién compilada tras la limpieza profunda (ver la entrada del
+2026-09-17 (d)) y lanzada con el botón Run en el **iPhone 17 Pro Max con iOS 27.0 (24A437)**.
+
+**Xcode 26.3 sí depura iOS 27.** CLAUDE.md lo daba por bloqueado hasta tener Xcode 27; no lo está.
+La primera conexión copió ~5.7 GB de símbolos a `iOS DeviceSupport` y tardó más de una hora por
+cable: el límite es el teléfono, no el transporte. Corregido en CLAUDE.md.
+
+| Prueba | Resultado |
+| --- | --- |
+| Push con la app minimizada | Llega; al tocarlo abre la app y refresca el estado de cuenta |
+| Push con la app abierta | **Sale el banner y se actualiza la lista de avisos.** Es lo que arregló `4645530` (el delegate de notificaciones de vuelta al plugin) y llevaba roto desde abril |
+| Webview del pago | Abre y navega |
+| Ticket PDF, factura ZIP y share sheet | Abren y se comparten |
+| Face ID | Sin probar |
+
+**Consola:** ni un crash. Salieron once mensajes que no estaban en la tabla de ruido —WebKit, share
+sheet, teclado y el `Conversion error!` del marco del teclado al minimizar—. Se buscaron en `lib/`,
+`ios/Runner/`, los Pods, los paquetes SPM (Firebase incluido) y los plugins de `~/.pub-cache`: ninguno
+sale de ahí. Añadidos a la tabla de CLAUDE.md.
+
+**Archive y subida.** Acto seguido se hizo el Archive desde Xcode 26.3 (SDK de iOS 26) y se subió a
+App Store Connect sin incidencias. **La 1.0.31+40 queda en Espera de Revisión en App Store desde el
+2026-09-18.** Va con firebase-ios-sdk 12.19.0, que es lo que se probó en el iPhone; los
+`Package.resolved` y el `Podfile.lock` que lo fijan estaban sin commitear al archivar.
+
 ### 2026-09-18 (c) — Verificación completa, commit `ba510f7` y binarios de la 1.0.31+40
 
 `flutter analyze` sin avisos y **981 tests en verde**, guardianes de iOS incluidos. Comprobaciones de
@@ -156,6 +183,65 @@ sola**, sin duplicado. Se ve en la cortina. El banner flotante no salía en una 
 después: o ya se había recogido, o ColorOS no lo enseña con la propia app al frente. El aviso ya no se
 pierde en ningún caso. ⚠️ **El APK y el AAB de la 1.0.31+40 generados el 2026-09-17 NO llevan esto.** Hay que
 regenerarlos antes de publicar.
+### 2026-09-17 (d) — La Mac al día: Flutter 3.47.4, limpieza profunda de iOS y la 1.0.31+40 compilada
+
+Se hizo en la **Mac**, que venía de `50027bb` (la 1.0.30+39) y estaba seis commits por detrás.
+`git pull` en fast-forward hasta `f6d3715`, sin conflictos ni cambios locales.
+
+**Primero el SDK, como avisaba la entrada (b).** La Mac tenía **Flutter 3.47.1** y el
+`pubspec.lock` del repo se resolvió con **3.47.4**, así que el `flutter upgrade` fue antes de la
+limpieza. Se comprobó que `origin/stable` apuntaba justo a 3.47.4 antes de lanzarlo, para no
+adelantar esta máquina respecto de la Linux. Quedó en **3.47.4 · Dart 3.13.3**.
+
+**El `flutter upgrade` arrastró un `pub upgrade` que no se pidió** y subió
+`flutter_cache_manager` de 3.4.3 a 3.4.4 en el `pubspec.lock`. **Se revirtió** con
+`git checkout pubspec.lock`: ese archivo está versionado precisamente para que la Mac compile lo
+mismo que se verificó en la Linux para la 1.0.31+40, y `cached_network_image` —de quien cuelga—
+es de los paquetes bloqueados. El `pub get` posterior respetó el 3.4.3 fijado.
+
+**Limpieza profunda**, la obligatoria más las cachés que `flutter clean` no toca. Unos **8.2 GB**
+liberados:
+
+| Qué | Tamaño |
+| --- | --- |
+| `build/` | 5.9 GB |
+| `.dart_tool/` | 313 MB |
+| `ios/Pods/`, `ios/.symlinks/`, `ios/Flutter/ephemeral/` | 16.7 MB |
+| `DerivedData/Runner-*` (cuatro carpetas) | 2.0 GB |
+
+`ios/Podfile.lock` **no** se borró: está versionado. En `build/` no había ningún APK, AAB ni IPA,
+así que no se perdió ningún binario —la comprobación que pide CLAUDE.md antes de todo `flutter
+clean` en esta máquina—.
+
+**Los tres blindajes del `post_install` se aplicaron solos**, como está documentado:
+`LastUpgradeCheck` y `LastUpgradeVersion` en **2700** (el bloque dijo "se queda en 2700", que es lo
+que se espera del suelo nuevo: ya estaba ahí, no hizo falta subirlo), `Package.swift` en
+`.iOS("15.0")` y el Run Script del dSYM de `objective_c` recolocado en el target Runner. Siguen en
+2700 **después** del build, confirmando que Flutter 3.47 ya no los degrada.
+
+**Verificación:** `flutter analyze` limpio, **949 tests en verde**, `ApiConfig.isProduction = true`,
+y el catálogo de iconos con **0 huérfanos y 0 fantasmas**. `./scripts/build_ios.sh` terminó bien:
+`build/ios/iphoneos/Runner.app`, **26.7 MB**, `1.0.31` / `com.example.arjipagos`, con
+`UIApplicationSceneManifest` presente en el `Info.plist` de la app generada —el requisito de
+UIScene de iOS 27, ya dentro del binario—.
+
+**Dos cambios quedaron sin commitear, los dos legítimos:**
+
+1. **`ios/Podfile.lock`** — solo cambia el `PODFILE CHECKSUM`. El `Podfile` se editó en la Linux
+   (`LAST_UPGRADE_MINIMO` 2630 → 2700) y allí nunca se corre `pod install`, así que el checksum
+   venía del Podfile viejo. Los checksums de los pods (`Flutter`, `open_filex`) **no** cambiaron.
+2. **Los dos `Package.resolved` de SwiftPM** — al borrar el DerivedData, Xcode volvió a resolver
+   los rangos que declara el `Package.swift` generado y subió **firebase-ios-sdk 12.17.0 → 12.19.0**,
+   GoogleAppMeasurement a 12.19.2, GoogleUtilities a 8.1.3 y el SDK de conversión a 3.7.0. Compila,
+   pero **no está probado en dispositivo**. Revertirlos es cosmético: el siguiente build volvería a
+   resolver igual mientras el manifiesto declare rangos.
+
+**Lo que sigue sin poder hacerse aquí:** la Mac está en **macOS 15.8** y **Xcode 26.3**, así que no
+hay Xcode 27 y no se puede depurar en un iPhone con iOS 27. El Archive y la subida **no** están
+bloqueados. Nota nueva del `flutter doctor`: avisa de que Flutter va a dejar de soportar Macs Intel,
+y ésta lo es (`darwin-x64`).
+
+**Repetida el 2026-09-18, tras el pull de `ba510f7`/`f7cdc42`** (device_id, avisos con la app abierta, carga única por login), con la misma limpieza profunda. Flutter 3.47.4 seguía siendo la última estable, así que no hubo `upgrade` y el `pubspec.lock` no se movió. Blindajes en 2700 / iOS 15.0, `analyze` limpio, **981 tests en verde** y `Runner.app` de 26.7 MB. Firebase iOS sigue resolviendo a 12.19.0. **Además, la app arrancó en el iPhone 17 con iOS 27 desde Xcode 26.3** una vez terminada la copia de símbolos: el bloqueo que describe CLAUDE.md no se cumplió en la práctica. Ruido nuevo en la consola: `non-launching port is incompatible with service identifier "com.apple.PointerUI…"`, del sistema de puntero de iOS 27, que no aparece en `lib/` ni en `ios/Runner/`.
 
 ### 2026-09-17 (c) — Verificada la fase 1 del recorte del JSON contra el servidor real
 
