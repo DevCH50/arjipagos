@@ -6,6 +6,7 @@ library;
 import 'package:arjipagos/src/data/dataSource/local/DispositivoStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
 import 'package:arjipagos/src/domain/repository/AuthRepository.dart';
 import 'package:arjipagos/src/domain/repository/BiometriaRepository.dart';
 import 'package:arjipagos/src/domain/repository/ResenaRepository.dart';
@@ -58,6 +59,12 @@ class MockResenaRepository extends Mock implements ResenaRepository {}
 
 /// Mock del servicio de Firebase Cloud Messaging.
 class MockFcmService extends Mock implements FcmService {}
+
+/// Mock del cobro por OpenPay («Otros pagos», emisor fiscal 2).
+///
+/// Sin él, un `CarritoBloc` de pruebas construye el service de verdad y, al
+/// pagar, intentaría una petición HTTP real.
+class MockOpenpayService extends Mock implements OpenpayService {}
 
 /// Mock del almacén del identificador estable del teléfono.
 class MockDispositivoStorage extends Mock implements DispositivoStorage {}

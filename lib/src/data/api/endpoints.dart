@@ -62,6 +62,27 @@ abstract class Endpoints {
   static const String pagoUrlRetorno =
       'https://arjipagos.moriah.mx/api/v1/pago-realizado/';
 
+  /// POST - Crea el cobro en OpenPay y devuelve la URL de su formulario.
+  ///
+  /// Lo usa el emisor fiscal 2 ("Otros pagos"). Pide `Authorization: Bearer` y
+  /// recibe `{"referencia": "5358A5359A5360"}`; responde
+  /// `{"success": true, "url": …, "order_id": …, "importe": …}`.
+  ///
+  /// **El importe NO se manda.** El backend lo calcula de los cargos que nombra
+  /// la referencia, que es lo único que no puede falsear el teléfono.
+  ///
+  /// Quien llama de verdad a OpenPay es el backend, porque crear el cobro
+  /// (`POST /v1/{merchant}/checkouts`) va firmado con la llave privada `sk_…`.
+  ///
+  /// **El retorno del pago NO se declara aquí, y es a propósito.** A diferencia
+  /// de Adquira —donde la app manda su `urlretorno` en el formulario, de ahí
+  /// [pagoUrlRetorno]—, en OpenPay el `redirect_url` lo pone el backend al crear
+  /// el cobro. La app nunca nombra esa URL: el WebView aterriza en ella por
+  /// redirección y lee el `{success, message}` que responde, que es el mismo
+  /// contrato que el de Adquira. Una constante aquí sería código muerto y, peor,
+  /// podría desincronizarse de la que el servidor use de verdad.
+  static const String openpayCrearCargo = '/api/v1/openpay/crear-cargo';
+
   // ============================================================================
   // NOTIFICACIONES
   // ============================================================================

@@ -11,6 +11,7 @@ import 'package:arjipagos/src/data/dataSource/local/VersionInstalada.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/BannerService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaPagadosService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/EdoCtaService.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FacturaService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart';
@@ -107,12 +108,20 @@ abstract class AppModule {
   EdoCtaListBlocPorEmisor get edoCtaListBlocPorEmisor =>
       EdoCtaListBlocPorEmisor(edoCtaUseCases, seleccionPagosStoragePorEmisor);
 
+  /// Cobro por OpenPay, el del emisor fiscal 2 ("Otros pagos").
+  ///
+  /// No guarda estado: solo pide al backend la URL del formulario de OpenPay
+  /// para una referencia. Por eso lo comparten todos los carritos.
+  @injectable
+  OpenpayService get openpayService => OpenpayService(authUseCases);
+
   /// Carritos: una instancia por emisor fiscal.
   @lazySingleton
   CarritoBlocPorEmisor get carritoBlocPorEmisor => CarritoBlocPorEmisor(
         authUseCases,
         edoCtaUseCases,
         seleccionPagosStoragePorEmisor,
+        openpayService,
       );
 
   @injectable

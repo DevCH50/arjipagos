@@ -206,7 +206,7 @@ compilar con él ya está resuelto:
 | Requisito | Estado |
 | --- | --- |
 | Ciclo de vida **UIScene** (sin él la app **no arranca**, no es un aviso) | Hecho: `UIApplicationSceneManifest` en `Info.plist` y `FlutterImplicitEngineDelegate` en el `AppDelegate` |
-| Flutter con soporte de Xcode 27 | Hecho: 3.47.4, que además trae el arreglo de la pantalla blanca al depurar (#189284) |
+| Flutter con soporte de Xcode 27 | Hecho: 3.47.4 (hoy 3.47.5), que además trae el arreglo de la pantalla blanca al depurar (#189284) |
 | Deployment target ≥ 15.0 (por debajo, el build falla con "Target Integrity") | Hecho: 15.0 en el proyecto y forzado en los pods por el `post_install` |
 | Plugins compatibles con escenas | Hecho: `firebase_messaging` 16.7.0, `local_auth_darwin` 2.0.4, `url_launcher_ios` 6.4.2, `webview_flutter_wkwebview` 3.26.1 |
 | `LastUpgradeCheck` / `LastUpgradeVersion` | 2700 (Xcode 27) |
@@ -238,7 +238,14 @@ Lo que eso bloquea y lo que no:
 - **Las cuatro pruebas pendientes no necesitan depurador.** El botón Run ya usa Release y
   `AppLogger` solo habla en Debug, así que hoy el iPhone no da ni una línea de la app. Push,
   webview del pago, share sheet y Face ID se comprueban mirando la pantalla: sirve una build por
-  **TestFlight**. Lo único que exige `flutter run` es ver el aviso del contrato 2 provisional.
+  **TestFlight**. Lo único que exige `flutter run` es leer los avisos de `AppLogger` del cobro
+  —el de configuración provisional de Adquira y el rastro del cobro por OpenPay—.
+
+  **Añadida a la lista el 2026-09-24: el cobro de «Otros pagos» por OpenPay en iPhone.** El
+  separador de la referencia cambia con la plataforma (`I` en iOS, `A` en Android) y es lo que le
+  dice al backend por qué canal entró el pago. Hay test que lo fija en las dos
+  (`test/unit/blocs/carrito_pasarela_test.dart`), pero el formulario de OpenPay dentro del
+  `WKWebView` solo se ve en un iPhone.
 
 **Probado en el iPhone 17 con iOS 27 el 2026-09-18**, con la 1.0.31+40 lanzada desde Xcode 26.3:
 
@@ -256,6 +263,22 @@ la interfaz de Flutter la pinta la app y no cambia.
 **Pendiente permanente: revisar en CADA actualización de Flutter si ya trae Liquid Glass de
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
+
+**Revisado el 2026-09-24 con Flutter 3.47.4, y de nuevo el 2026-09-28 con 3.47.5: sigue sin haberlo, y hay fecha.** Comprobado contra el
+SDK instalado, no contra un artículo:
+`grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
+`$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
+[#170310](https://github.com/flutter/flutter/issues/170310) que **no** está desarrollando el diseño
+Apple'26 dentro de la librería Cupertino actual ni acepta contribuciones: el trabajo irá a un
+`package:cupertino` independiente, al desacoplar Material y Cupertino del SDK, **previsto para
+finales de 2026**.
+
+Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
+bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la
+maqueta que ya se descartó (ver abajo); lo segundo mete vistas nativas en medio del árbol de
+Flutter, con su coste de rendimiento y sin arreglar el motivo real del descarte —que las pantallas
+tienen **fondo liso** y no hay nada que desenfocar—. **La respuesta hoy sigue siendo no.** Volver a
+mirarlo cuando aparezca el `package:cupertino` oficial.
 
 Ese día se montó una maqueta imitándolo con `BackdropFilter` y se vio en el Oppo. **Descartada**,
 por tres motivos que siguen valiendo mientras no haya soporte oficial: (1) por la barra inferior
@@ -389,10 +412,11 @@ plugins de `~/.pub-cache`. Ninguno de estos símbolos aparece en
 solo sistema, Flutter y WebKit — cero salida de ArjiPagos. **Un log sin líneas de la app no
 significa que algo no se ejecutara.**
 
-Consecuencia a tener presente: el aviso del contrato 2 provisional
-(`CarritoBloc.dart:230`, cuando `configuracion.esProvisional`) **también es invisible ahí**. Es
-uno de los tres recordatorios de que el dinero de "Otros pagos" entra en la cuenta del emisor 1.
-Para verlo dispararse hace falta `flutter run`, que fuerza Debug. Comprobado el 2026-08-28.
+Consecuencia a tener presente: **los avisos del cobro también son invisibles ahí** —el de
+configuración provisional de Adquira (`CarritoBloc._cobrarPorAdquira`) y el
+`[Carrito] Cobro por OpenPay — ref: … | Emisor fiscal 2` de `_cobrarPorOpenpay`, que es el rastro
+con el que se sigue un cobro de "Otros pagos"—. Para verlos hace falta `flutter run`, que fuerza
+Debug. Comprobado el 2026-08-28 y de nuevo el 2026-09-24.
 
 **Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
 
@@ -532,7 +556,8 @@ como se comportaba la app cuando había un solo contrato.
 
 | Qué | Dónde |
 | --- | --- |
-| Endpoint y parámetros de Adquira (`idexpress`…) | `ConfiguracionAdquira` |
+| **Pasarela con la que cobra** (Adquira u OpenPay) | `ConfiguracionAdquira.pasarela` |
+| Endpoint y parámetros de Adquira (`idexpress`…) | `ConfiguracionAdquira` — inertes si la pasarela es OpenPay |
 | Reglas de selección y referencia | `PoliticaEmisor` |
 | Clave del almacén de selección | `seleccion_pagos_ef1`, `_ef2`, … |
 | Instancia de `EdoCtaListBloc` y `CarritoBloc` | `lib/src/di/RegistroEmisores.dart` |
@@ -582,8 +607,10 @@ que tocar pantallas, widgets ni BLoCs: el registro instancia uno por cada emisor
    que no son de ningún emisor; con un filtro allí, los alumnos que solo tuvieran pagos del
    emisor 2 desaparecerían del menú sin que nada fallara. Hay test guardián.
 
-   Mientras el contrato 2 siga con datos prestados, los dos emisores mandan el mismo `idexpress`
-   ('928'), así que **`emisorfiscal_id` es lo único que los distingue** del lado del cobro.
+   Desde el 2026-09-24 el emisor 2 ya no cobra por Adquira, así que `emisorfiscal_id` **solo viaja
+   en la petición del estado de cuenta**; el `toMap()` de `PagoRequest` lo sigue mandando, pero solo
+   lo usa el emisor 1. En OpenPay el emisor no se manda: el backend lo deduce de los cargos que
+   nombra la `referencia`, y rechaza el cobro si no es de los suyos.
 
 ### En el AppBar de `EdoCtaPage` y `CarritoPage` no se usa `context.read`
 
@@ -615,23 +642,62 @@ el botón**. Lleva anotadas sus dos trampas: los BLoC hay que crearlos dentro de
 —uno creado en `setUp` nace fuera de la zona `FakeAsync` y ningún `pump` resuelve sus
 `Future`— y **no vale `pumpAndSettle`**, porque el punto del alumno anima sin parar.
 
-### ⚠️ El contrato 2 lleva datos prestados del 1
+### Cada emisor cobra por SU pasarela: el 1 por Adquira, el 2 por OpenPay
 
-`ConfiguracionAdquira.ef2` usa hoy el `endpoint` y el `idExpress` del emisor 1, puestos a
-propósito para poder montar la pantalla mientras llegan los reales. **Con eso, todo lo que se
-cobre en "Otros pagos" entra en la cuenta bancaria del emisor 1**, y Adquira no da ningún error
-porque para él la operación es válida.
+**Desde el 2026-09-24 los dos emisores ni siquiera comparten proveedor.** El contrato 2 nunca llegó
+a tener datos propios de Adquira, y en vez de seguir esperándolos se le cambió de pasarela.
 
-Está marcado con `esProvisional: true`, avisa por `AppLogger` en cada cobro y hay tests que lo
-recuerdan (`test/unit/configuracion_adquira_test.dart`).
+Lo decide **`ConfiguracionAdquira.pasarela`** (`PasarelaPago.adquira` | `.openpay`), y de ahí sale
+todo lo demás:
 
-**Publicar así está AUTORIZADO por el cliente desde el 2026-08-26**, mientras su proveedor le
-entrega la cuenta del contrato 2. Es una decisión suya, con conocimiento de que el dinero de
-"Otros pagos" entra en la cuenta del emisor 1 y hay que reasignarlo a mano.
+| | Emisor 1 «Pagos Pendientes» | Emisor 2 «Otros pagos» |
+| --- | --- | --- |
+| Pasarela | Adquira | OpenPay («Botón de pago») |
+| Cómo se consigue la URL | Es fija: `configuracion.endpoint` | La pide el backend en cada cobro |
+| Cómo la abre el WebView | **POST** con formulario y `Authorization` | **GET**, y sin ninguna cabecera |
+| Parámetros del cobro | `PagoRequest.toMap()` (`idexpress`, `mediospago`…) | Solo `{referencia}`; el importe lo calcula el servidor |
 
-No es permanente: en cuanto lleguen los datos reales, sustituir `endpoint` e `idExpress` en
-`ConfiguracionAdquira.ef2`, revisar el resto de parámetros, quitar `esProvisional` y borrar el
-grupo de tests "contrato 2 (PROVISIONAL)", que existe solo para no olvidarlo.
+`CarritoBloc._onPagar` bifurca con un `switch (configuracion.pasarela)` hacia `_cobrarPorAdquira`
+—el código de siempre, movido tal cual— o `_cobrarPorOpenpay`. **Añadir una pasarela nueva es un
+valor más en el enum y una rama más en ese `switch`**: no hay que tocar pantallas ni widgets.
+
+Las dos terminan igual: el WebView aterriza en un retorno **nuestro** que responde
+`{success, message}`, así que `WebViewScripts.detectarRespuestaJson` y `PagoResponseHandler` sirven
+a ambas sin un solo cambio.
+
+**Tres cosas que no se pueden deshacer:**
+
+1. **`params` vacío significa «cargar con GET».** Es la señal que distingue las dos pasarelas dentro
+   del WebView, y evita meter un campo nuevo en `PagoWebViewArgs`. Lo decide
+   `PeticionWebView.desde()`, que está fuera de la pantalla para poder probarlo.
+2. **Al GET de OpenPay no se le manda NINGUNA cabecera, y menos el `Bearer`.** Esa URL es de un
+   dominio de OpenPay; mandarle el token sería entregarle a un tercero la credencial con la que se
+   lee el estado de cuenta y las facturas del tutor. Test:
+   `test/unit/pago_webview/peticion_webview_test.dart`.
+3. **Una respuesta sin la clave `success` no se cree.** Laravel contesta los errores de framework
+   con `{"message": "The POST method is not supported for route…"}`, y ese texto no se le enseña a
+   un padre. Solo se muestra el `message` cuando viene con `success`, que es lo que manda siempre el
+   controlador de OpenPay.
+
+**Por qué la app no llama a OpenPay directamente.** Crear el cobro
+(`POST /v1/{merchant}/checkouts`) va firmado con la **llave privada** `sk_…` —la documentación del
+botón de pago lo dice literal: «HEADER PRIVATE_API_KEY»—, y una `sk_` dentro del APK se saca con
+`unzip` y `strings`: sirve para crear cargos y **hacer devoluciones** en el comercio. Las llaves
+viven en el `.env` del backend y **en este repo no va ninguna**.
+
+#### ⚠️ `ef2` conserva `esProvisional: true`, y no es un olvido
+
+Sus campos de Adquira (`endpoint`, `idExpress`…) **siguen siendo copia de los del emisor 1**, pero
+con `PasarelaPago.openpay` **no los lee nadie**: `_cobrarPorAdquira` ni se ejecuta. Se conservan, y
+con ellos la marca, como red de seguridad del día que alguien devuelva este emisor a Adquira: si lo
+hace **sin cambiar el `idexpress`, el dinero vuelve a entrar en la cuenta del emisor 1** y Adquira
+no se queja, porque para él la operación es válida.
+
+**Quitar `esProvisional` solo cuando existan de verdad los datos del contrato 2 en Adquira**, no por
+el hecho de haber pasado a OpenPay. El aviso de `AppLogger` ahora sale **solo en la rama de
+Adquira**, que es donde significa algo.
+
+El plan completo está en `Plan OpenPay Frontend.md`; lo que falta del servidor, en su §7.
 
 ## «No hay…» no es «Error al cargar»
 
@@ -888,8 +954,17 @@ cosas que los tests no ven:
   iguales, y `emit` descarta el estado que considera repetido.
 - **`cached_network_image` 4.0.0** cambia `flutter/material.dart` por el paquete desacoplado
   `material_ui`. Mezclarlo con la app, que usa el Material del SDK, solo se valida en dispositivo.
+- **`google_fonts` 9.0.0** (revisado el 2026-09-28, con Flutter 3.47.5) depende de `material_ui`
+  por lo mismo que `cached_network_image` 4, y además no trae nada que la app use. Se queda en 8.x.
 
 Reconsiderar cuando haya un motivo de verdad, y probándolo en el Oppo y en el iPhone.
+
+**Aviso de Gradle «Built-in Kotlin» — no es del proyecto.** Desde Flutter 3.47.5 cada build de
+Android avisa de que `firebase_core`, `in_app_review` y `pdfx` aplican el Kotlin Gradle Plugin y
+que «futuras versiones de Flutter» dejarán de compilarlos. Hoy **solo es un aviso**: compila,
+instala y los tres funcionan (comprobado en el Oppo el 2026-09-28, ticket con `pdfx` incluido). Lo
+tienen que migrar sus autores; **en cada actualización de Flutter o de esos tres plugins, mirar si
+ya salió la versión migrada**, antes de que Flutter lo convierta en error.
 
 ## Reglas del código
 

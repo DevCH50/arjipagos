@@ -11,6 +11,7 @@
 library;
 
 import 'package:arjipagos/src/core/constants/app_strings.dart';
+import 'package:arjipagos/src/data/api/pasarela_pago.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart'
     show kEmisorFiscalPredeterminado;
 import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
@@ -18,7 +19,22 @@ import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
 /// Datos de un contrato con Adquira: a dónde se envía el pago y con qué
 /// parámetros de comercio.
 class ConfiguracionAdquira {
+  /// Proveedor con el que cobra este emisor.
+  ///
+  /// Decide **de dónde sale la URL que abre el WebView**, y con ello si los
+  /// campos de comercio de abajo ([endpoint], [idExpress], [financiamiento],
+  /// [tipo], [tipoPago], [plazos], [mediosPago]) se usan o se ignoran: son de
+  /// Adquira y solo tienen sentido con [PasarelaPago.adquira].
+  ///
+  /// Se declara con valor por omisión [PasarelaPago.adquira] a propósito: es
+  /// como cobraba la app cuando solo había un proveedor, así que un contrato
+  /// nuevo que no diga nada sigue comportándose como siempre.
+  final PasarelaPago pasarela;
+
   /// URL de Adquira a la que el WebView hace el POST del pago.
+  ///
+  /// Solo se usa con [PasarelaPago.adquira]. Con OpenPay la URL la da el
+  /// backend en cada cobro, porque lleva el identificador del checkout.
   final String endpoint;
 
   /// Identificador del comercio en Adquira. Es el que decide a qué cuenta
@@ -84,12 +100,14 @@ class ConfiguracionAdquira {
     required this.ruta,
     required this.titulo,
     required this.claveSeleccion,
+    this.pasarela = PasarelaPago.adquira,
     this.esProvisional = false,
   });
 
   /// Emisor fiscal 1 — "Pagos Pendientes". Datos reales, en producción desde
   /// siempre: son los que la app venía enviando cuando había un solo endpoint.
   static const ConfiguracionAdquira ef1 = ConfiguracionAdquira(
+    pasarela: PasarelaPago.adquira,
     endpoint: 'https://www.adquiramexico.com.mx:443/mExpress/pago/avanzado',
     idExpress: '928',
     financiamiento: '0',
@@ -105,16 +123,26 @@ class ConfiguracionAdquira {
     claveSeleccion: 'seleccion_pagos_ef1',
   );
 
-  /// Emisor fiscal 2 — "Otros pagos".
+  /// Emisor fiscal 2 — "Otros pagos". **Cobra por OpenPay, no por Adquira.**
   ///
-  /// ⚠️ **PROVISIONAL: estos NO son los datos del contrato 2.** Son una copia
-  /// de los de [ef1] puesta a propósito para poder montar la pantalla mientras
-  /// llegan los reales. Con esto, **todo lo que se cobre en "Otros pagos" entra
-  /// en la cuenta bancaria del emisor 1**.
+  /// El contrato 2 nunca llegó a tener datos propios de Adquira, y en vez de
+  /// esperarlos se le cambió de proveedor: desde el 2026-09-24 cobra con el
+  /// «Botón de pago» de OpenPay. La URL del formulario la pide la app al
+  /// backend en cada cobro (ver [PasarelaPago.openpay]).
   ///
-  /// Antes de publicar en tiendas hay que sustituir `endpoint` e `idExpress`
-  /// por los del contrato 2 y quitar `esProvisional`.
+  /// ⚠️ **Los campos de Adquira de aquí abajo están INERTES.** Siguen siendo
+  /// copia de los de [ef1] y siguen sin ser los del contrato 2, pero con
+  /// [PasarelaPago.openpay] no los lee nadie: `CarritoBloc` ni construye el
+  /// `PagoRequest` en ese camino. Se conservan —y con ellos `esProvisional`—
+  /// porque son la red de seguridad del día que alguien devuelva este emisor a
+  /// Adquira: si eso pasa **sin cambiar el `idexpress`, el dinero vuelve a
+  /// entrar en la cuenta bancaria del emisor 1**, y Adquira no se queja porque
+  /// para él la operación es válida.
+  ///
+  /// O sea: quitar `esProvisional` solo cuando existan de verdad los datos del
+  /// contrato 2 en Adquira, no por el hecho de haber pasado a OpenPay.
   static const ConfiguracionAdquira ef2 = ConfiguracionAdquira(
+    pasarela: PasarelaPago.openpay,
     endpoint: 'https://www.adquiramexico.com.mx:443/mExpress/pago/avanzado',
     idExpress: '928',
     financiamiento: '0',

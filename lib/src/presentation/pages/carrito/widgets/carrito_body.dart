@@ -1,5 +1,6 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
+import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_alumno_card.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_empty_widget.dart';
@@ -76,7 +77,13 @@ class CarritoBody extends StatelessWidget {
         content: Text(mensaje),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              Navigator.pop(ctx);
+              // Se descarta al cerrarlo, no al mostrarlo: mientras el error
+              // siga en el estado, cualquier cambio posterior del carrito
+              // volvería a sacar este mismo aviso.
+              context.read<CarritoBloc>().add(const CarritoLimpiarErrorEvent());
+            },
             child: const Text(AppStrings.accept),
           ),
         ],

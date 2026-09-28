@@ -56,3 +56,16 @@ class CarritoPagoFallidoEvent extends CarritoEvent {
 class CarritoCancelarPagoEvent extends CarritoEvent {
   const CarritoCancelarPagoEvent();
 }
+
+/// Evento para descartar el error que ya se le enseñó al usuario.
+///
+/// Hace falta porque el diálogo de error lo dispara `carrito_body` mirando
+/// `state.errorMessage` en **cada** estado que emite el BLoC, no solo en el que
+/// lo trajo. Sin borrarlo, el siguiente cambio del carrito —vaciarlo, quitar un
+/// renglón— vuelve a sacar el mismo error, que el usuario ya cerró.
+///
+/// Visto en el Oppo el 2026-09-24: el cobro por OpenPay falló, el usuario cerró
+/// el aviso, vació el carrito, y el aviso reapareció encima del carrito vacío.
+class CarritoLimpiarErrorEvent extends CarritoEvent {
+  const CarritoLimpiarErrorEvent();
+}

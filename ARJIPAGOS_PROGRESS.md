@@ -9,7 +9,183 @@
 
 ### En progreso
 
-_(ninguno)_
+**OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
+el 2026-09-28. Faltan las llaves de producción (solo backend).
+
+### 2026-09-28 — Primer cobro real por OpenPay (sandbox), en el Oppo
+
+Carlos puso las llaves de sandbox en el backend. Prueba con `flutter run` (debug), usuario con el
+cargo de prueba «OPENPAY 1 PREESCOLAR 26 / 27 PAGO 2» de **$1.00** en «Otros pagos»:
+
+1. `[Carrito] Cobro por OpenPay — ref: 30543A0 | Emisor fiscal 2` → `POST /openpay/crear-cargo`
+   **200**, `order_id 30543A0-N1790615526093`. El **422** del 2026-09-24 ya no sale.
+2. El WebView abre por GET el formulario de `sandbox-api.openpay.mx` con el importe y el concepto
+   correctos. Tarjeta de pruebas Visa `4111 1111 1111 1111` → «El pago se realizó exitosamente»,
+   autorización 801585.
+3. Llega el push `pago_exitoso` con `emisorfiscal_id: 2`; se refrescan su lista y Pagos Realizados.
+4. «Finalizar» lleva a nuestro retorno: `{"success":true,"message":"Este pago ya estaba
+   registrado."}` → `AlertDialog` «Pago exitoso». El mensaje indica que el webhook lo aplicó antes
+   que el retorno y que el retorno **no lo duplicó**.
+5. Al aceptar, «Otros pagos» queda en «Sin pagos pendientes».
+
+Observación sin arreglar (cosmética): OpenPay no redirige sola, hay que pulsar «Finalizar».
+
+**JSON crudo detrás del diálogo — arreglado.** `PagoWebViewPage` activa `_respuestaRecibida` al
+procesar la respuesta y tapa el WebView con una capa opaca del `scaffoldBackgroundColor` (sirve en
+claro y oscuro, y a las dos pasarelas). «Reintentar» la quita. Test guardián:
+`test/unit/pago_webview/json_retorno_oculto_test.dart`. **Pendiente verlo en el Oppo**: hace falta
+otro cargo de prueba del emisor 2, porque el de $1.00 ya quedó pagado.
+
+### 2026-09-28 (b) — Release 1.0.32+41: OpenPay, Flutter 3.47.5 y dependencias
+
+**Versión.** La 1.0.31 ya está publicada en las dos tiendas (App Store desde el 19-sep; Play la
+muestra; el servidor la exige como mínima), así que la nueva es **1.0.32+41**.
+
+**Revisión antes de publicar:**
+
+- `flutter analyze` limpio y **1028 tests en verde**, antes y después de actualizar.
+- `ios/` y `android/` sin tocar; `isProduction = true`, `INTERNET`, `NSFaceIDUsageDescription`,
+  `kTemporadaForzada = null`, icono iOS con 0 huérfanos y 0 fantasmas.
+- Ni una llave de OpenPay en `lib/`, `test/`, `ios/` ni `android/`.
+- Sin `e.toString()` al usuario, sin textos fijos fuera de `AppStrings`, sin símbolos sin usar.
+
+**Widget < 200 líneas.** `PagoWebViewPage` estaba justo en 200 líneas de código y la capa del JSON la
+pasaba a 208. Se sacó el cuerpo (`Stack` con WebView, error, carga y capa) a
+`widgets/pago_webview_cuerpo.dart` → la página queda en 194. Con eso el test de la capa **monta el
+widget de verdad** con un WebView falso y comprueba, en claro y en oscuro, que es opaca, del color
+del tema y del mismo tamaño que el WebView.
+
+**Actualización.** Flutter **3.47.4 → 3.47.5** y siete paquetes de parche/menor (`get_it` 9.3.0,
+`flutter_cache_manager` 3.4.5, `octo_image`, `petitparser`, `vector_math`, `xml`…). Fuera, a
+propósito: `equatable` 3, `cached_network_image` 4, `flutter_secure_storage` 11 (ya bloqueados) y
+**`google_fonts` 9**, que depende de `material_ui` (anotado en CLAUDE.md). Liquid Glass: **sigue sin
+estar** en 3.47.5.
+
+**Nuevo aviso de Gradle:** `firebase_core`, `in_app_review` y `pdfx` aplican KGP y Flutter anuncia
+que dejará de compilarlos. Hoy es solo aviso. En el Oppo con 3.47.5: arranca, 200 en todas las
+peticiones, Pagos Realizados muestra el pago de OpenPay (folio T8540) y su ticket abre con `pdfx`
+diciendo «Pago realizado en OpenPay vía Android».
+
+**Para la Mac:** `flutter upgrade` a 3.47.5 antes de la limpieza obligatoria, porque el
+`pubspec.lock` se resolvió con ella.
+
+### 2026-09-24 (b) — Repaso completo y `CLAUDE.md` puesto al día
+
+`flutter analyze` limpio y **1023 tests en verde**. Guardianes pasados uno a uno: delegate de iOS,
+biometría y `device_id` fuera de `SharedPref`, no reinstanciar `MyApp`, sesión que no arrastra
+usuario, assets declarados, services que no filtran excepciones, `ConfiguracionAdquira` y separación
+de emisores.
+
+**Cobertura que faltaba y se añadió: iOS.** El separador de la referencia lo decide la plataforma
+(`I` en iOS, `A` en Android) y es lo que le dice al backend por qué canal entró el pago. Como
+`PoliticaEmisor` usa `defaultTargetPlatform`, se puede forzar en test: ahora hay uno que comprueba
+que **el camino de OpenPay manda `10I11` en iOS y `10A11` en Android**. Sin él, un cobro desde
+iPhone podría quedar registrado como Android sin que nada fallara.
+
+**Revisión del resto de plataformas:** `ios/` y `android/` **sin tocar** (`git status` vacío en las
+dos), **sin dependencias nuevas** (`pubspec` intacto), sin assets nuevos, y ningún widget nuevo —así
+que no hay nada que revisar en claro/oscuro ni en tamaños de pantalla: el único elemento visible es
+el `AlertDialog` de error que **ya existía**, del que solo cambió el callback de «Aceptar». El
+`urlValida` del checkout **exige `https`**, que en iOS es además lo que impide que ATS deje la
+pantalla en blanco sin explicar por qué.
+
+**Limpieza:** se quitó `Endpoints.openpayUrlRetorno`, que era código muerto —la app nunca nombra esa
+URL, el `redirect_url` lo pone el backend— y podría desincronizarse del servidor. El porqué quedó
+escrito en el comentario de `openpayCrearCargo`.
+
+**`CLAUDE.md` actualizado**, porque describía el EF2 como era antes:
+
+- La sección «El contrato 2 lleva datos prestados del 1» se sustituyó por **«Cada emisor cobra por
+  SU pasarela»**, con la tabla Adquira/OpenPay, las tres cosas que no se pueden deshacer y por qué
+  `ef2` conserva `esProvisional`.
+- «Todo lo que va por emisor» ahora lista la **pasarela** como primera fila.
+- La nota del `emisorfiscal_id` en las dos peticiones: el emisor 2 ya no cobra por Adquira.
+- Las dos menciones de iOS al «aviso del contrato 2 provisional», y **una prueba nueva en la lista
+  de pendientes del iPhone**: el cobro de «Otros pagos» por OpenPay en un `WKWebView`.
+- El encargo permanente de **Liquid Glass**, con la revisión del 2026-09-24 hecha contra el SDK
+  instalado y la fecha que dio el equipo de Flutter.
+
+### 2026-09-24 — «Otros pagos» (EF2) pasa de Adquira a OpenPay
+
+`flutter analyze` limpio y **1015 tests en verde** (eran 981). **Nada de Adquira/EF1 se ha tocado**,
+y hay tests que lo vigilan explícitamente.
+
+**El emisor fiscal 2 ya no cobra por Adquira.** Nunca llegó a tener datos propios del contrato 2, y
+en vez de seguir esperándolos se le cambió de proveedor: ahora cobra con el «Botón de pago» de
+OpenPay. El emisor 1 («Pagos Pendientes») sigue exactamente igual.
+
+**Cómo quedó el flujo**, que es el mismo reparto de Adquira con otro endpoint y otros parámetros:
+
+1. La app pide la URL del cobro: `POST /api/v1/openpay/crear-cargo` con `{referencia}` y el Bearer
+   del tutor. **El importe no se manda**: lo calcula el servidor con los cargos que nombra la
+   referencia, que es lo único que un teléfono no puede falsear.
+2. El backend crea el cobro en OpenPay con la llave privada y devuelve
+   `{success, url, order_id, importe}`.
+3. El WebView abre esa `url` con un **GET y sin ninguna cabecera**.
+4. OpenPay cobra y redirige solo a `/api/v1/openpay/pago-realizado?id={charge_id}`, que responde
+   `{success, message}` — **el mismo contrato que Adquira**, así que
+   `WebViewScripts.detectarRespuestaJson` y `PagoResponseHandler` lo reconocen sin tocarlos.
+
+**Por qué la app no llama a OpenPay directamente:** crear el cobro
+(`POST /v1/{merchant}/checkouts`) va firmado con la **llave privada** `sk_…`, y la documentación del
+botón de pago lo dice literal («HEADER PRIVATE_API_KEY»). Una `sk_` dentro del APK se saca con
+`unzip` y `strings`, y con ella se crean cargos y se hacen **devoluciones** en el comercio.
+
+| Archivo nuevo | Qué es |
+| --- | --- |
+| `lib/src/data/api/pasarela_pago.dart` | `enum PasarelaPago { adquira, openpay }` |
+| `lib/src/domain/models/OpenpayCheckout.dart` | `{url, orderId, importe}` + `urlValida` (exige https) |
+| `lib/src/data/dataSource/remote/services/OpenpayService.dart` | `crearCargo(referencia)` |
+| `lib/src/presentation/pages/pago_webview/peticion_webview.dart` | Decide GET o POST y con qué cabeceras |
+| `test/unit/services/openpay_service_test.dart` | 21 tests |
+| `test/unit/blocs/carrito_pasarela_test.dart` | 8 tests |
+| `test/unit/pago_webview/peticion_webview_test.dart` | 9 tests |
+
+Modificados: `configuracion_adquira.dart` (campo `pasarela`), `endpoints.dart`, `app_strings.dart`,
+`CarritoBloc.dart` (`_onPagar` bifurca en `_cobrarPorAdquira` / `_cobrarPorOpenpay`),
+`PagoWebViewPage.dart`, `RegistroEmisores.dart`, `AppModule.dart`, `injection.config.dart`,
+`test/helpers/mocks.dart` y `test/unit/appbar_encuentra_su_bloc_test.dart`.
+
+**Tres decisiones que no se deben deshacer:**
+
+1. **`params` vacío significa «cargar con GET».** Es la señal que distingue las dos pasarelas dentro
+   del WebView, y evitó tocar `PagoWebViewArgs` y `carrito_body.dart`.
+2. **Al GET de OpenPay no se le manda NINGUNA cabecera.** Mandarle el `Bearer` a un dominio de
+   OpenPay sería entregarle a un tercero la credencial del tutor. Test explícito.
+3. **Una respuesta sin la clave `success` no se cree.** Laravel contesta los errores de framework
+   con `{"message": "The POST method is not supported for route…"}`, y ese texto no se le enseña a
+   un padre que quiere pagar.
+
+**`ConfiguracionAdquira.ef2` conserva `esProvisional: true`** aunque ya no cobre por Adquira: sus
+campos de Adquira quedan inertes pero siguen prestados del emisor 1, y la marca es la red de
+seguridad del día que alguien devuelva este emisor a Adquira sin cambiar el `idexpress`.
+
+**Verificado en el Oppo** con CATutorM30 sobre un cargo real del emisor 2 (FUTBOL TIGRES, $3,500):
+la app manda `referencia 30355A0` con Bearer y **sin importe**, y al recibir el rechazo del backend
+enseña su mensaje en un `AlertDialog` **sin navegar al WebView**. También se comprobó que los
+estados vacíos de las dos pantallas salen como vacíos y no como error.
+
+**Un fallo que salió de esa prueba y se arregló:** al cerrar el aviso de error y vaciar el carrito,
+el aviso **reaparecía**. `carrito_body` dispara el diálogo mirando `state.errorMessage` en **cada**
+estado, no solo en el que lo trajo, y nadie lo borraba. Es previo a este trabajo —cualquier error de
+Adquira hacía lo mismo— pero el camino de OpenPay lo dejó a la vista. Ahora hay
+`CarritoLimpiarErrorEvent`, que el diálogo dispara al cerrarse. Tres tests nuevos.
+
+**🔴 Pendiente, y es del backend.** El servidor **sí está desplegado** (una sonda con curl sin token
+me dio 405/404 y concluí lo contrario; desde la app, con Bearer, las dos rutas responden). Lo que
+falta: `OPENPAY_EMISORES=2` en el `.env` (+ `config:clear`) —el 422 «Estos cargos no se cobran por
+esta vía» sale de `cobraPorOpenpay()`—, las llaves de sandbox, y commitear los archivos de OpenPay
+en ArjiApp. **Además**, `pagoRealizadoOpenpay` usa `responder(esWeb: true, …)` a pelo cuando falta
+`id` o falla `consultarCargo`: devuelve 302 al portal web y deja al tutor colgado dentro del WebView
+del pago.
+
+El plan `Plan OpenPay Frontend.md` se reescribió entero: el del 3-sep describía un reparto que no se
+puede hacer (la app creando el cobro sin llave privada). El original se conservó en
+`otros/planes_anteriores/`.
+
+**Liquid Glass (encargo permanente):** revisado hoy. Sigue sin soporte oficial — el equipo de Flutter
+no está desarrollando el diseño Apple'26 en la librería Cupertino actual; irá a un `package:cupertino`
+aparte, previsto para finales de 2026. Se mantiene la decisión de no adoptarlo.
 
 ### 2026-09-18 (d) — iOS 27 probado en el iPhone 17: los push ya funcionan con la app abierta
 

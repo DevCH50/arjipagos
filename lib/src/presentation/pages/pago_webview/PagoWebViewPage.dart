@@ -1,8 +1,6 @@
 import 'package:arjipagos/injection.dart';
 import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
-import 'dart:convert';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
-import 'dart:typed_data';
 
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
@@ -11,6 +9,7 @@ import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/di/RegistroEmisores.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/pago_webview_args.dart';
+import 'package:arjipagos/src/presentation/pages/pago_webview/peticion_webview.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/webview_scripts.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +18,15 @@ import 'package:webview_flutter/webview_flutter.dart';
 // Re-exportar PagoWebViewArgs para mantener compatibilidad
 export 'pago_webview_args.dart';
 
-/// Página con WebView para procesar el pago en Adquira México.
+/// Página con WebView para procesar el pago en la pasarela del emisor.
+///
+/// Sirve a las dos: **Adquira** (emisor 1, "Pagos Pendientes") y **OpenPay**
+/// (emisor 2, "Otros pagos"). La diferencia está solo en cómo se abre la URL
+/// —ver [_PagoWebViewPageState._cargarPagina]—, porque las dos terminan
+/// aterrizando en un retorno de nuestro backend que responde
+/// `{success, message}`, que es justo lo que busca
+/// `WebViewScripts.detectarRespuestaJson`. De ahí para abajo —el canal, los
+/// diálogos, vaciar el carrito y recargar el estado de cuenta— todo es común.
 class PagoWebViewPage extends StatefulWidget {
   const PagoWebViewPage({super.key});
 
@@ -33,6 +40,12 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
   String? _errorMessage;
   bool _initialized = false;
   bool _pagoProcessed = false;
+
+  /// Si ya se detectó la respuesta `{success, message}` del retorno.
+  ///
+  /// Mientras sea `true`, una capa opaca tapa el WebView: el retorno es JSON
+  /// sin estilo, y sin esa capa el padre lo leía en crudo detrás del diálogo.
+  bool _respuestaRecibida = false;
   PagoWebViewArgs? _currentArgs;
 
   /// Emisor fiscal que se está cobrando, tomado de los argumentos de la ruta.
@@ -97,25 +110,31 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is PagoWebViewArgs) {
       _currentArgs = args;
-      _loadPostRequest(args);
+      _cargarPagina(args);
     } else if (args is String) {
       _controller.loadRequest(Uri.parse(args));
     }
   }
 
-  void _loadPostRequest(PagoWebViewArgs args) {
-    final bodyString = args.params.entries
-        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-        .join('&');
+  /// Abre la pasarela del emisor que se está cobrando.
+  ///
+  /// El **qué** —GET o POST, con qué cabeceras y con qué cuerpo— lo decide
+  /// [PeticionWebView.desde], que está fuera para poder probarlo; aquí solo
+  /// queda el **cómo** se le pide al controlador.
+  void _cargarPagina(PagoWebViewArgs args) {
+    final Uri url = Uri.parse(args.url);
+    final peticion = PeticionWebView.desde(args);
+
+    if (!peticion.esPost) {
+      _controller.loadRequest(url);
+      return;
+    }
 
     _controller.loadRequest(
-      Uri.parse(args.url),
+      url,
       method: LoadRequestMethod.post,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Bearer ${args.token}',
-      },
-      body: Uint8List.fromList(utf8.encode(bodyString)),
+      headers: peticion.headers,
+      body: peticion.body,
     );
   }
 
@@ -125,8 +144,9 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
         _isLoading = true;
         _errorMessage = null;
         _pagoProcessed = false;
+        _respuestaRecibida = false;
       });
-      _loadPostRequest(_currentArgs!);
+      _cargarPagina(_currentArgs!);
     }
   }
 
@@ -141,6 +161,7 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     }
 
     _pagoProcessed = true;
+    setState(() => _respuestaRecibida = true);
     if (result.success) {
       _carritoDelEmisor.add(const CarritoPagoExitosoEvent());
       // Suma el pago a la cuenta de la política de reseñas antes de mostrar el
@@ -220,28 +241,16 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
             onPressed: _confirmarSalir,
           ),
         ),
-        // Edge-to-edge (Android 15+): el WebView de la pasarela de pago no
-        // conoce los insets del sistema. Reservamos el alto de la barra de
-        // navegacion inferior para que el boton de pagar del HTML nunca quede
-        // tapado por ella. El AppBar ya cubre el inset superior.
-        body: SafeArea(
-          top: false,
-          child: Stack(
-            children: [
-              if (_errorMessage != null)
-                PagoErrorWidget(
-                  message: _errorMessage!,
-                  onRetry: () {
-                    if (_currentArgs != null) {
-                      _loadPostRequest(_currentArgs!);
-                    }
-                  },
-                )
-              else
-                WebViewWidget(controller: _controller),
-              if (_isLoading) const PagoLoadingWidget(),
-            ],
-          ),
+        body: PagoWebViewCuerpo(
+          controller: _controller,
+          errorMessage: _errorMessage,
+          cargando: _isLoading,
+          respuestaRecibida: _respuestaRecibida,
+          onReintentar: () {
+            if (_currentArgs != null) {
+              _cargarPagina(_currentArgs!);
+            }
+          },
         ),
       ),
     );

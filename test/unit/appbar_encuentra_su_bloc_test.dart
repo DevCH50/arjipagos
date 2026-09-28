@@ -128,6 +128,9 @@ void main() {
         createMockAuthUseCases(),
         createMockEdoCtaUseCases(getEstadosDeCuenta: mockGetEstadosDeCuenta),
         storages,
+        // Este test no paga, pero el carrito lo pide: sin un doble se
+        // construiría el service de verdad.
+        MockOpenpayService(),
       ),
     );
   }

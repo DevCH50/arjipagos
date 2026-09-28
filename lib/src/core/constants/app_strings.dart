@@ -169,6 +169,23 @@ class AppStrings {
       'Pago procesado correctamente';
   static const String pagoRealizadoConExito = 'Pago realizado con éxito';
 
+  // --- OpenPay ("Otros pagos", emisor fiscal 2) -------------------------------
+  // Solo se usan cuando el cobro NO llega a empezar. En cuanto el formulario de
+  // OpenPay se abre, lo que se le enseña al usuario es el `message` que manda el
+  // backend en el retorno, que distingue casos que desde aquí no se ven —sobre
+  // todo «pagaste pero no identificamos los cargos», donde el dinero sí salió y
+  // decir «rechazado» empujaría a pagar dos veces—.
+
+  /// Fallo al crear el cobro sin que el backend explique por qué.
+  static const String openpayNoSePudoIniciar =
+      'No pudimos iniciar el pago con tarjeta. Vuelve a intentarlo en unos '
+      'minutos; no se te ha cobrado nada.';
+
+  /// No hay cargos que cobrar. En la práctica no debería verse: el botón de
+  /// pagar ya exige carrito con renglones.
+  static const String openpaySinReferencia =
+      'No hay cargos seleccionados para pagar.';
+
   // ============================================================================
   // NOTIFICACIONES
   // ============================================================================

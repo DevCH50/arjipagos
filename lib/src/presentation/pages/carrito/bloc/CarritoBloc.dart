@@ -3,7 +3,11 @@ import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
+import 'package:arjipagos/src/data/api/pasarela_pago.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
+import 'package:arjipagos/src/domain/models/AuthResponse.dart';
+import 'package:arjipagos/src/domain/models/OpenpayCheckout.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
@@ -27,14 +31,23 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
   /// y ninguno sabe que existen los demás.
   final int emisorFiscalId;
 
+  /// Cobro por OpenPay. Solo lo usan los emisores con
+  /// [PasarelaPago.openpay]; para los de Adquira nunca se llama.
+  final OpenpayService _openpayService;
+
   CarritoBloc({
     required SeleccionPagosStorage seleccionStorage,
     required AuthUseCases authUseCases,
     required EdoCtaUseCases edoCtaUseCases,
     required this.emisorFiscalId,
+    OpenpayService? openpayService,
   }) : _seleccionStorage = seleccionStorage,
        _authUseCases = authUseCases,
        _edoCtaUseCases = edoCtaUseCases,
+       // Opcional para que los tests puedan meter un doble sin montar el
+       // registro entero. Construirlo no hace nada: solo guarda el
+       // `authUseCases` que ya recibimos, y la petición sale en `_onPagar`.
+       _openpayService = openpayService ?? OpenpayService(authUseCases),
        super(CarritoState(emisorFiscalActivo: emisorFiscalId)) {
     on<CarritoInitialEvent>(_onInitial);
     on<CarritoQuitarPagoEvent>(_onQuitarPago);
@@ -43,6 +56,17 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     on<CarritoPagoExitosoEvent>(_onPagoExitoso);
     on<CarritoPagoFallidoEvent>(_onPagoFallido);
     on<CarritoCancelarPagoEvent>(_onCancelarPago);
+    on<CarritoLimpiarErrorEvent>(_onLimpiarError);
+  }
+
+  /// Descarta el error que el usuario ya vio. Ver [CarritoLimpiarErrorEvent].
+  void _onLimpiarError(
+    CarritoLimpiarErrorEvent event,
+    Emitter<CarritoState> emit,
+  ) {
+    if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
   }
 
   /// Maneja el evento inicial: carga los pagos seleccionados del storage.
@@ -227,49 +251,14 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         );
       }
 
-      if (configuracion.esProvisional) {
-        AppLogger.warning(
-          'CONFIGURACIÓN PROVISIONAL — ${configuracion.descripcion} está usando '
-          'los datos de otro contrato (idexpress ${configuracion.idExpress}): '
-          'el cobro entra en la cuenta bancaria equivocada',
-          tag: 'Carrito',
-        );
+      // Cada pasarela consigue la URL del WebView a su manera. A partir de que
+      // esa URL existe, la pantalla de pago es idéntica para las dos.
+      switch (configuracion.pasarela) {
+        case PasarelaPago.adquira:
+          _cobrarPorAdquira(configuracion, authResponse, emit);
+        case PasarelaPago.openpay:
+          await _cobrarPorOpenpay(configuracion, authResponse, emit);
       }
-
-      // Construir el request de pago
-      final pagoRequest = PagoRequest(
-        token: authResponse.accessToken,
-        userId: authResponse.user.id,
-        importe: state.totalAPagar,
-        urlRetorno: Endpoints.pagoUrlRetorno,
-        referencia: state.referenciaPago,
-        emisorFiscalId: emisorFiscalId,
-        idExpress: configuracion.idExpress,
-        financiamiento: configuracion.financiamiento,
-        moneda: configuracion.moneda,
-        tipo: configuracion.tipo,
-        tipoPago: configuracion.tipoPago,
-        plazos: configuracion.plazos,
-        mediosPago: configuracion.mediosPago,
-      );
-
-      AppLogger.debug(
-        'Pago — ref: ${pagoRequest.referencia} | importe: ${pagoRequest.importe} '
-        '| userId: ${pagoRequest.userId} | ${configuracion.descripcion}',
-        tag: 'Carrito',
-      );
-
-      // Construir datos para el WebView
-      emit(
-        state.copyWith(
-          isProcesandoPago: false,
-          pagoData: {
-            'url': configuracion.endpoint,
-            'params': pagoRequest.toMap(),
-            'token': pagoRequest.token,
-          },
-        ),
-      );
     } catch (e) {
       AppLogger.error('Error al iniciar el pago', error: e, tag: 'Carrito');
       emit(
@@ -279,6 +268,129 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         ),
       );
     }
+  }
+
+  /// Cobro por Adquira — **el camino de siempre, sin un solo cambio.**
+  ///
+  /// La app arma el formulario con los parámetros del contrato y el WebView le
+  /// hace un POST al endpoint del comercio. Lo usa el emisor fiscal 1 ("Pagos
+  /// Pendientes").
+  void _cobrarPorAdquira(
+    ConfiguracionAdquira configuracion,
+    AuthResponse authResponse,
+    Emitter<CarritoState> emit,
+  ) {
+    if (configuracion.esProvisional) {
+      AppLogger.warning(
+        'CONFIGURACIÓN PROVISIONAL — ${configuracion.descripcion} está usando '
+        'los datos de otro contrato (idexpress ${configuracion.idExpress}): '
+        'el cobro entra en la cuenta bancaria equivocada',
+        tag: 'Carrito',
+      );
+    }
+
+    final pagoRequest = PagoRequest(
+      token: authResponse.accessToken,
+      userId: authResponse.user.id,
+      importe: state.totalAPagar,
+      urlRetorno: Endpoints.pagoUrlRetorno,
+      referencia: state.referenciaPago,
+      emisorFiscalId: emisorFiscalId,
+      idExpress: configuracion.idExpress,
+      financiamiento: configuracion.financiamiento,
+      moneda: configuracion.moneda,
+      tipo: configuracion.tipo,
+      tipoPago: configuracion.tipoPago,
+      plazos: configuracion.plazos,
+      mediosPago: configuracion.mediosPago,
+    );
+
+    AppLogger.debug(
+      'Pago — ref: ${pagoRequest.referencia} | importe: ${pagoRequest.importe} '
+      '| userId: ${pagoRequest.userId} | ${configuracion.descripcion}',
+      tag: 'Carrito',
+    );
+
+    emit(
+      state.copyWith(
+        isProcesandoPago: false,
+        pagoData: {
+          'url': configuracion.endpoint,
+          'params': pagoRequest.toMap(),
+          'token': pagoRequest.token,
+        },
+      ),
+    );
+  }
+
+  /// Cobro por OpenPay — «Otros pagos», emisor fiscal 2.
+  ///
+  /// Le pide al backend la URL del formulario alojado de OpenPay y la deja en
+  /// `pagoData` para que el WebView la abra. Tres diferencias con Adquira, y
+  /// las tres son deliberadas:
+  ///
+  /// 1. **Hay una petición HTTP antes de navegar.** Con Adquira la URL es
+  ///    constante y se conoce sin preguntar; aquí el cobro se crea en OpenPay
+  ///    y hasta que no responde no hay a dónde ir. Por eso esto puede fallar
+  ///    antes de que el usuario vea nada, y el error se enseña en el carrito.
+  /// 2. **`params` va vacío.** Es la señal de que el WebView debe cargar con
+  ///    un GET: la URL de OpenPay ya lleva dentro el identificador del cobro y
+  ///    no hay formulario que enviar.
+  /// 3. **No se manda el importe.** El backend lo calcula de los cargos que
+  ///    nombra la referencia. `state.totalAPagar` solo se registra en el log
+  ///    para poder contrastarlo; si no coincidieran, manda el del servidor.
+  Future<void> _cobrarPorOpenpay(
+    ConfiguracionAdquira configuracion,
+    AuthResponse authResponse,
+    Emitter<CarritoState> emit,
+  ) async {
+    final String referencia = state.referenciaPago;
+
+    AppLogger.debug(
+      'Cobro por OpenPay — ref: $referencia | total en pantalla: '
+      '${state.totalAPagar} | userId: ${authResponse.user.id} | '
+      '${configuracion.descripcion}',
+      tag: 'Carrito',
+    );
+
+    final resultado = await _openpayService.crearCargo(referencia);
+
+    // El evento pudo cerrarse mientras esperábamos —el usuario salió del
+    // carrito, o se cerró la sesión—. Emitir aquí reventaría.
+    if (emit.isDone) {
+      AppLogger.warning(
+        'El carrito se cerró antes de recibir la URL de OpenPay — '
+        'ref $referencia',
+        tag: 'Carrito',
+      );
+      return;
+    }
+
+    if (resultado is! Success<OpenpayCheckout>) {
+      final String mensaje = resultado is Error<OpenpayCheckout>
+          ? resultado.msg
+          : AppStrings.openpayNoSePudoIniciar;
+
+      emit(state.copyWith(isProcesandoPago: false, errorMessage: mensaje));
+      return;
+    }
+
+    final OpenpayCheckout checkout = resultado.data;
+
+    emit(
+      state.copyWith(
+        isProcesandoPago: false,
+        pagoData: {
+          'url': checkout.url,
+          // Vacío = cargar con GET. Ver `PagoWebViewPage._cargarPagina`.
+          'params': const <String, String>{},
+          // Viaja para no cambiar la forma de `pagoData`, pero el WebView NO
+          // se lo manda a OpenPay: sería filtrarle la sesión del tutor a un
+          // tercero. Ver `PagoWebViewPage._cargarPagina`.
+          'token': authResponse.accessToken,
+        },
+      ),
+    );
   }
 
   /// Maneja el evento de pago exitoso.

@@ -38,6 +38,8 @@ import 'package:arjipagos/src/data/dataSource/remote/services/FcmService.dart'
     as _i303;
 import 'package:arjipagos/src/data/dataSource/remote/services/NotificacionService.dart'
     as _i955;
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart'
+    as _i13;
 import 'package:arjipagos/src/data/dataSource/remote/services/TicketService.dart'
     as _i965;
 import 'package:arjipagos/src/data/dataSource/remote/services/VersionService.dart'
@@ -92,6 +94,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i64.SharedPref>(() => appModule.sharedPref);
     gh.factory<_i260.SecureStorage>(() => appModule.secureStorage);
     gh.factory<_i12.DispositivoStorage>(() => appModule.dispositivoStorage);
+    gh.factory<_i13.OpenpayService>(() => appModule.openpayService);
     gh.factory<_i424.AuthService>(() => appModule.authService);
     gh.factory<_i1009.AuthRepository>(() => appModule.authRepository);
     gh.factory<_i887.AuthUseCases>(() => appModule.authUseCases);

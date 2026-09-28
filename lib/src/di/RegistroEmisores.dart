@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/local/SharedPref.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/useCases/edocta/EdoCtaUseCases.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -77,6 +78,7 @@ class CarritoBlocPorEmisor {
     AuthUseCases authUseCases,
     EdoCtaUseCases edoCtaUseCases,
     SeleccionPagosStoragePorEmisor storages,
+    OpenpayService openpayService,
   ) : _porEmisor = {
         for (final int emisor in ConfiguracionAdquira.emisoresConocidos)
           emisor: CarritoBloc(
@@ -84,6 +86,9 @@ class CarritoBlocPorEmisor {
             authUseCases: authUseCases,
             edoCtaUseCases: edoCtaUseCases,
             emisorFiscalId: emisor,
+            // El mismo para todos: no guarda estado y el emisor no cambia nada
+            // de la petición. Los carritos de Adquira ni lo llaman.
+            openpayService: openpayService,
           ),
       };
 
