@@ -186,6 +186,34 @@ class AppStrings {
   static const String openpaySinReferencia =
       'No hay cargos seleccionados para pagar.';
 
+  /// `crear-cargo` respondió 401. Al aceptar se vuelve al login.
+  static const String openpaySesionExpirada =
+      'Tu sesión expiró. Vuelve a entrar para pagar; no se te ha cobrado nada.';
+
+  // Al cerrar el WebView de OpenPay sin que llegara el retorno, la app pregunta
+  // al backend en qué quedó el cobro. Ver `AvisoCierreCobro`. Los mensajes
+  // solo se usan cuando el backend no manda el suyo.
+
+  /// Mientras se consulta el estado del cobro.
+  static const String openpayVerificando = 'Confirmando tu pago...';
+
+  static const String openpayRechazadoTitle = 'Pago rechazado';
+  static const String openpayRechazadoMsg =
+      'El banco no autorizó el pago. Tus pagos siguen en el carrito.';
+
+  static const String openpayNoCompletadoTitle = 'No se completó el pago';
+  /// No invita a pagar otra vez sin más: un `pendiente` puede ser un cobro que
+  /// OpenPay aún está terminando.
+  static const String openpayNoCompletadoMsg =
+      'Si ya pagaste, se verá reflejado en unos minutos. Si no, tus pagos '
+      'siguen en el carrito.';
+
+  /// Puede que sí se cobrara: lo importante es que no pague dos veces.
+  static const String openpaySinConfirmarTitle = 'No pudimos confirmar tu pago';
+  static const String openpaySinConfirmarMsg =
+      'NO vuelvas a pagar. Revisa tu estado de cuenta en unos minutos: si los '
+      'cargos siguen pendientes, podrás pagarlos entonces.';
+
   // ============================================================================
   // NOTIFICACIONES
   // ============================================================================

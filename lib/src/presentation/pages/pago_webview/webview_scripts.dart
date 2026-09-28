@@ -39,4 +39,17 @@ class WebViewScripts {
       } catch (e) {}
     })();
   ''';
+
+  /// Quita el foco del campo en el que esté escribiendo el tutor.
+  ///
+  /// Al cerrar OpenPay con la ✕ mientras teclea la tarjeta, la capa de
+  /// «Confirmando tu pago…» tapa el WebView pero el campo sigue con el foco
+  /// debajo, y el teclado se quedaba abierto encima de la capa y del diálogo.
+  static const String soltarFoco = '''
+    (function() {
+      try {
+        if (document.activeElement) { document.activeElement.blur(); }
+      } catch (e) {}
+    })();
+  ''';
 }

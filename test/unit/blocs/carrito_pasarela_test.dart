@@ -21,6 +21,7 @@ library;
 import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/data/api/pasarela_pago.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
+import 'package:arjipagos/src/domain/models/ErrorCobroOpenpay.dart';
 import 'package:arjipagos/src/domain/models/OpenpayCheckout.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
@@ -119,6 +120,10 @@ void main() {
         expect(params['importe'], '2000.00');
         expect(params['referencia'], bloc.state.referenciaPago);
 
+        // Sin `order_id`: al cerrar no hay estado que consultar, y la ✕
+        // sigue preguntando «¿cancelar el pago?».
+        expect(pagoData['orderId'], isNull);
+
         // 🔴 Lo importante de este test: Adquira no pasa por OpenPay.
         verifyNever(() => mockOpenpay.crearCargo(any()));
       },
@@ -146,6 +151,10 @@ void main() {
         // `params` vacío = el WebView carga con GET. Ver
         // `PagoWebViewPage._cargarPagina`.
         expect(pagoData['params'], isEmpty);
+
+        // El `order_id` viaja al WebView: con él se pregunta en qué quedó el
+        // cobro si el tutor cierra sin que llegue el retorno.
+        expect(pagoData['orderId'], _checkout.orderId);
 
         // Y ni rastro del endpoint de Adquira: si apareciera, el emisor 2
         // estaría cobrando en la cuenta del 1 otra vez.
@@ -195,6 +204,40 @@ void main() {
         // existe y el usuario vería una pantalla en blanco.
         expect(bloc.state.pagoData, isNull);
         expect(bloc.state.isProcesandoPago, isFalse);
+      },
+    );
+
+    for (final motivo in MotivoFalloCobro.values) {
+      blocTest<CarritoBloc, CarritoState>(
+        'pasa el motivo del fallo (${motivo.name}) para decidir qué hacer',
+        build: () {
+          when(() => mockOpenpay.crearCargo(any())).thenAnswer(
+            (_) async => ErrorCobroOpenpay('No se pudo', motivo),
+          );
+          return crearBloc(2);
+        },
+        seed: () => conDosCargos(2),
+        act: (bloc) => bloc.add(const CarritoPagarEvent()),
+        verify: (bloc) {
+          expect(bloc.state.errorMessage, 'No se pudo');
+          expect(bloc.state.motivoFallo, motivo);
+        },
+      );
+    }
+
+    blocTest<CarritoBloc, CarritoState>(
+      'al cerrar el diálogo el motivo se limpia junto con el mensaje',
+      build: () => crearBloc(2),
+      seed: () => const CarritoState(
+        emisorFiscalActivo: 2,
+        errorMessage: 'No se pudo',
+        motivoFallo: MotivoFalloCobro.sesionExpirada,
+      ),
+      act: (bloc) => bloc.add(const CarritoLimpiarErrorEvent()),
+      verify: (bloc) {
+        expect(bloc.state.errorMessage, isNull);
+        // Si quedara, el siguiente error cualquiera mandaría al login.
+        expect(bloc.state.motivoFallo, isNull);
       },
     );
 

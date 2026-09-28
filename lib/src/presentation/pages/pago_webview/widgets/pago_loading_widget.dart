@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 
 /// Widget de carga para la página de pago.
 class PagoLoadingWidget extends StatelessWidget {
-  const PagoLoadingWidget({super.key});
+  const PagoLoadingWidget({super.key, this.mensaje = AppStrings.pagoLoading});
+
+  /// Texto bajo el indicador: la carga de la pasarela, o la consulta del
+  /// estado del cobro al cerrarla.
+  final String mensaje;
 
   @override
   Widget build(BuildContext context) {
@@ -11,13 +15,13 @@ class PagoLoadingWidget extends StatelessWidget {
 
     return Container(
       color: theme.colorScheme.surface.withValues(alpha: 0.8),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text(AppStrings.pagoLoading),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(mensaje),
           ],
         ),
       ),

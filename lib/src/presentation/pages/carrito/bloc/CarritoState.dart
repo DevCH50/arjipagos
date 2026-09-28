@@ -1,6 +1,7 @@
 import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
 import 'package:arjipagos/src/domain/models/PoliticaEmisor.dart';
 import 'package:arjipagos/src/domain/models/Alumno.dart';
+import 'package:arjipagos/src/domain/models/ErrorCobroOpenpay.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
 import 'package:arjipagos/src/domain/utils/AmbitoDeSeleccion.dart';
 import 'package:equatable/equatable.dart';
@@ -24,6 +25,11 @@ class CarritoState extends Equatable {
 
   /// Mensaje de error si existe.
   final String? errorMessage;
+
+  /// Qué hacer además de enseñar [errorMessage], si el cobro de OpenPay no
+  /// se pudo crear: volver al login o recargar los cargos. `null` en
+  /// cualquier otro error. Se limpia junto con [errorMessage].
+  final MotivoFalloCobro? motivoFallo;
 
   /// Datos del pago para el WebView: {url, params, token}.
   final Map<String, dynamic>? pagoData;
@@ -49,6 +55,7 @@ class CarritoState extends Equatable {
     this.isLoading = false,
     this.isProcesandoPago = false,
     this.errorMessage,
+    this.motivoFallo,
     this.pagoData,
     this.pagoExitoso = false,
     this.mensajeExito,
@@ -62,6 +69,7 @@ class CarritoState extends Equatable {
     bool? isLoading,
     bool? isProcesandoPago,
     String? errorMessage,
+    MotivoFalloCobro? motivoFallo,
     Map<String, dynamic>? pagoData,
     bool? pagoExitoso,
     String? mensajeExito,
@@ -75,6 +83,7 @@ class CarritoState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isProcesandoPago: isProcesandoPago ?? this.isProcesandoPago,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      motivoFallo: clearError ? null : (motivoFallo ?? this.motivoFallo),
       pagoData: clearPagoData ? null : (pagoData ?? this.pagoData),
       pagoExitoso: pagoExitoso ?? this.pagoExitoso,
       mensajeExito: mensajeExito ?? this.mensajeExito,
@@ -198,6 +207,7 @@ class CarritoState extends Equatable {
         isLoading,
         isProcesandoPago,
         errorMessage,
+        motivoFallo,
         pagoData,
         pagoExitoso,
         mensajeExito,

@@ -83,6 +83,18 @@ abstract class Endpoints {
   /// podría desincronizarse de la que el servidor use de verdad.
   static const String openpayCrearCargo = '/api/v1/openpay/crear-cargo';
 
+  /// GET - ¿En qué quedó un cobro de OpenPay? `?order_id=…`, con `Bearer`.
+  ///
+  /// Se consulta al cerrar el WebView de «Otros pagos» si no llegó el retorno:
+  /// OpenPay no vuelve solo a la app, y un tutor que cierra con la ✕ después de
+  /// pagar no vería nunca el resultado. Responde siempre 200 con
+  /// `{success, estado, message}`, y `estado` es uno de `pagado`, `pendiente`,
+  /// `rechazado`, `sin_aplicar` o `sin_verificar`. Un `order_id` ajeno da 422.
+  ///
+  /// Si OpenPay ya cobró y el webhook aún no lo aplicó, **lo aplica esta
+  /// misma consulta**, sin duplicarlo.
+  static const String openpayEstado = '/api/v1/openpay/estado';
+
   // ============================================================================
   // NOTIFICACIONES
   // ============================================================================

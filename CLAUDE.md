@@ -644,6 +644,13 @@ el botón**. Lleva anotadas sus dos trampas: los BLoC hay que crearlos dentro de
 
 ### Cada emisor cobra por SU pasarela: el 1 por Adquira, el 2 por OpenPay
 
+**Regla general de Carlos (2026-09-28): emisor 1 → Adquira, emisor 2 → OpenPay. Sin excepciones por
+usuario.** El backend manda desde ese día un campo `pasarela` en cada cargo (`openpay` | `adquira`,
+según si el usuario está en `OPENPAY_USUARIOS_PRUEBA`); **la app no lo usa, a propósito**, y el
+emisor 2 nunca vuelve a Adquira. Consecuencia: mientras OpenPay esté limitado a usuarios de prueba,
+cualquier otro tutor recibe 422 en «Otros pagos», así que **la 1.0.32 no se publica hasta que el
+backend abra OpenPay a todos** (llaves de producción y `OPENPAY_USUARIOS_PRUEBA` vacía).
+
 **Desde el 2026-09-24 los dos emisores ni siquiera comparten proveedor.** El contrato 2 nunca llegó
 a tener datos propios de Adquira, y en vez de seguir esperándolos se le cambió de pasarela.
 
@@ -678,6 +685,61 @@ a ambas sin un solo cambio.
    con `{"message": "The POST method is not supported for route…"}`, y ese texto no se le enseña a
    un padre. Solo se muestra el `message` cuando viene con `success`, que es lo que manda siempre el
    controlador de OpenPay.
+
+#### OpenPay no vuelve solo: al cerrar, se pregunta en qué quedó
+
+**Tras pagar, OpenPay enseña su comprobante y espera a que el tutor pulse «Finalizar».** Si cierra
+con la ✕ —o con el botón atrás—, el retorno no llega nunca. Desde el 2026-09-28 la app guarda el
+`order_id` de `crear-cargo` (viaja en `PagoWebViewArgs.orderId`) y, al cerrar sin retorno, consulta
+`GET /api/v1/openpay/estado?order_id=…` con `OpenpayService.verificarCobro`. Si llega `pendiente`,
+reintenta dos veces con **3 s** entre medias (el backend sugería 3 y 6; se quedó en 3 y 3). **En el
+Oppo tarda unos 10 s** cuando se cierra sin pagar, porque cada consulta tarda ~1 s.
+
+El documento del backend que lo pide es «App del cobro OpenPay»
+(`https://claude.ai/artifact/7Bmt684DepeyPtut5MafK1`), pareja del de backend
+(`https://claude.ai/artifact/8mhy57Y7QXXeu1YQpqeC3f`).
+
+| estado | Diálogo | Después |
+| --- | --- | --- |
+| `pagado` | El de éxito de siempre | Vacía el carrito y vuelve a la lista del emisor |
+| `rechazado` | «Pago rechazado» con el `message` | Al carrito, con la selección |
+| `pendiente` | «No se completó el pago» | Al carrito, con la selección |
+| `sin_verificar` / `sin_aplicar`, red caída, lo que no se entienda | «No pudimos confirmar tu pago» («NO vuelvas a pagar») | **Vacía el carrito** y vuelve a la lista recargada |
+
+Decisiones de Carlos del 2026-09-28, que no se deshacen:
+
+- **En OpenPay la ✕ no pregunta «¿cancelar el pago?».** El tutor puede estar en el comprobante de un
+  pago ya hecho. En Adquira sí se sigue preguntando.
+- **Sin «Reintentar» en `rechazado`.** Se vuelve al carrito y «Pagar» crea un cobro nuevo, con otro
+  `order_id`.
+- **«Sin confirmar» vacía el carrito.** Puede que el dinero sí saliera: con un «Pagar» delante con
+  los mismos cargos, el tutor pagaría dos veces. La lista recargada le dice la verdad.
+- **Un retorno de OpenPay con `success: false` tampoco se cree:** puede ser «pagaste pero no
+  identificamos los cargos». Manda la consulta de estado.
+- **Un retorno con `success: true` sí se cree, sin consultar.** El documento del backend pide
+  consultar «siempre»; no se hace porque ese JSON lo responde nuestro servidor **después** de aplicar
+  el pago, y consultar solo añadiría ~1 s de espera.
+- **El texto de `pendiente` no invita a pagar otra vez:** «Si ya pagaste, se verá reflejado en unos
+  minutos. Si no, tus pagos siguen en el carrito». Un `pendiente` puede ser un cobro que OpenPay aún
+  termina.
+- **Si `crear-cargo` falla, el motivo decide qué pasa al cerrar el diálogo** (`ErrorCobroOpenpay`,
+  `actuarTrasFalloCobro`): **401 → cierre de sesión completo y al login**; **422 → vacía el
+  carrito, recarga la lista del emisor y vuelve a ella** (los cargos ya no se pueden cobrar así, y
+  reintentar daría el mismo error); cualquier otro → se queda en el carrito. El 401 de Laravel llega
+  **sin `success`** («Unauthenticated.») y por eso se mira antes que esa clave.
+- **Al consultar se suelta el foco del formulario** (`WebViewScripts.soltarFoco` y `TextInput.hide`).
+  Sin eso, el teclado se quedaba abierto encima de la capa y del diálogo si el tutor cerraba mientras
+  tecleaba la tarjeta. Visto en el Oppo.
+
+La tabla vive en `AvisoCierreCobro` (Dart puro), y lo que pasa al terminar el pago —el carrito, los
+diálogos, a dónde se vuelve— en `DesenlacePago`, fuera de la página. Tests:
+`test/unit/pago_webview/cierre_openpay_test.dart`, que monta la pantalla con un WebView falso
+(`test/helpers/fake_webview_platform.dart`), y `aviso_cierre_cobro_test.dart`.
+
+**Al probar en el Oppo, cuidado con Google Pay.** Al teclear en el campo del número de tarjeta, el
+autocompletado de Google ofrece la **tarjeta real** de Carlos y se queda con lo que se teclea. Pasó
+el 2026-09-28: se canceló a tiempo y no llegó al formulario. **No automatizar por adb el número de
+tarjeta**; esa parte la teclea Carlos.
 
 **Por qué la app no llama a OpenPay directamente.** Crear el cobro
 (`POST /v1/{merchant}/checkouts`) va firmado con la **llave privada** `sk_…` —la documentación del

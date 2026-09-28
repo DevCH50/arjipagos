@@ -36,6 +36,96 @@ claro y oscuro, y a las dos pasarelas). «Reintentar» la quita. Test guardián:
 `test/unit/pago_webview/json_retorno_oculto_test.dart`. **Pendiente verlo en el Oppo**: hace falta
 otro cargo de prueba del emisor 2, porque el de $1.00 ya quedó pagado.
 
+### 2026-09-28 (e) — Revisión de los cambios del backend A22-d y A22-e
+
+Leídos sus commits (`c27448065`, `deb19e9ee`) y probado en el Oppo con el backend de las 13:25.
+**Nada rompe la app:**
+
+- `estado-de-cuenta-sin-pagar` trae un campo nuevo por cargo, **`pasarela`** (`openpay` | `adquira`),
+  calculado para el usuario que pregunta. Es aditivo y la app hoy **no lo lee** (`EstadoDeCuenta` lo
+  ignora). Comprobado: tutor 2825 (CATutorP811) → sus 5 cargos del emisor 2 en `openpay`;
+  CATutorM974 → 22 del emisor 1 en `adquira`; **CATutorM820 → 5 del emisor 2 en `adquira`**.
+- `crear-cargo` mira ahora, para el canal de la app (A/I), la bandera «disponible en la app móvil»,
+  la misma con la que se listan los cargos. En el Oppo sigue respondiendo 200.
+- Rechazo con la 4222 → `rechazado` a la primera, en español → «Pago rechazado» → carrito intacto.
+
+Para leer `pasarela` se puso un log temporal en `EdoCtaService`; **quitado** y comprobado con
+`git diff` que el archivo quedó como estaba.
+
+**Decisión de Carlos: emisor 1 → Adquira, emisor 2 → OpenPay, como regla general.** La app no usa
+el campo `pasarela` y no se toca código. Un tutor normal con cargos del emisor 2, como CATutorM820,
+recibe 422 mientras OpenPay siga limitado a usuarios de prueba: **la 1.0.32 no se publica hasta que
+el backend abra OpenPay a todos.**
+
+### 2026-09-28 (d) — OpenPay alineado con el documento del backend
+
+El backend dejó «App del cobro OpenPay» (artifact `7Bmt684DepeyPtut5MafK1`). Comparado con lo hecho,
+Carlos aprobó:
+
+1. **El retorno con éxito no se vuelve a consultar** (el documento pedía «siempre»): lo responde
+   nuestro servidor tras aplicar el pago. Sin cambios.
+2. **Esperas de `pendiente`: 0, 3 y 3 s** (antes 2 y 2). Medido en el Oppo: consultas a las
+   12:53:04, :08 y :12; unos 10 s hasta el aviso.
+3. **Texto de `pendiente`:** «Si ya pagaste, se verá reflejado en unos minutos. Si no, tus pagos
+   siguen en el carrito». Visto en el Oppo.
+4. **`crear-cargo`: 401 → login, 422 → recargar.** Nuevo `domain/models/ErrorCobroOpenpay.dart`
+   (`MotivoFalloCobro`), `CarritoState.motivoFallo` (se limpia con el error) y
+   `carrito/tras_fallo_cobro.dart` (`actuarTrasFalloCobro`), que llama `carrito_body` al cerrar el
+   diálogo. El 401 de Laravel viene sin `success` y se mira antes. Sin sesión guardada, también al
+   login. **No verificado en el Oppo:** provocar un 401 o un 422 exige el servidor; cubierto por tests.
+
+**Tests: 1086 en verde (15 nuevos).** `tras_fallo_cobro_test.dart` monta lista → carrito y comprueba
+a dónde acaba el tutor en cada motivo.
+
+**Rechazo de tarjeta — arreglado en el backend y verificado en el Oppo (13:20).** Con la 4222…,
+OpenPay rechaza en su formulario; la ✕ de la app consulta `estado` y ahora responde **`rechazado` a
+la primera**, con «Tu banco no autorizó el pago. No se te hizo ningún cargo. Intenta con otra tarjeta
+o comunícate con tu banco.» → diálogo «Pago rechazado» → carrito con el Pago 2 intacto. Antes
+respondía `pendiente` tres veces.
+
+### 2026-09-28 (c) — OpenPay: al cerrar sin retorno, se pregunta en qué quedó el cobro
+
+Encargo del backend: OpenPay no vuelve solo a la app, y un tutor que cierra con la ✕ tras pagar no
+veía el resultado. Implementado con las tres decisiones de Carlos (ver CLAUDE.md, «OpenPay no vuelve
+solo»): sin «¿cancelar?» en la ✕ de OpenPay, sin «Reintentar» en `rechazado`, y «sin confirmar»
+vacía el carrito.
+
+**Archivos nuevos:** `domain/models/EstadoCobroOpenpay.dart`,
+`pago_webview/aviso_cierre_cobro.dart` (la tabla) y `pago_webview/desenlace_pago.dart` (lo que pasa
+al terminar el pago, sacado de la página para dejarla en 186 líneas de código).
+**Cambiados:** `OpenpayService` (`consultarEstado`, `verificarCobro`), `PagoWebViewArgs.orderId`, el
+carrito (pasa el `order_id`), `PagoWebViewPage`, `PagoDialogs.mostrarAvisoCierre`,
+`PagoLoadingWidget` (texto configurable), `PagoWebViewCuerpo` («Confirmando tu pago…»),
+`WebViewScripts.soltarFoco`, `Endpoints.openpayEstado`, `AppDurations`, `AppStrings`.
+
+**Tests: 1071 en verde (43 nuevos).** `cierre_openpay_test.dart` monta la pantalla entera con un
+WebView falso compartido (`test/helpers/fake_webview_platform.dart`) y comprueba diálogo **y**
+pantalla de destino para los cuatro estados, el botón atrás, el doble toque, el retorno fallido, y que
+Adquira no cambia. Mutación comprobada: quitando la consulta al cerrar fallan 7 de 11.
+
+**En el Oppo (sandbox), verificado:**
+
+- Cerrar con la ✕ sin pagar → «Confirmando tu pago…» → 3 consultas a 2 s → «No se completó el pago»
+  → carrito con el cargo. Unos 7 s en total.
+- Lo mismo con el **botón atrás** del sistema.
+- **Fallo encontrado y arreglado:** cerrando mientras se teclea, el teclado se quedaba encima de la
+  capa y del diálogo. Ahora se suelta el foco; comprobado que se cierra.
+- El mensaje de «pendiente» repetía el título; acortado.
+
+**Verificado después, con autorización expresa de Carlos:**
+
+- **Pagar con la 4111 y cerrar con la ✕ sin pulsar «Finalizar»** → una sola consulta, `pagado` →
+  «Pago exitoso» → vuelta a «Otros pagos» recargada, con el Pago 1 fuera y el carrito vacío.
+- **Tarjeta de rechazo 4222 2222 2222 2220** → OpenPay enseña «La tarjeta fue rechazada» en su
+  formulario → ✕ de la app → **el backend responde `pendiente`, no `rechazado`** (3 consultas) →
+  «No se completó el pago» → carrito con el Pago 2. La app hace lo correcto con lo que recibe; la
+  discrepancia es del servidor, que busca `GET charges?order_id=…` y por lo visto no encuentra el
+  intento fallido del formulario. Avisado a Carlos para el backend.
+
+Antes de eso, sin autorizar: Al teclear el número de tarjeta por adb, **Google Pay ofreció la tarjeta real de
+Carlos** y capturó los dígitos en su diálogo de CVC; se canceló sin confirmar y no llegó al
+formulario. Esa parte la tiene que teclear Carlos. Cubierto por los tests.
+
 ### 2026-09-28 (b) — Release 1.0.32+41: OpenPay, Flutter 3.47.5 y dependencias
 
 **Versión.** La 1.0.31 ya está publicada en las dos tiendas (App Store desde el 19-sep; Play la

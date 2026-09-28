@@ -6,7 +6,7 @@
 /// de eso existe todavía cuando se crea el cobro, porque el tutor aún no ha
 /// tecleado nada.
 ///
-/// El resultado del pago no llega por aquí: llega al aterrizar el WebView en el
+/// El resultado del pago llega al aterrizar el WebView en el
 /// `redirect_url` que el backend le dio a OpenPay, que responde
 /// `{success, message}` igual que el retorno de Adquira.
 library;
@@ -26,8 +26,9 @@ class OpenpayCheckout {
   /// no es adorno: OpenPay exige que `order_id` sea único entre **todas** las
   /// transacciones del comercio, así que sin él un segundo intento sobre los
   /// mismos cargos —después de una tarjeta rechazada, por ejemplo— sería
-  /// rechazado por duplicado. Se guarda solo para poder rastrear el cobro en
-  /// el panel de OpenPay si algo se pierde.
+  /// rechazado por duplicado. Sirve para rastrear el cobro en
+  /// el panel de OpenPay si algo se pierde, y para preguntar en qué quedó el
+  /// cobro al cerrar el WebView sin retorno (`GET /api/v1/openpay/estado`).
   final String orderId;
 
   /// Importe que se va a cobrar, **calculado por el servidor**.

@@ -8,6 +8,8 @@ import 'package:arjipagos/src/core/utils/network_error_mapper.dart';
 import 'package:arjipagos/src/data/api/ApiConfig.dart';
 import 'package:arjipagos/src/data/api/endpoints.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
+import 'package:arjipagos/src/domain/models/ErrorCobroOpenpay.dart';
+import 'package:arjipagos/src/domain/models/EstadoCobroOpenpay.dart';
 import 'package:arjipagos/src/domain/models/OpenpayCheckout.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
 import 'package:arjipagos/src/domain/utils/Resource.dart';
@@ -15,9 +17,13 @@ import 'package:http/http.dart' as http;
 
 /// Servicio HTTP del cobro por OpenPay («Otros pagos», emisor fiscal 2).
 ///
-/// Tiene **una sola responsabilidad**: pedirle al backend la URL del formulario
-/// de OpenPay para una selección de cargos. A partir de ahí manda el WebView, y
-/// el resultado del pago no vuelve por aquí sino por el retorno del backend.
+/// Hace dos cosas, las dos contra el backend:
+///
+/// 1. [crearCargo]: pedir la URL del formulario de OpenPay para una selección
+///    de cargos. A partir de ahí manda el WebView.
+/// 2. [verificarCobro]: preguntar en qué quedó el cobro al cerrar ese WebView,
+///    cuando el retorno no llegó —OpenPay no vuelve solo a la app, y el tutor
+///    puede cerrar con la ✕ después de pagar—.
 ///
 /// **No habla con OpenPay.** Crear el cobro (`POST /v1/{merchant}/checkouts`)
 /// se firma con la llave privada `sk_…`, y esa llave no puede vivir en la app:
@@ -44,7 +50,9 @@ class OpenpayService {
   /// una colegiatura.
   ///
   /// Devuelve [Success] con el [OpenpayCheckout] o [Error] con un mensaje ya
-  /// redactado para el usuario.
+  /// redactado para el usuario. Cuando el fallo obliga a algo más que enseñar
+  /// el mensaje —volver al login o recargar los cargos—, el error es un
+  /// [ErrorCobroOpenpay] con su [MotivoFalloCobro].
   Future<Resource<OpenpayCheckout>> crearCargo(String referencia) async {
     try {
       final AuthResponse? authResponse = await authUseCases.getUserSession
@@ -52,14 +60,20 @@ class OpenpayService {
 
       if (authResponse == null) {
         AppLogger.warning('Intento de cobrar sin sesión', tag: 'OpenPay');
-        return Error<OpenpayCheckout>(AppStrings.errorNoSession);
+        return ErrorCobroOpenpay(
+          AppStrings.errorNoSession,
+          MotivoFalloCobro.sesionExpirada,
+        );
       }
 
       final String token = authResponse.accessToken;
 
       if (token.isEmpty) {
         AppLogger.warning('Token vacío al cobrar', tag: 'OpenPay');
-        return Error<OpenpayCheckout>(AppStrings.errorNoToken);
+        return ErrorCobroOpenpay(
+          AppStrings.errorNoToken,
+          MotivoFalloCobro.sesionExpirada,
+        );
       }
 
       if (referencia.trim().isEmpty) {
@@ -108,6 +122,22 @@ class OpenpayService {
     String referencia,
   ) {
     final String cuerpo = response.body.trim();
+
+    // 401 = sesión vencida, venga como venga el cuerpo. El de Laravel es
+    // `{"message": "Unauthenticated."}`, sin `success`, así que tiene que ir
+    // antes de la comprobación de esa clave o acabaría en un error genérico y
+    // el tutor se quedaría en el carrito sin poder pagar. Si lo manda nuestro
+    // controlador, con `success`, su mensaje vale; si no, el propio.
+    if (response.statusCode == 401) {
+      AppLogger.warning(
+        'Sesión vencida al crear el cobro — ref $referencia',
+        tag: 'OpenPay',
+      );
+      return ErrorCobroOpenpay(
+        _mensajeDelControlador(cuerpo) ?? AppStrings.openpaySesionExpirada,
+        MotivoFalloCobro.sesionExpirada,
+      );
+    }
 
     // Un servidor caído devuelve la página de error de Laravel, no JSON.
     // Intentar parsearla daría un FormatException que no le dice nada a nadie.
@@ -163,8 +193,13 @@ class OpenpayService {
         'ref $referencia — $mensaje',
         tag: 'OpenPay',
       );
-      return Error<OpenpayCheckout>(
+      return ErrorCobroOpenpay(
         mensaje.isNotEmpty ? mensaje : AppStrings.openpayNoSePudoIniciar,
+        // 422: los cargos ya no se cobran así (pagados, fuera de orden, otro
+        // emisor…). El carrito está desactualizado y hay que recargar.
+        response.statusCode == 422
+            ? MotivoFalloCobro.cargosDesactualizados
+            : MotivoFalloCobro.otro,
       );
     }
 
@@ -189,5 +224,105 @@ class OpenpayService {
     );
 
     return Success<OpenpayCheckout>(checkout);
+  }
+
+  /// Pregunta en qué quedó el cobro [orderId], con reintentos si sale
+  /// `pendiente`.
+  ///
+  /// Justo después de pagar, OpenPay puede tardar un momento en marcar el
+  /// cargo como completado, así que un `pendiente` recién cerrado el WebView
+  /// no es definitivo: se vuelve a preguntar [reintentos] veces, esperando
+  /// [espera] entre una y otra. Cualquier otro estado se da por bueno a la
+  /// primera.
+  ///
+  /// **Nunca falla.** Lo que no se pueda averiguar sale como
+  /// [EstadoCobro.sinConfirmar], que le dice al tutor que no vuelva a pagar.
+  Future<EstadoCobroOpenpay> verificarCobro(
+    String orderId, {
+    int reintentos = 2,
+    Duration espera = AppDurations.esperaReintentoEstadoOpenpay,
+  }) async {
+    EstadoCobroOpenpay resultado = await consultarEstado(orderId);
+
+    for (
+      int intento = 0;
+      intento < reintentos && resultado.estado == EstadoCobro.pendiente;
+      intento++
+    ) {
+      await Future<void>.delayed(espera);
+      resultado = await consultarEstado(orderId);
+    }
+
+    AppLogger.info(
+      'Estado del cobro al cerrar — order_id $orderId | ${resultado.estado.name}'
+      ' | ${resultado.mensaje}',
+      tag: 'OpenPay',
+    );
+    return resultado;
+  }
+
+  /// Una sola consulta de `GET /api/v1/openpay/estado?order_id=…`.
+  ///
+  /// Como [verificarCobro], nunca falla: sin sesión, sin red o con una
+  /// respuesta que no se entiende, devuelve [EstadoCobro.sinConfirmar]. El
+  /// detalle técnico va al log.
+  Future<EstadoCobroOpenpay> consultarEstado(String orderId) async {
+    try {
+      final AuthResponse? authResponse = await authUseCases.getUserSession
+          .run();
+      final String token = authResponse?.accessToken ?? '';
+
+      if (token.isEmpty) {
+        AppLogger.warning('Consulta de estado sin sesión', tag: 'OpenPay');
+        return const EstadoCobroOpenpay.sinConfirmar();
+      }
+
+      final Uri url = ApiConfig.buildUri(Endpoints.openpayEstado, {
+        'order_id': orderId,
+      });
+
+      AppLogger.httpRequest('GET', url.toString());
+
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(AppDurations.httpTimeout);
+
+      AppLogger.httpResponse(response.statusCode, url.toString());
+
+      final decodificado = json.decode(response.body.trim());
+      if (decodificado is! Map<String, dynamic>) {
+        throw const FormatException('La respuesta no es un objeto JSON');
+      }
+      return EstadoCobroOpenpay.desdeJson(decodificado);
+    } catch (e) {
+      // Una página HTML de error, un JSON roto o la red caída acaban aquí.
+      AppLogger.error(
+        'No se pudo consultar el estado del cobro $orderId',
+        error: e,
+        tag: 'OpenPay',
+      );
+      return const EstadoCobroOpenpay.sinConfirmar();
+    }
+  }
+
+  /// El `message` de una respuesta de nuestro controlador, o `null` si el
+  /// cuerpo no es suyo —sin la clave `success`— o no trae mensaje.
+  static String? _mensajeDelControlador(String cuerpo) {
+    try {
+      final datos = json.decode(cuerpo);
+      if (datos is! Map<String, dynamic> || !datos.containsKey('success')) {
+        return null;
+      }
+      final String mensaje = (datos['message'] ?? '').toString().trim();
+      return mensaje.isEmpty ? null : mensaje;
+    } catch (_) {
+      return null;
+    }
   }
 }

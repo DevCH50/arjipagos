@@ -7,6 +7,7 @@ import 'package:arjipagos/src/data/api/pasarela_pago.dart';
 import 'package:arjipagos/src/data/dataSource/local/SeleccionPagosStorage.dart';
 import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
 import 'package:arjipagos/src/domain/models/AuthResponse.dart';
+import 'package:arjipagos/src/domain/models/ErrorCobroOpenpay.dart';
 import 'package:arjipagos/src/domain/models/OpenpayCheckout.dart';
 import 'package:arjipagos/src/domain/models/PagoRequest.dart';
 import 'package:arjipagos/src/domain/useCases/auth/AuthUseCases.dart';
@@ -371,7 +372,17 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
           ? resultado.msg
           : AppStrings.openpayNoSePudoIniciar;
 
-      emit(state.copyWith(isProcesandoPago: false, errorMessage: mensaje));
+      emit(
+        state.copyWith(
+          isProcesandoPago: false,
+          errorMessage: mensaje,
+          // El carrito decide qué hacer al cerrar el diálogo: login (401),
+          // recargar los cargos (422) o nada.
+          motivoFallo: resultado is ErrorCobroOpenpay
+              ? resultado.motivo
+              : MotivoFalloCobro.otro,
+        ),
+      );
       return;
     }
 
@@ -388,6 +399,9 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
           // se lo manda a OpenPay: sería filtrarle la sesión del tutor a un
           // tercero. Ver `PagoWebViewPage._cargarPagina`.
           'token': authResponse.accessToken,
+          // Para preguntar en qué quedó el cobro si el tutor cierra el
+          // WebView sin que llegue el retorno. Ver `PagoWebViewArgs.orderId`.
+          'orderId': checkout.orderId,
         },
       ),
     );

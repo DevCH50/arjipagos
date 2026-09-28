@@ -1,18 +1,16 @@
 import 'package:arjipagos/injection.dart';
-import 'package:arjipagos/src/domain/useCases/resena/ResenaUseCases.dart';
 import 'package:arjipagos/src/core/constants/app_strings.dart';
 
-import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
-import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
-import 'package:arjipagos/src/presentation/pages/edo_cta/bloc/EdoCtaListEvent.dart';
-import 'package:arjipagos/src/data/api/configuracion_adquira.dart';
-import 'package:arjipagos/src/di/RegistroEmisores.dart';
+import 'package:arjipagos/src/data/dataSource/remote/services/OpenpayService.dart';
 import 'package:arjipagos/src/domain/models/EstadoDeCuenta.dart';
+import 'package:arjipagos/src/presentation/pages/pago_webview/aviso_cierre_cobro.dart';
+import 'package:arjipagos/src/presentation/pages/pago_webview/desenlace_pago.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/pago_webview_args.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/peticion_webview.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/webview_scripts.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // Re-exportar PagoWebViewArgs para mantener compatibilidad
@@ -27,6 +25,10 @@ export 'pago_webview_args.dart';
 /// `{success, message}`, que es justo lo que busca
 /// `WebViewScripts.detectarRespuestaJson`. De ahí para abajo —el canal, los
 /// diálogos, vaciar el carrito y recargar el estado de cuenta— todo es común.
+///
+/// **OpenPay no vuelve solo a la app.** Si el tutor cierra sin pulsar su botón
+/// «Finalizar», el retorno no llega nunca; por eso, al cerrar un cobro de
+/// OpenPay, se pregunta al backend en qué quedó. Ver [_PagoWebViewPageState._confirmarSalir].
 class PagoWebViewPage extends StatefulWidget {
   const PagoWebViewPage({super.key});
 
@@ -46,21 +48,18 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
   /// Mientras sea `true`, una capa opaca tapa el WebView: el retorno es JSON
   /// sin estilo, y sin esa capa el padre lo leía en crudo detrás del diálogo.
   bool _respuestaRecibida = false;
+
+  /// Si se está preguntando al backend en qué quedó el cobro de OpenPay.
+  bool _verificando = false;
   PagoWebViewArgs? _currentArgs;
 
-  /// Emisor fiscal que se está cobrando, tomado de los argumentos de la ruta.
+  /// Qué pasa al terminar el pago, para el emisor que se está cobrando.
   ///
-  /// Si faltara —no debería—, se asume el predeterminado antes que dejar el
-  /// pago sin nadie a quien avisar del resultado.
-  int get _emisorFiscalId =>
-      _currentArgs?.emisorFiscalId ?? kEmisorFiscalPredeterminado;
-
-  /// Carrito del emisor que se está cobrando.
-  ///
-  /// Va por el registro y no por `context.read`: hay un carrito por emisor y
-  /// esta pantalla tiene que avisar exactamente al suyo.
-  CarritoBloc get _carritoDelEmisor =>
-      locator<CarritoBlocPorEmisor>().de(_emisorFiscalId);
+  /// Si faltara el emisor en los argumentos —no debería—, se asume el
+  /// predeterminado antes que dejar el pago sin nadie a quien avisar.
+  DesenlacePago get _desenlace => DesenlacePago(
+    _currentArgs?.emisorFiscalId ?? kEmisorFiscalPredeterminado,
+  );
 
   @override
   void initState() {
@@ -163,65 +162,62 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     _pagoProcessed = true;
     setState(() => _respuestaRecibida = true);
     if (result.success) {
-      _carritoDelEmisor.add(const CarritoPagoExitosoEvent());
-      // Suma el pago a la cuenta de la política de reseñas antes de mostrar el
-      // diálogo, para que al cerrarlo el contador ya esté al día.
-      locator<ResenaUseCases>().registrarPagoExitoso.run();
-      _mostrarDialogoExito();
+      _desenlace.exito(context);
+    } else if (_currentArgs?.verificaAlCerrar ?? false) {
+      // En OpenPay un retorno fallido no se cree sin más: puede ser «pagaste
+      // pero no identificamos los cargos», donde el dinero sí salió. Manda el
+      // estado del cobro, igual que al cerrar con la ✕.
+      _verificarCobro();
     } else {
-      _carritoDelEmisor.add(CarritoPagoFallidoEvent(result.message));
-      _mostrarDialogoError(result.message);
+      _desenlace.fallo(context, result.message, onReintentar: _recargarWebView);
     }
   }
 
-  void _mostrarDialogoExito() {
-    PagoDialogs.mostrarExito(
-      context: context,
-      onAceptar: () {
-        // Solo se recarga la lista del emisor cobrado. El otro no se entera:
-        // su selección y su carrito quedan intactos.
-        locator<EdoCtaListBlocPorEmisor>()
-            .de(_emisorFiscalId)
-            .add(const EdoCtaListRefreshEvent());
-        // Y se vuelve a SU pantalla, no a la del otro emisor.
-        final String ruta = ConfiguracionAdquira.para(_emisorFiscalId).ruta;
-        Navigator.of(context).popUntil((route) => route.settings.name == ruta);
-        _invitarACalificar();
-      },
-    );
-  }
-
-  /// Invita a calificar la app, si la política lo permite.
+  /// Cerrar con la ✕ o con el botón atrás.
   ///
-  /// Va después del `popUntil` y en un post-frame a propósito: la hoja de
-  /// reseña la pinta el sistema encima de lo que haya, y debe salir sobre el
-  /// estado de cuenta ya restaurado, no sobre el WebView que se está cerrando.
-  ///
-  /// No se espera el resultado ni se avisa de nada: el caso de uso decide si
-  /// toca, y ni Apple ni Google informan de si la hoja llegó a mostrarse.
-  void _invitarACalificar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      locator<ResenaUseCases>().solicitarResena.run();
-    });
-  }
-
-  void _mostrarDialogoError(String mensaje) {
-    PagoDialogs.mostrarError(
-      context: context,
-      mensaje: mensaje,
-      onVolver: () => Navigator.pop(context),
-      onReintentar: _recargarWebView,
-    );
-  }
-
+  /// En un cobro de OpenPay sin retorno **no se pregunta** «¿cancelar el
+  /// pago?»: el tutor puede estar en el comprobante de un pago ya hecho, y esa
+  /// pregunta lo asustaría. Se consulta en qué quedó y se le dice. En Adquira,
+  /// o si ya se procesó el retorno, se cierra como siempre.
   void _confirmarSalir() {
-    PagoDialogs.confirmarCancelar(
-      context: context,
-      onCancelar: () {
-        _carritoDelEmisor.add(const CarritoCancelarPagoEvent());
-        Navigator.pop(context);
-      },
+    if (_verificando) {
+      return;
+    }
+    if (!_pagoProcessed && (_currentArgs?.verificaAlCerrar ?? false)) {
+      _verificarCobro();
+      return;
+    }
+    _desenlace.confirmarCancelar(context);
+  }
+
+  /// Pregunta al backend en qué quedó el cobro y enseña el diálogo que toca.
+  ///
+  /// La tabla de estados está en [AvisoCierreCobro]; `pagado` usa el diálogo
+  /// de éxito de siempre.
+  Future<void> _verificarCobro() async {
+    // Sin esto el teclado del campo de la tarjeta se queda abierto encima.
+    _controller.runJavaScript(WebViewScripts.soltarFoco);
+    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+    setState(() => _verificando = true);
+    _pagoProcessed = true;
+
+    final resultado = await locator<OpenpayService>().verificarCobro(
+      _currentArgs!.orderId!,
     );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _verificando = false;
+      _respuestaRecibida = true;
+    });
+
+    final AvisoCierreCobro? aviso = AvisoCierreCobro.para(resultado);
+    if (aviso == null) {
+      _desenlace.exito(context);
+    } else {
+      _desenlace.avisoDeCierre(context, aviso);
+    }
   }
 
   @override
@@ -246,6 +242,7 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
           errorMessage: _errorMessage,
           cargando: _isLoading,
           respuestaRecibida: _respuestaRecibida,
+          verificando: _verificando,
           onReintentar: () {
             if (_currentArgs != null) {
               _cargarPagina(_currentArgs!);

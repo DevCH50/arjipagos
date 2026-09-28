@@ -1,3 +1,4 @@
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/pago_error_widget.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/pago_loading_widget.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 ///
 /// 1. El WebView, o el error de carga si la página no se pudo abrir.
 /// 2. El indicador de carga mientras la pasarela navega.
-/// 3. Una capa opaca cuando ya llegó la respuesta del retorno.
+/// 3. Una capa opaca cuando ya llegó la respuesta del retorno, o mientras se
+///    pregunta al backend en qué quedó el cobro (con «Confirmando tu pago…»).
 ///
 /// La capa 3 existe porque el retorno responde `{success, message}` sin
 /// ningún estilo, y detrás del diálogo de resultado el padre leía ese JSON en
@@ -23,6 +25,7 @@ class PagoWebViewCuerpo extends StatelessWidget {
     required this.errorMessage,
     required this.cargando,
     required this.respuestaRecibida,
+    required this.verificando,
     required this.onReintentar,
   });
 
@@ -35,6 +38,9 @@ class PagoWebViewCuerpo extends StatelessWidget {
 
   /// Si ya se detectó la respuesta del retorno y hay que tapar el WebView.
   final bool respuestaRecibida;
+
+  /// Si se está consultando el estado del cobro de OpenPay al cerrar.
+  final bool verificando;
 
   /// Vuelve a abrir la pasarela desde el estado de error.
   final VoidCallback onReintentar;
@@ -54,10 +60,15 @@ class PagoWebViewCuerpo extends StatelessWidget {
           else
             WebViewWidget(controller: controller),
           if (cargando) const PagoLoadingWidget(),
-          if (respuestaRecibida)
+          if (respuestaRecibida || verificando)
             Positioned.fill(
               child: ColoredBox(
                 color: Theme.of(context).scaffoldBackgroundColor,
+                child: verificando
+                    ? const PagoLoadingWidget(
+                        mensaje: AppStrings.openpayVerificando,
+                      )
+                    : null,
               ),
             ),
         ],

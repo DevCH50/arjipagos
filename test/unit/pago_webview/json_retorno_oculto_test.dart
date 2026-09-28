@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/widgets/pago_webview_cuerpo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
+
+import '../../helpers/fake_webview_platform.dart';
 
 /// Test guardián: el JSON del retorno no se le enseña al padre.
 ///
@@ -19,17 +21,23 @@ import 'package:webview_flutter_platform_interface/webview_flutter_platform_inte
 /// cuándo se quita lo decide `PagoWebViewPage`, que no se puede montar sin la
 /// vista nativa, y eso se comprueba sobre su código fuente.
 void main() {
-  setUpAll(() => WebViewPlatform.instance = _FakeWebViewPlatform());
+  setUpAll(() => WebViewPlatform.instance = FakeWebViewPlatform());
 
-  /// Busca la capa: un `ColoredBox` que llena el `Stack` por completo.
-  Finder capa() => find.descendant(
+  /// Busca la capa: el `ColoredBox` que llena el `Stack` por completo.
+  ///
+  /// `.first` porque, mientras se consulta el estado, dentro va el indicador
+  /// de carga, que pinta su propio fondo con otro `ColoredBox`.
+  Finder capa() => find
+      .descendant(
         of: find.byType(Positioned),
         matching: find.byType(ColoredBox),
-      );
+      )
+      .first;
 
   Future<void> montar(
     WidgetTester tester, {
     required bool respuestaRecibida,
+    bool verificando = false,
     ThemeData? tema,
   }) {
     return tester.pumpWidget(
@@ -41,6 +49,7 @@ void main() {
             errorMessage: null,
             cargando: false,
             respuestaRecibida: respuestaRecibida,
+            verificando: verificando,
             onReintentar: () {},
           ),
         ),
@@ -54,7 +63,7 @@ void main() {
       await montar(tester, respuestaRecibida: false);
 
       expect(find.byType(WebViewWidget), findsOneWidget);
-      expect(capa(), findsNothing);
+      expect(find.byType(Positioned), findsNothing);
     });
 
     for (final brillo in Brightness.values) {
@@ -73,6 +82,26 @@ void main() {
         );
       });
     }
+  });
+
+  group('PagoWebViewCuerpo — consultando el estado de OpenPay', () {
+    testWidgets('tapa el WebView y dice que está confirmando el pago', (
+      tester,
+    ) async {
+      await montar(tester, respuestaRecibida: false, verificando: true);
+
+      expect(capa(), findsOneWidget);
+      expect(find.text(AppStrings.openpayVerificando), findsOneWidget);
+    });
+
+    testWidgets('con la respuesta ya recibida, la capa va sin texto', (
+      tester,
+    ) async {
+      await montar(tester, respuestaRecibida: true);
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text(AppStrings.openpayVerificando), findsNothing);
+    });
   });
 
   group('PagoWebViewPage', () {
@@ -96,30 +125,4 @@ void main() {
       );
     });
   });
-}
-
-/// Plataforma de WebView falsa: el widget no pinta nada nativo.
-class _FakeWebViewPlatform extends WebViewPlatform {
-  @override
-  PlatformWebViewWidget createPlatformWebViewWidget(
-    PlatformWebViewWidgetCreationParams params,
-  ) =>
-      _FakePlatformWebViewWidget(params);
-
-  @override
-  PlatformWebViewController createPlatformWebViewController(
-    PlatformWebViewControllerCreationParams params,
-  ) =>
-      _FakePlatformWebViewController(params);
-}
-
-class _FakePlatformWebViewWidget extends PlatformWebViewWidget {
-  _FakePlatformWebViewWidget(super.params) : super.implementation();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.expand();
-}
-
-class _FakePlatformWebViewController extends PlatformWebViewController {
-  _FakePlatformWebViewController(super.params) : super.implementation();
 }

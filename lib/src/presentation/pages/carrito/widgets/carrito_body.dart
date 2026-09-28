@@ -2,6 +2,7 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoBloc.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoEvent.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/bloc/CarritoState.dart';
+import 'package:arjipagos/src/presentation/pages/carrito/tras_fallo_cobro.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_alumno_card.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_empty_widget.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_loading_widget.dart';
@@ -40,7 +41,7 @@ class CarritoBody extends StatelessWidget {
   void _onStateChange(BuildContext context, CarritoState state) {
     // Mostrar diálogo de error si existe
     if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-      _mostrarDialogoError(context, state.errorMessage!);
+      _mostrarDialogoError(context, state);
     }
 
     // Navegar al WebView de pago
@@ -59,12 +60,14 @@ class CarritoBody extends StatelessWidget {
           // Para que el WebView avise al carrito correcto y vuelva a la
           // pantalla correcta al terminar.
           emisorFiscalId: state.emisorFiscalActivo,
+          // Solo lo trae OpenPay; en Adquira no existe y queda en null.
+          orderId: state.pagoData!['orderId'] as String?,
         ),
       );
     }
   }
 
-  void _mostrarDialogoError(BuildContext context, String mensaje) {
+  void _mostrarDialogoError(BuildContext context, CarritoState state) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -74,7 +77,7 @@ class CarritoBody extends StatelessWidget {
           size: 48,
         ),
         title: const Text(AppStrings.error),
-        content: Text(mensaje),
+        content: Text(state.errorMessage!),
         actions: [
           TextButton(
             onPressed: () {
@@ -83,6 +86,13 @@ class CarritoBody extends StatelessWidget {
               // siga en el estado, cualquier cambio posterior del carrito
               // volvería a sacar este mismo aviso.
               context.read<CarritoBloc>().add(const CarritoLimpiarErrorEvent());
+              // Si el cobro de OpenPay no se pudo crear, puede tocar ir al
+              // login (401) o recargar los cargos (422).
+              actuarTrasFalloCobro(
+                context,
+                motivo: state.motivoFallo,
+                emisorFiscalId: state.emisorFiscalActivo,
+              );
             },
             child: const Text(AppStrings.accept),
           ),
