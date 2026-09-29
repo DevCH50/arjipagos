@@ -292,7 +292,7 @@ class OpenpayService {
               'Authorization': 'Bearer $token',
             },
           )
-          .timeout(AppDurations.httpTimeout);
+          .timeout(AppDurations.timeoutEstadoOpenpay);
 
       AppLogger.httpResponse(response.statusCode, url.toString());
 

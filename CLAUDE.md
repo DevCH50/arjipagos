@@ -695,6 +695,12 @@ con la ✕ —o con el botón atrás—, el retorno no llega nunca. Desde el 202
 reintenta dos veces con **3 s** entre medias (el backend sugería 3 y 6; se quedó en 3 y 3). **En el
 Oppo tarda unos 10 s** cuando se cierra sin pagar, porque cada consulta tarda ~1 s.
 
+**Una consulta fallida también se reintenta** (red caída, un 502, un JSON sin `estado`:
+`EstadoCobroOpenpay.consultaFallida`), desde el 2026-09-29; el `sin_verificar` del backend no, porque
+es una respuesta de verdad. Y cada consulta tiene **su propio timeout de 20 s**
+(`AppDurations.timeoutEstadoOpenpay`, decisión de Carlos), no los 30 s generales: el tutor la espera
+delante de una capa. Peor caso, ~66 s. `crear-cargo` sigue con los 30 s.
+
 El documento del backend que lo pide es «App del cobro OpenPay»
 (`https://claude.ai/artifact/7Bmt684DepeyPtut5MafK1`), pareja del de backend
 (`https://claude.ai/artifact/8mhy57Y7QXXeu1YQpqeC3f`).

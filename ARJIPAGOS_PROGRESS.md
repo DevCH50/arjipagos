@@ -32,6 +32,38 @@ plugins de Kotlin. `pub outdated`: nada sube dentro de los rangos; los saltos ma
 `cupertino_icons` 2) siguen fuera, por los motivos de `CLAUDE.md`. Versión sin cambiar: la
 1.0.32+41 aún no está publicada.
 
+**Probado en el Oppo** (`flutter run` debug, CATutorP811, OpenPay sandbox):
+
+- «Otros pagos»: nuevos cargos de prueba «OPENPAY 1 PREESCOLAR 26 / 27 PAGO 2…5» de $1.00; el
+  orden ascendente bloquea del 3 al 5 y al marcar el 2 se libera el 3. Refresco del AppBar sin fallo.
+- Pagar → `crear-cargo` 200 → formulario de OpenPay con $1.00 y el concepto. Cerrar con la ✕ sin
+  pagar: 3 consultas a 3 s → `pendiente` → «No se completó el pago» → vuelve al carrito con el pago.
+- **El arreglo, de verdad:** WiFi y datos cortados al pulsar la ✕ (`svc wifi/data disable`). 1.ª
+  consulta: `Failed host lookup`; 2.ª: `connection abort` (tardó ~29 s mientras volvía la red);
+  3.ª: 200 → `pendiente` y el carrito se conserva. Antes del arreglo la 1.ª caída habría dado
+  «No pudimos confirmar» y vaciado el carrito.
+- Pagos Pendientes y Facturas: estado vacío con «Reintentar». Pagos Realizados: el pago del
+  2026-09-28 (T8550) y su ticket en el visor pdfx. «Otros pagos» en tema oscuro, correcto.
+- Cero excepciones de Flutter en el log. Al arrancar, `FlutterSecureStorage` avisa
+  «EncryptedSharedPreferences initialization failed … bad base-64 … Falling back to custom
+  ciphers»: lo resuelve el propio plugin y la sesión se conservó.
+- Carrito vaciado y modo claro del teléfono restaurado al terminar.
+
+**Timeout propio de 20 s para la consulta del estado** (Carlos pidió «unos 15 o 20 segundos»; se
+probó con 15 y luego fijó 20). La consulta colgada de la prueba anterior agotó los 30 s de
+`httpTimeout`. `AppDurations.timeoutEstadoOpenpay` = 20 s, solo en `OpenpayService.consultarEstado`;
+`crear-cargo` sigue con 30. Peor caso al cerrar: 3 × 20 + 2 × 3 ≈ 66 s (antes ≈ 96 s). Test nuevo
+con reloj falso (`testWidgets`): a los 19 s aún espera, a los 21 s da `sinConfirmar` con
+`consultaFallida`.
+
+**Probado en el Oppo con los 20 s**, repitiendo el corte de red al pulsar la ✕: 1.ª consulta
+`Failed host lookup`; 2.ª **colgada y cortada a los 20,0 s exactos** (`TimeoutException after
+0:00:20`, 10:54:55 → 10:55:15), frente a los ~29 s de antes; 3.ª 200 → `pendiente` → «No se
+completó el pago» y el carrito conserva el pago. Espera total ~27 s. Cero excepciones de Flutter;
+carrito vaciado y red restaurada al terminar.
+Comprobado que el test **falla** si se vuelve a poner `httpTimeout`. `analyze` limpio y **1090
+tests** en verde.
+
 ### 2026-09-28 — Primer cobro real por OpenPay (sandbox), en el Oppo
 
 Carlos puso las llaves de sandbox en el backend. Prueba con `flutter run` (debug), usuario con el

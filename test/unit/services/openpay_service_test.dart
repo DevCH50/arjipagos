@@ -583,6 +583,27 @@ void main() {
       expect(resultado.consultaFallida, isTrue);
     });
 
+    // Visto en el Oppo el 2026-09-29: con la red volviendo, una consulta se
+    // quedó colgada los 30 s del timeout general. La del estado tiene el suyo,
+    // más corto. `testWidgets` pone el reloj falso: no se esperan 20 s reales.
+    testWidgets('una consulta colgada se corta a los 20 s, no a los 30',
+        (tester) async {
+      conSesion(TestAuthResponse.valid);
+      EstadoCobroOpenpay? resultado;
+
+      http.runWithClient(
+        () => service.verificarCobro('ref-N1', reintentos: 0),
+        () => MockClient((_) => Completer<http.Response>().future),
+      ).then((r) => resultado = r);
+
+      await tester.pump(const Duration(seconds: 19));
+      expect(resultado, isNull, reason: 'antes de 20 s aún no se rinde');
+
+      await tester.pump(const Duration(seconds: 2));
+      expect(resultado?.estado, EstadoCobro.sinConfirmar);
+      expect(resultado?.consultaFallida, isTrue);
+    });
+
     test('el sin_verificar del backend NO es un fallo: no se reintenta', () {
       final estado = EstadoCobroOpenpay.desdeJson({
         'estado': 'sin_verificar',

@@ -21,6 +21,15 @@ class AppDurations {
   /// espera unos 9 s, contando lo que tarda cada consulta (~1 s en el Oppo).
   static const Duration esperaReintentoEstadoOpenpay = Duration(seconds: 3);
 
+  /// Timeout de cada consulta de `GET /openpay/estado` (20 segundos).
+  ///
+  /// Más corto que [httpTimeout] porque el tutor la espera delante de una
+  /// capa, recién cerrado el pago, y una consulta colgada se reintenta. Visto
+  /// en el Oppo el 2026-09-29: con la red volviendo, una consulta agotó los
+  /// 30 s y la espera pasó de medio minuto. Con 20 s, el peor caso —tres
+  /// consultas colgadas y dos esperas— se queda en unos 66 s.
+  static const Duration timeoutEstadoOpenpay = Duration(seconds: 20);
+
   // ============================================================================
   // SPLASH SCREEN
   // ============================================================================
