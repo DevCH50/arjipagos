@@ -39,11 +39,31 @@ class EstadoCobroOpenpay {
   /// lo hay y uno propio cuando no.
   final String mensaje;
 
-  const EstadoCobroOpenpay(this.estado, {this.mensaje = ''});
+  /// `true` si no hubo respuesta que leer: la red falló, el servidor dio un
+  /// 502 con su página HTML, o contestó algo que no es de este endpoint.
+  ///
+  /// Distingue ese «sin confirmar» del `sin_verificar` que manda el backend:
+  /// el suyo es una respuesta de verdad y vale a la primera; éste es un
+  /// parpadeo y merece otro intento. Visto en el Oppo el 2026-09-28: un 502
+  /// suelto dejaba al tutor con «No pudimos confirmar tu pago» y el carrito
+  /// vacío, cuando la consulta siguiente respondía con normalidad.
+  final bool consultaFallida;
+
+  const EstadoCobroOpenpay(this.estado, {this.mensaje = ''})
+    : consultaFallida = false;
 
   /// Estado desconocido: no se pudo averiguar qué pasó con el cobro.
-  const EstadoCobroOpenpay.sinConfirmar({this.mensaje = ''})
-    : estado = EstadoCobro.sinConfirmar;
+  const EstadoCobroOpenpay.sinConfirmar({
+    this.mensaje = '',
+    this.consultaFallida = false,
+  }) : estado = EstadoCobro.sinConfirmar;
+
+  /// Si conviene volver a preguntar antes de enseñarle nada al tutor.
+  ///
+  /// `pendiente` puede ser un cobro que OpenPay aún termina, y una consulta
+  /// fallida no dice nada. El resto de estados son definitivos.
+  bool get convieneReintentar =>
+      estado == EstadoCobro.pendiente || consultaFallida;
 
   /// Construye el estado desde la respuesta del backend.
   ///
@@ -53,7 +73,7 @@ class EstadoCobroOpenpay {
   /// escrito para un programador.
   factory EstadoCobroOpenpay.desdeJson(Map<String, dynamic> json) {
     if (!json.containsKey('estado')) {
-      return const EstadoCobroOpenpay.sinConfirmar();
+      return const EstadoCobroOpenpay.sinConfirmar(consultaFallida: true);
     }
 
     final String mensaje = (json['message'] ?? '').toString().trim();

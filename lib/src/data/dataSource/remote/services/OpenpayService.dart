@@ -232,8 +232,9 @@ class OpenpayService {
   /// Justo después de pagar, OpenPay puede tardar un momento en marcar el
   /// cargo como completado, así que un `pendiente` recién cerrado el WebView
   /// no es definitivo: se vuelve a preguntar [reintentos] veces, esperando
-  /// [espera] entre una y otra. Cualquier otro estado se da por bueno a la
-  /// primera.
+  /// [espera] entre una y otra. Lo mismo con una consulta que falló (red, un
+  /// 502 del servidor): ver [EstadoCobroOpenpay.convieneReintentar]. Cualquier
+  /// otro estado se da por bueno a la primera.
   ///
   /// **Nunca falla.** Lo que no se pueda averiguar sale como
   /// [EstadoCobro.sinConfirmar], que le dice al tutor que no vuelva a pagar.
@@ -246,7 +247,7 @@ class OpenpayService {
 
     for (
       int intento = 0;
-      intento < reintentos && resultado.estado == EstadoCobro.pendiente;
+      intento < reintentos && resultado.convieneReintentar;
       intento++
     ) {
       await Future<void>.delayed(espera);
@@ -307,7 +308,7 @@ class OpenpayService {
         error: e,
         tag: 'OpenPay',
       );
-      return const EstadoCobroOpenpay.sinConfirmar();
+      return const EstadoCobroOpenpay.sinConfirmar(consultaFallida: true);
     }
   }
 

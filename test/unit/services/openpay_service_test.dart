@@ -539,6 +539,60 @@ void main() {
       expect(resultado.estado, EstadoCobro.pagado);
     });
 
+    // Visto en el Oppo el 2026-09-28: un 502 suelto del servidor dejaba al
+    // tutor con «No pudimos confirmar» y el carrito vacío, cuando la consulta
+    // siguiente respondía con normalidad.
+    Future<(EstadoCobroOpenpay, int)> conFallos(
+      List<http.Response> respuestas,
+    ) async {
+      conSesion(TestAuthResponse.valid);
+      var consultas = 0;
+      final resultado = await http.runWithClient(
+        () => service.verificarCobro('ref-N1', espera: Duration.zero),
+        () => MockClient((_) async {
+          final r = respuestas[consultas.clamp(0, respuestas.length - 1)];
+          consultas++;
+          return r;
+        }),
+      );
+      return (resultado, consultas);
+    }
+
+    test('un 502 suelto se reintenta y se queda con la respuesta buena',
+        () async {
+      final (resultado, consultas) = await conFallos([
+        http.Response('<html><body>502 Bad Gateway</body></html>', 502),
+        http.Response(
+          json.encode({'success': true, 'estado': 'pagado', 'message': ''}),
+          200,
+        ),
+      ]);
+
+      expect(consultas, 2);
+      expect(resultado.estado, EstadoCobro.pagado);
+    });
+
+    test('si falla siempre, tras los reintentos queda «sin confirmar»',
+        () async {
+      final (resultado, consultas) = await conFallos([
+        http.Response('<html>502</html>', 502),
+      ]);
+
+      expect(consultas, 3);
+      expect(resultado.estado, EstadoCobro.sinConfirmar);
+      expect(resultado.consultaFallida, isTrue);
+    });
+
+    test('el sin_verificar del backend NO es un fallo: no se reintenta', () {
+      final estado = EstadoCobroOpenpay.desdeJson({
+        'estado': 'sin_verificar',
+        'message': 'NO vuelvas a pagar',
+      });
+
+      expect(estado.consultaFallida, isFalse);
+      expect(estado.convieneReintentar, isFalse);
+    });
+
     for (final valor in ['pagado', 'rechazado', 'sin_verificar']) {
       test('«$valor» vale a la primera, sin reintentar', () async {
         final (_, consultas) = await verificar([valor]);

@@ -12,6 +12,26 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-09-29 — Un 502 suelto al consultar el estado de OpenPay ya no vacía el carrito
+
+Visto en el Oppo el 2026-09-28: al cerrar el WebView, un 502 aislado del servidor en
+`GET /openpay/estado` dejaba al tutor con «No pudimos confirmar tu pago» y el carrito vacío, cuando
+la consulta siguiente respondía bien.
+
+- `EstadoCobroOpenpay` gana `consultaFallida` (red caída, página HTML de error, JSON sin `estado`) y
+  `convieneReintentar` (`pendiente` **o** consulta fallida).
+- `OpenpayService.verificarCobro` reintenta con `convieneReintentar` en vez de solo con `pendiente`.
+  El `sin_verificar` que manda el backend **no** se reintenta: es una respuesta de verdad.
+- Tests nuevos en `openpay_service_test.dart`: 502 y luego `pagado` → 2 consultas y `pagado`; 502
+  siempre → 3 consultas y `sinConfirmar`; `sin_verificar` no reintenta.
+
+Verificación: `flutter analyze` sin avisos y **1089 tests en verde**. Flutter 3.47.5 sigue siendo la
+última estable (`flutter upgrade --verify-only`), así que no toca revisar Liquid Glass ni los
+plugins de Kotlin. `pub outdated`: nada sube dentro de los rangos; los saltos mayores
+(`cached_network_image` 4, `equatable` 3, `flutter_secure_storage` 11, `google_fonts` 9,
+`cupertino_icons` 2) siguen fuera, por los motivos de `CLAUDE.md`. Versión sin cambiar: la
+1.0.32+41 aún no está publicada.
+
 ### 2026-09-28 — Primer cobro real por OpenPay (sandbox), en el Oppo
 
 Carlos puso las llaves de sandbox en el backend. Prueba con `flutter run` (debug), usuario con el
