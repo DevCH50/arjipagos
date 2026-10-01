@@ -12,6 +12,30 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-01 (b) — Recorrido completo en el Oppo con la 1.0.32+41 (CATutorP811)
+
+Sin cambios de código. Debug de `7fe9137` instalado encima del anterior (`DEBUGGABLE`, versionCode 41).
+`flutter analyze` limpio y 1090 tests en verde.
+
+- **Visto con captura y sin fallos:** splash, menú (octubre sin temporada: sin listón, correcto),
+  Pagos Pendientes vacío con Reintentar, Otros pagos (orden ascendente, aviso del bloqueado, arrastre
+  al deseleccionar), carrito (quitar con ⊖, Vaciar con confirmación), Pagos Realizados, visor del
+  ticket T8550 con Compartir y botón atrás del sistema, Facturas vacío, Notificaciones y su detalle,
+  aviso del carrusel, drawer, Aviso de Privacidad, validación de Cambiar Contraseña. Modo oscuro y
+  fuente 1.3 en menú, Otros pagos y carrito. Arranque en frío con sesión: los cargos salen a la primera.
+- **OpenPay sandbox:** `crear-cargo` 200, formulario con $1.00 y el concepto; cierre con la ✕ →
+  3 consultas de estado cada 3 s (~9 s) → «No se completó el pago» → vuelve al carrito con la
+  selección. No se tocó ningún campo de tarjeta.
+- **Sin red:** recargar da «Sin conexión, intente más tarde» y conserva la lista. En el log solo
+  aparecen esos dos errores provocados; ni una excepción de Flutter.
+- **Hallazgo (sin corregir, pendiente de decisión):** con un pago seleccionado y sin red, el carrito
+  saca el diálogo de error y debajo **«Carrito vacío — Selecciona pagos desde Estados de Cuenta»**,
+  sin Reintentar. `carrito_body.dart` pinta el vacío cuando `alumnos` está vacío, aunque venga de
+  un fallo de carga. La selección **no** se pierde (al volver sigue «1 pago seleccionado»).
+- **Backend:** los cargos del emisor 2 **siguen llegando** a la app («OPENPAY 1 PREESCOLAR PAGO 2…5»).
+  Aún no se apagó `esta_disponible_en_la_app_movil` en esos conceptos.
+- Dispositivo restaurado: tema claro, `font_scale` 1.0, Wi-Fi y datos encendidos, carrito vacío.
+
 ### 2026-10-01 — Revisión completa y release de la 1.0.32+41 (sin llaves de OpenPay)
 
 Carlos decide publicar ya: el backend esconde los conceptos del emisor 2, así que las llaves de
