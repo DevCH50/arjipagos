@@ -273,6 +273,11 @@ Apple'26 dentro de la librería Cupertino actual ni acepta contribuciones: el tr
 `package:cupertino` independiente, al desacoplar Material y Cupertino del SDK, **previsto para
 finales de 2026**.
 
+**2026-10-01: ese paquete ya existe y se llama `cupertino_ui`** (1.1.1 en pub.dev, de flutter.dev).
+Por ahora es una **copia** del Cupertino del SDK: su changelog no menciona Liquid Glass ni ningún
+estilo nuevo. A partir de ahora, la revisión de cada actualización incluye **el changelog de
+`cupertino_ui`**, que es donde aparecerá primero. Flutter sigue en 3.47.5, la última estable.
+
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la
 maqueta que ya se descartó (ver abajo); lo segundo mete vistas nativas en medio del árbol de
@@ -648,8 +653,14 @@ el botón**. Lleva anotadas sus dos trampas: los BLoC hay que crearlos dentro de
 usuario.** El backend manda desde ese día un campo `pasarela` en cada cargo (`openpay` | `adquira`,
 según si el usuario está en `OPENPAY_USUARIOS_PRUEBA`); **la app no lo usa, a propósito**, y el
 emisor 2 nunca vuelve a Adquira. Consecuencia: mientras OpenPay esté limitado a usuarios de prueba,
-cualquier otro tutor recibe 422 en «Otros pagos», así que **la 1.0.32 no se publica hasta que el
-backend abra OpenPay a todos** (llaves de producción y `OPENPAY_USUARIOS_PRUEBA` vacía).
+cualquier otro tutor recibe 422 en «Otros pagos».
+
+**Decisión de Carlos del 2026-10-01: la 1.0.32 se publica sin esperar las llaves.** El backend apaga
+`esta_disponible_en_la_app_movil` en los **conceptos** del emisor 2; el filtro es de servidor, así
+que esos cargos no llegan a la app y «Otros pagos» sale vacío, con Reintentar. **Al llegar las
+llaves, en este orden:** llaves + `OPENPAY_SANDBOX=false` + vaciar `OPENPAY_USUARIOS_PRUEBA`, y
+**después** encender los conceptos; al revés, los tutores reciben 422. Todo es del backend: la app
+no cambia.
 
 **Desde el 2026-09-24 los dos emisores ni siquiera comparten proveedor.** El contrato 2 nunca llegó
 a tener datos propios de Adquira, y en vez de seguir esperándolos se le cambió de pasarela.
@@ -1024,6 +1035,10 @@ cosas que los tests no ven:
   `material_ui`. Mezclarlo con la app, que usa el Material del SDK, solo se valida en dispositivo.
 - **`google_fonts` 9.0.0** (revisado el 2026-09-28, con Flutter 3.47.5) depende de `material_ui`
   por lo mismo que `cached_network_image` 4, y además no trae nada que la app use. Se queda en 8.x.
+
+- **`cupertino_icons` 2.0.0** (revisado el 2026-10-01) migra a `cupertino_ui` en lugar de
+  `flutter/cupertino.dart`: el mismo desacople. La app no usa `CupertinoIcons` en `lib/`, así que no
+  aporta nada. Se queda en 1.x.
 
 Reconsiderar cuando haya un motivo de verdad, y probándolo en el Oppo y en el iPhone.
 

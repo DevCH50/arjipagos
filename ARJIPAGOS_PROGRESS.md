@@ -12,6 +12,57 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-01 — Revisión completa y release de la 1.0.32+41 (sin llaves de OpenPay)
+
+Carlos decide publicar ya: el backend esconde los conceptos del emisor 2, así que las llaves de
+producción no hacen falta para subir la app.
+
+- **Versión:** publicada en las dos tiendas la **1.0.31** (App Store por `itunes lookup`, Play por
+  la ficha; `/app/version` da mínima y recomendada 1.0.31 en android e ios). La 1.0.32+41 no se ha
+  subido a ninguna, así que **se conserva** (regla 2 de versionado).
+- **Flutter:** 3.47.5 sigue siendo la última estable; no hay nada que actualizar.
+- **Paquetes:** `flutter pub upgrade` dentro de las restricciones subió 5 parches/menores:
+  `jni` 1.1.0, `jni_flutter` 1.0.4, `objective_c` 9.6.2, `octo_image` 2.1.2,
+  `webview_flutter_wkwebview` 3.26.2. Los saltos mayores siguen bloqueados (ver CLAUDE.md); se
+  añade `cupertino_icons` 2.0.0 a la lista, porque migra a `cupertino_ui`.
+- **Liquid Glass:** el `package:cupertino` anunciado ya existe como `cupertino_ui` 1.1.1, pero es
+  copia del Cupertino del SDK. Sigue sin haberlo.
+- **Verificado:** `flutter analyze` sin incidencias; **1090 tests en verde**. Invariantes de iOS
+  revisados sin la Mac: `LastUpgradeCheck`/`LastUpgradeVersion` 2700, Launch y Archive en Release,
+  deployment target 15.0, `NSFaceIDUsageDescription` y `UIApplicationSceneManifest` en el
+  `Info.plist`, delegate de notificaciones del plugin, bloque `objective_c` del Podfile, AppIcon con
+  0 huérfanos y 0 fantasmas. Android: permiso INTERNET, `ApiConfig.isProduction = true`, recursos
+  del splash sin tocar, `kTemporadaForzada = null`.
+- **No verificado:** iOS no se compila en la Linux (toca la Mac, con `pod install` por el nuevo
+  `objective_c`); no se probó en el Oppo porque no hubo cambios de código de la app.
+
+**Pendiente:** subir el AAB a Play Console; Archive en la Mac; confirmar que los conceptos del
+emisor 2 están apagados en el backend antes de que la 1.0.32 llegue a los padres.
+
+### 2026-09-30 — Cómo publicar la 1.0.32 sin esperar las llaves de OpenPay
+
+Sin cambios de código; solo decisión y comprobaciones.
+
+- **Las llaves de producción van al `.env` del backend**, no a la app ni al chat. La app no usa
+  ninguna llave de OpenPay.
+- **Plan de Carlos:** publicar la 1.0.32+41 ya, con «Otros pagos» vacío, apagando en el backend
+  `esta_disponible_en_la_app_movil` de los **conceptos** del emisor 2. Comprobado en el código del
+  backend (sin tocarlo): el filtro es de servidor (`FamiliaAPIController.php:258`), así que esos
+  cargos no viajan a la app. Vale para la 1.0.31 y la 1.0.32 sin tocar la app. `crear-cargo` revisa
+  la misma bandera (`OpenpayPagoController.php:552`). La bandera va **por concepto**: apagarla lo
+  esconde también al tutor de pruebas.
+- **Se descartó** un interruptor nuevo en la app (menú según `emisores_habilitados` o
+  `/app/version`): no hace falta con el filtro del servidor.
+- **AAB comprobado** en `build/app/outputs/bundle/release/app-release.aab`: 64 MB, del 29-sep
+  11:47 (commit `417bc96`), árbol limpio y remoto sin commits nuevos. No hay que regenerarlo.
+
+**Pendiente:**
+1. Apagar los conceptos del emisor 2 en el backend y ver en el Oppo que «Otros pagos» sale vacío,
+   con Reintentar.
+2. Subir el AAB a Play Console (Linux) y hacer el Archive (Mac).
+3. Al llegar las llaves: llaves + `OPENPAY_SANDBOX=false` + vaciar `OPENPAY_USUARIOS_PRUEBA`, y
+   **después** encender los conceptos. Si se encienden antes, los tutores reciben 422.
+
 ### 2026-09-29 — Un 502 suelto al consultar el estado de OpenPay ya no vacía el carrito
 
 Visto en el Oppo el 2026-09-28: al cerrar el WebView, un 502 aislado del servidor en
