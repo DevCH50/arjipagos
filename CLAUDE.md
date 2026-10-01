@@ -373,8 +373,9 @@ recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 2026-09-09 con la 1.0.30+39, al arrancar en el iPhone 17. Las filas a partir de
 `non-launching port` se añadieron el 2026-09-18 con la 1.0.31+40 en **iOS 27**, recorriendo pago,
 tickets, facturas y los push en los dos planos; se buscaron también en los paquetes SPM y en los
-plugins de `~/.pub-cache`. Ninguno de estos símbolos aparece en
-`lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
+plugins de `~/.pub-cache`. La fila de `RBSAssertionErrorDomain Code=2` se añadió el 2026-10-01 con
+la 1.0.32+41, al abrir el formulario de OpenPay en el iPhone 17. Ninguno de estos símbolos aparece
+en `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
 | --- | --- |
@@ -395,6 +396,7 @@ plugins de `~/.pub-cache`. Ninguno de estos símbolos aparece en
 | `WebProcess::markAllLayersVolatile: Failed to mark layers as volatile` | WebKit liberando las capas de la webview al dejar de estar en primer plano |
 | `xpc_user_sessions_get_foreground_uid() failed with error 1 - Operation not permitted` | El proceso `WebContent` de WebKit preguntándole a XPC qué sesión de usuario está en primer plano. Su sandbox —más estrecho que el de la app— no tiene ese permiso: la consulta falla, WebKit sigue adelante y no usa el dato para nada. Sale al abrir el `WKWebView` del pago, una línea por proceso. **Ver dos PID distintos de `WebContent` es normal**: es el *process swap* de WebKit al navegar a otro origen (la pasarela mandando del sitio de Adquira al del banco) |
 | `Failed to terminate process … RBSRequestErrorDomain Code=3 "No such process found"` | WebKit cerrando un proceso `WebContent` que ya había salido solo. Llega tarde y no encuentra a quién matar |
+| `Error acquiring assertion … RBSAssertionErrorDomain Code=2 "Specified target process N does not exist"` | La tercera de la misma familia: WebKit pidiendo una `assertion` sobre un `WebContent` que ya no existe. Se distingue de las dos de arriba por el dominio y el código — `RBSServiceErrorDomain` 1 es el permiso negado, `RBSRequestErrorDomain` 3 el cierre que llega tarde, y este 2 el proceso que ya se fue. Sale en el *process swap* de la webview, al navegar de la pasarela a nuestra URL de retorno |
 | `-- LLDB integration loaded --` | El depurador de Xcode adjuntándose. Solo sale al correr desde Xcode, nunca en la app instalada |
 | `Thread Performance Checker … waiting on a thread without a QoS class` con traza a `third_party/skia/include/private/SkSemaphore.h:79` | Inversión de prioridades **dentro del engine**. El hilo principal espera en un semáforo de Skia, cuyos hilos de trabajo (`SkTaskGroup`/`SkExecutor`) se crean sin QoS. Es `user-interactive` porque desde Flutter 3.47 el hilo de UI va **fusionado con el de plataforma** en iOS: por eso el backtrace enseña frames de Dart (`App`, `kDartSnapshotText`) colgando de `UIApplicationMain`. Lo detecta `libRPAC.dylib`, que **solo inyecta Xcode al lanzar desde el IDE** — no viaja en el binario que sube a App Store. Que aparezca Skia con Impeller activo no es contradicción: Impeller dibuja, pero Skia sigue haciendo trabajo de CPU como decodificar imágenes, y de ahí que salga en el arranque. **Ningún frame sale de `lib/` ni de `ios/Runner/`**, así que no hay nada que corregir. Se puede apagar en Edit Scheme → Run → Diagnostics, pero eso escribe en `Runner.xcscheme`, que es archivo blindado: desmarcarlo sin commitear no rompe nada. Comprobado el 2026-09-09 en iPhone 17: la app arrancó y navegó con normalidad |
 | `non-launching port is incompatible with service identifier "com.apple.PointerUI…"` | El sistema de puntero de iOS 27 (trackpad o ratón). Sale al arrancar |

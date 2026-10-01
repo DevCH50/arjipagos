@@ -201,6 +201,12 @@ Tarjetas de prueba de OpenPay (cualquier fecha futura; CVV 3 dígitos, 4 en AMEX
 
 ## 7. 🔴 Lo que falta, y no es de la app
 
+> **Esta sección está fechada el 24-sep-2026, y parte ya se resolvió.** Al **1-oct-2026**: el 422
+> del punto 1 **está resuelto** (`OPENPAY_EMISORES=2` puesto en el servidor) y las **llaves de
+> sandbox están puestas** — `crear-cargo` responde 200 desde el 28-sep, y otra vez el 1-oct en el
+> Oppo. Lo que sigue faltando son las **llaves de producción** y el punto 3. La tabla de llaves de
+> más abajo, con las tres credenciales «vacías», describe el 24-sep y **no** el estado de hoy.
+
 **El backend está desplegado y responde.** Probado en el Oppo el **24-sep-2026** con CATutorM30,
 pulsando Pagar sobre un cargo real del emisor 2 (FUTBOL TIGRES, $3,500):
 
@@ -219,13 +225,27 @@ servidor, y son tres cosas:
    Sin llaves, `crearCargo` responde 503 con un mensaje claro en vez de fallar a medias.
 3. Commitear los archivos de OpenPay, que en el repo de ArjiApp siguen sin versionar.
 
-### ⚠️ Dos ramas del retorno que dejan colgada a la app
+### ⚠️ Dos ramas del retorno que devuelven 302 — amortiguadas desde el 28-sep, sin arreglar
 
 `pagoRealizadoOpenpay` llama a `responder(esWeb: true, …)` **a pelo** cuando no llega `id` y cuando
 falla `consultarCargo`. Comprobado con curl: las dos contestan **302 al portal web** en lugar del
 `{success, message}`. En el móvil eso deja al tutor en la pantalla de login del portal, dentro del
-WebView del pago, sin saber si le cobraron. Deberían resolver el canal como la rama de rechazado,
-con `ReferenciaOpenpay::canalDesde`.
+WebView del pago. Deberían resolver el canal como la rama de rechazado, con
+`ReferenciaOpenpay::canalDesde`.
+
+**Ya no lo deja «sin saber si le cobraron».** Eso era cierto cuando se escribió esto, el 24-sep,
+antes de que existiera el flujo de cierre del 28-sep. Comprobado en el código el 1-oct: un 302 al
+portal no trae JSON, así que `_pagoProcessed` se queda en `false`, y al cerrar con la ✕
+`_confirmarSalir()` entra por `_verificarCobro()`, consulta `GET /openpay/estado?order_id=…` y
+enseña el veredicto de la tabla de `AvisoCierreCobro`. **Sigue siendo un fallo que hay que
+arreglar** —el tutor aterriza en el login de un portal que no es suyo— pero ya no es una pantalla
+muda.
+
+**Cuándo se vuelve urgente.** Hoy no lo es: la 1.0.32 se publica con los conceptos del emisor 2
+apagados en el backend, así que ningún tutor llega a OpenPay. Ojo, que **al 1-oct ese apagado
+seguía sin hacerse** (en el Oppo los cargos del emisor 2 todavía llegaban). Lo será el día que
+lleguen las llaves de producción y se enciendan los conceptos — y el orden manda: llaves +
+`OPENPAY_SANDBOX=false` + vaciar `OPENPAY_USUARIOS_PRUEBA`, y **después** los conceptos.
 
 ### 🔑 Las llaves: dónde van cuando lleguen
 

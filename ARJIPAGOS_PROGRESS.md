@@ -12,6 +12,83 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-01 (c) — La Mac ya compila la 1.0.32+41: pull, Flutter 3.47.5 y limpieza iOS
+
+Cierra el «no verificado» que dejó la Linux ese mismo día: **iOS no se compila allí**. Sin cambios
+de código; el `git status` quedó limpio de principio a fin.
+
+- **Pull:** 6 commits (`98ccc5f` → `35bd8de`), fast-forward, 42 archivos. Trae OpenPay en «Otros
+  pagos», el `CLAUDE.md` con +210 líneas y los seis archivos de tests nuevos.
+- **Flutter 3.47.4 → 3.47.5** en la Mac, que es la versión con la que se hicieron esos commits.
+  `pub get` **no movió ninguna dependencia**: el `pubspec.lock` del repo ya estaba resuelto contra
+  ese SDK. `flutter doctor` solo avisa de la deprecación de los Mac Intel.
+- **Limpieza obligatoria completa** (`flutter clean` → `pub get` → `pod install`). Los dos
+  `post_install` del Podfile actuaron: «LastUpgradeCheck se queda en 2700» y el Run Script del dSYM
+  reconfigurado. `Package.swift`, que el clean había regenerado en `.iOS("13.0")`, volvió a
+  `.iOS("15.0")`.
+- **`./scripts/build_ios.sh` en verde**, `Runner.app` de 45 MB en `build/ios/iphoneos/`. **Ni un
+  `warning:` ni un `unassigned children` en todo el log.** Flutter 3.47.5 **no** degradó
+  `LastUpgradeCheck`/`LastUpgradeVersion`: siguen en 2700 después de compilar.
+- **dSYM de `objective_c` comprobado**, que es lo que valida App Store Connect: binario y dSYM
+  comparten UUID `39F254E9-E9A2-3D3B-87AA-C8684A0B9BF7` (arm64).
+- **Invariantes iOS verificados en la Mac:** 2700 en pbxproj y scheme, Launch y Archive en Release,
+  deployment target 15.0 en las tres configs, `NSFaceIDUsageDescription` y
+  `UIApplicationSceneManifest` en el `Info.plist`, bloque `objective_c` del Podfile,
+  `LAST_UPGRADE_MINIMO = '2700'`, AppIcon con 25 entradas / 21 PNG / 0 huérfanos / 0 fantasmas,
+  `ApiConfig.isProduction = true`. **1090 tests en verde** con el SDK nuevo.
+- El aviso de CocoaPods sobre la *base configuration* es el de siempre: los tres
+  `ios/Flutter/*.xcconfig` ya incluyen los de Pods con `#include?`. No hay nada que corregir.
+
+**Probado después en el iPhone 17 con el botón Run** (Release, desde Xcode 26.3). **Las dos pruebas
+que arrastraban desde la 1.0.31+40 quedan cerradas:**
+
+- **Face ID: funciona.** Era el pendiente más viejo de la lista.
+- **El formulario de OpenPay sale en el `WKWebView`**, con su importe y su concepto. Se entró con
+  usuario de prueba, así que no hubo 422. Es lo único de este cambio que ningún test de la Linux
+  puede comprobar, porque ese formulario lo pinta OpenPay dentro de la webview.
+- **Consola: solo ruido conocido y cero líneas de la app** —lo correcto, porque el Run usa Release
+  y `AppLogger` solo habla en Debug—. Ninguna firma de crash (`EXC_BAD_ACCESS`, `SIGABRT`,
+  `Fatal error:`, `Message from debugger`). Arrancaron **dos procesos `WebContent` (5195 y 5196)**:
+  es el *process swap* de WebKit al navegar del dominio de OpenPay a nuestra URL de retorno.
+- **Una variante de ruido nueva, añadida a la tabla del `CLAUDE.md`:**
+  `Error acquiring assertion … RBSAssertionErrorDomain Code=2 "Specified target process N does not
+  exist"`. Es la tercera de la misma familia —`RBSServiceErrorDomain` 1 es el permiso negado,
+  `RBSRequestErrorDomain` 3 el cierre que llega tarde, y este 2 el proceso que ya se fue—.
+  Comprobado con `grep -rI` que no sale de `lib/`, `ios/Runner/` ni los Pods.
+- **Lo que no se pudo ver:** el separador `I` de la referencia viaja en una línea de `AppLogger`,
+  invisible en Release. Hace falta `flutter run` o mirar el `order_id` en el back-office.
+
+**Archive y Distribute HECHOS el 1-oct-2026**, sin incidencias en la validación —el dSYM de
+`objective_c` pasó, que era el histórico—. Con eso el trabajo de la Mac para esta versión queda
+cerrado.
+
+**🚀 La 1.0.32 está PUBLICADA en las DOS tiendas el 1-oct-2026** (App Store y Google Play; el AAB
+lo subió Carlos desde la Linux). Las dos plataformas vuelven a ir a la par.
+
+**Dos consecuencias inmediatas:**
+
+1. **El `pubspec` queda en la versión publicada, no por encima.** Por la regla 1 de versionado, el
+   próximo release tiene que subir a **1.0.33+42**. No se incrementa ahora: solo cuando Carlos lo
+   pida (regla 2).
+2. **Apagar los conceptos del emisor 2 pasa de pendiente a URGENTE.** Ya no es una precaución
+   previa: la versión está en manos de los padres. Mientras esos conceptos sigan encendidos y
+   OpenPay limitado a `OPENPAY_USUARIOS_PRUEBA`, cualquier tutor con cargos del emisor 2 que pulse
+   Pagar en «Otros pagos» recibe un **422**. Al 1-oct seguía sin hacerse.
+
+Ya se puede subir `version_minima`/`version_recomendada` a **1.0.32** en `/app/version`: estaba
+bloqueado mientras Apple no publicara, y ya publicó.
+
+**Pendiente al cerrar la sesión:**
+**apagar `esta_disponible_en_la_app_movil` en los conceptos del
+emisor 2** (backend, y antes de que la 1.0.32 llegue a los padres — al 1-oct seguía sin hacerse); el
+hallazgo del carrito vacío tras un fallo de red; y, del lado del servidor, las **dos ramas del retorno
+de OpenPay que devuelven 302** (ver §7 del plan, anotada hoy: el flujo de cierre del 28-sep las
+amortigua, pero siguen sin arreglar).
+
+También se anotó en `Plan OpenPay Frontend.md` que su §7 está fechada el 24-sep: el 422 por
+`OPENPAY_EMISORES` y las llaves de sandbox ya están resueltos, y lo que falta son las de producción.
+
+
 ### 2026-10-01 (b) — Recorrido completo en el Oppo con la 1.0.32+41 (CATutorP811)
 
 Sin cambios de código. Debug de `7fe9137` instalado encima del anterior (`DEBUGGABLE`, versionCode 41).
