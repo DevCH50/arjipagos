@@ -12,6 +12,53 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-01 (d) — Liberar espacio en la Mac, y la trampa de los runtimes de simulador
+
+Encargo de Carlos, ajeno al proyecto: liberar disco sin romper nada. **Se rompió algo y se
+arregló**, y de ahí sale una sección nueva del `CLAUDE.md`.
+
+**El fallo.** Se borraron los 4 runtimes de simulador con `xcrun simctl runtime delete all`,
+razonando que el proyecto no los usa —cierto, es decisión documentada—. Pero **en Xcode 26 el
+soporte de dispositivo y el runtime del simulador son un solo componente**: ese borrado dejó la Mac
+**sin poder compilar ni archivar para iPhone**. El síntoma no menciona simuladores
+(`No Xcode build settings have been found`), y `xcodebuild -showsdks` seguía listando el SDK, que
+no era lo que faltaba. El motivo real solo apareció con `-showdestinations` tras reiniciar
+`CoreSimulatorService`: `iOS 26.2 is not installed`. El *cryptex* de
+`/Library/Developer/CoreSimulator/Cryptex` había quedado en 0B.
+
+**El arreglo:** `xcodebuild -downloadPlatform iOS`, 10.47 GB. No se puede pedir solo el soporte de
+dispositivo. Después, build en verde (`EXIT_REAL=0`, sin un solo `warning:`), dSYM de `objective_c`
+con UUID coincidente y `flutter doctor` con Xcode de vuelta en `[✓]`.
+
+**Dos fallos de método, anotados para no repetirlos:**
+
+1. **Primer diagnóstico equivocado.** Se culpó a la caché de SwiftPM —borrada también— y se gastó
+   una resolución completa de los 12 repos de Firebase para nada. Esa caché sí afecta, pero solo
+   a la duración del primer build.
+2. **La verificación enmascaraba el fallo.** `./scripts/build_ios.sh > log; echo "EXIT=$?"` hace
+   que el código de salida de la tarea sea el del `echo`, siempre 0: se informó «exit code 0» de un
+   build que devolvió 1. Desde entonces el `EXIT_REAL` se escribe **dentro** del log.
+
+**Balance:** 177 GB usados → **119 GB**, es decir **~57 GB netos** (76 liberados, menos los 10.5 de
+la plataforma devuelta y lo que DerivedData y SwiftPM regeneraron al compilar).
+
+| Qué se quitó | Cuánto | Efecto |
+| --- | --- | --- |
+| Símbolos del iPhone en iOS 27.0 | 6.6 GB | Ninguno: obsoletos, el aparato va en 27.0.1 |
+| SDK de Android y `.gradle` | 5.7 GB | `flutter doctor` marca `[✗] Android toolchain`. **Aprobado por Carlos**; Android es trabajo de la Linux |
+| DerivedData, SwiftPM, caché de Homebrew | 5.2 GB | Se regeneran |
+| 47 simuladores y sus 4 runtimes | 40 GB | **Rompió el build; hubo que devolver 10.47 GB.** No repetir |
+| Instantáneas locales de Time Machine | el resto | Retenían lo liberado; Time Machine conserva su destino «Nuevo vol» |
+
+**Los dos Archives antiguos se movieron, no se borraron**, a `otros/archives_ios/` (abril y julio,
+con sus 15 y 5 dSYM). Son lo único con lo que se simbolizan los crashes de las versiones
+publicadas. El de la 1.0.32+41 se queda donde Xcode lo busca.
+
+**ArjiPagos no sufrió nada**, comprobado por tres vías que no pasan por Xcode: `git status` limpio
+toda la sesión, `flutter analyze` sin incidencias y **1090 tests en verde**. El daño fue siempre del
+toolchain de la máquina.
+
+
 ### 2026-10-01 (c) — La Mac ya compila la 1.0.32+41: pull, Flutter 3.47.5 y limpieza iOS
 
 Cierra el «no verificado» que dejó la Linux ese mismo día: **iOS no se compila allí**. Sin cambios

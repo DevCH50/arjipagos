@@ -90,6 +90,53 @@ distinto de la que se usó en su día. Si alguien lo ejecuta por error:
 Cambiar el splash implica rehacer a mano el edge-to-edge después. Los drawables
 y el storyboard ya generados están versionados; ahí es donde se toca.
 
+## NO borrar los runtimes de simulador (aunque el proyecto no los use)
+
+**En Xcode 26 el soporte de dispositivo y el runtime del simulador son UN SOLO componente.**
+`xcrun simctl runtime delete all` se lleva los dos y deja la Mac **sin poder compilar ni archivar
+para iPhone**. Comprobado a las malas el 2026-10-01, liberando espacio.
+
+Es contraintuitivo precisamente por la decisión de más abajo —aquí no se usan simuladores—, así que
+borrarlos parece gratis. No lo es.
+
+**Cómo se ve el daño.** El build muere con un mensaje que no menciona simuladores ni plataformas:
+
+```
+No Xcode build settings have been found. Please check possible errors above.
+Encountered error while building for device.
+```
+
+Y `xcodebuild -showdestinations` deja de ofrecer destinos; con `-showdestinations` tras reiniciar
+`com.apple.CoreSimulator.CoreSimulatorService` aparece el motivo real:
+
+```
+Ineligible destinations for the "Runner" scheme:
+  { platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device,
+    error:iOS 26.2 is not installed. Please download and install the platform from
+    Xcode > Settings > Components. }
+```
+
+**`xcodebuild -showsdks` da falsa confianza:** sigue listando `iOS 26.2` y
+`iPhoneOS.platform` sigue dentro de `Xcode.app`, porque el SDK no es lo que falta. Lo que falta es
+el componente de plataforma, cuyo *cryptex* vive fuera, en
+`/Library/Developer/CoreSimulator/Cryptex`, y queda en **0B**.
+
+**Arreglo:** `xcodebuild -downloadPlatform iOS`. Son **10.47 GB** y no se puede pedir solo el
+soporte de dispositivo: lo que baja se llama «iOS 26.3.1 Universal Simulator» y trae los dos.
+Después, verificar con `-showdestinations` que «Any iOS Device» vuelve a estar bajo *Available*,
+no bajo *Ineligible*.
+
+**Qué sí se puede borrar sin romper nada**, comprobado el mismo día:
+
+| Qué | Cuánto | Nota |
+| --- | --- | --- |
+| `~/Library/Developer/Xcode/iOS DeviceSupport/<version>` de versiones que ya no lleva ningún aparato | ~6.6 GB cada una | Mirar antes `xcrun devicectl device info details` o `xctrace list devices`: **no borrar la del iOS que lleva el iPhone hoy** |
+| `~/Library/Developer/Xcode/DerivedData` | varios GB | Se regenera |
+| `~/Library/Caches/org.swift.swiftpm` | ~600 MB | Se regenera, pero obliga a reclonar los 12 repos de Firebase: el primer build después tarda mucho más |
+| Instantáneas locales de Time Machine | lo que retengan | Retienen el espacio recién liberado y caducan solas en ~24 h; `tmutil deletelocalsnapshots <fecha>` lo adelanta |
+| Archives antiguos | ~215 MB cada uno | **Mover, no borrar**: son los dSYM con los que se simbolizan los crashes de las versiones publicadas. A `otros/archives_ios/` |
+
+
 ## Dos máquinas: la Mac hace iOS, la Linux hace Android
 
 **Los builds están repartidos y no son intercambiables.**
