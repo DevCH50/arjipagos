@@ -60,6 +60,9 @@ Encargo de Carlos. `git fetch` previo: nada que bajar.
   `build/` ya documentado) y compiló solo a la primera. Comprobado: las 12 `.so` del AAB son ELF
   válidos e idénticas a las del APK; pesa más que el de la 1.0.32 (50.7) porque ahora sí trae los
   `libflutter.so.sym` de arm64/x86_64 en `BUNDLE-METADATA`, que no llegan al usuario.
+- **Release instalado en el Oppo** a petición de Carlos (desinstalando antes el debug): login con
+  CATutorP811, `v1.0.33` en el drawer, Configuraciones y el `BiometricPrompt` del interruptor
+  (cancelado: queda apagado). Sin crashes en logcat; R8 no rompió nada de lo probado.
 - **Pendiente en la Mac** (anotado en `CLAUDE.md`, sección «Pendiente en la Mac»): `git pull`,
   `flutter upgrade` a 3.47.6, limpieza + `pod install`, probar en el iPhone la webview del pago
   (sube `webview_flutter_wkwebview`), compartir y Configuraciones, y después el Archive.
