@@ -74,10 +74,7 @@ class AppStrings {
   static const String menuPagosRealizados = 'Pagos Realizados';
   static const String menuFacturas = 'Facturas';
 
-  /// Item del menú que abre la ficha de la app en la tienda.
-  static const String menuCalificarApp = 'Calificar la app';
-
-  /// Error al no poder abrir Google Play o la App Store desde el menú.
+  /// Error al no poder abrir Google Play o la App Store desde Configuraciones.
   static const String resenaErrorAbrirTienda =
       'No se pudo abrir la tienda de aplicaciones. Inténtalo de nuevo más tarde.';
   static const String menuCerrando = 'Cerrando sesión...';
@@ -88,6 +85,16 @@ class AppStrings {
 
   static const String drawerDatosPersonales = 'Datos personales';
   static const String drawerMiCuenta = 'Mi cuenta';
+
+  // ============================================================================
+  // CONFIGURACIONES
+  // ============================================================================
+
+  /// Título de la pantalla y de su entrada en el drawer.
+  static const String configuracionesTitulo = 'Configuraciones';
+
+  /// Opción que abre la ficha de la app en la tienda.
+  static const String configuracionesCalificarApp = 'Calificar la app';
   static const String drawerFamilia = 'Familia';
   static const String drawerSinRegistrar = 'Sin registrar';
 

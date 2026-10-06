@@ -158,6 +158,28 @@ Dos consecuencias prácticas:
 - **Al listar lo que falta para publicar, separar por máquina.** Que iOS esté subido no dice
   nada del estado de Android, y al revés.
 
+### Pendiente en la Mac — tras la actualización del 2026-10-06
+
+En la Linux se subió **Flutter 3.47.5 → 3.47.6** y `flutter pub upgrade` (solo versiones
+compatibles, sin tocar `pubspec.yaml`). Desde entonces el `pubspec.lock` exige **Flutter ≥ 3.47.0**.
+**Antes del Archive de la 1.0.33+42, en la Mac y en este orden:**
+
+```bash
+git pull                     # trae el pubspec.lock y la versión 1.0.33+42
+flutter upgrade              # a 3.47.6; comprobar con flutter --version
+flutter clean
+flutter pub get
+cd ios && pod install && cd ..   # los pods/SPM de los plugins que subieron
+./scripts/build_ios.sh
+```
+
+Luego el checklist de Archive de siempre. **Probar en el iPhone, antes de distribuir, la webview
+del pago**: subió `webview_flutter_wkwebview` 3.26.2 → 3.27.0, que es solo de iOS y desde la Linux
+no se puede ver. Abrir «Otros pagos» → Pagar con CATutorP811 (formulario de OpenPay) y cerrar con
+la ✕ sin pagar; y «Pagos Pendientes» si hay cargos (Adquira). También: compartir un ticket
+(`share_plus` 13.3.1) y la pantalla nueva **Configuraciones** (Face ID y «Calificar la app», que en
+iOS abre la App Store). Al terminar, borrar esta sección.
+
 ## Instrucciones para Release (Agente)
 
 > **Esto se ejecuta en la máquina Linux.** Ver la sección anterior.
@@ -253,7 +275,7 @@ compilar con él ya está resuelto:
 | Requisito | Estado |
 | --- | --- |
 | Ciclo de vida **UIScene** (sin él la app **no arranca**, no es un aviso) | Hecho: `UIApplicationSceneManifest` en `Info.plist` y `FlutterImplicitEngineDelegate` en el `AppDelegate` |
-| Flutter con soporte de Xcode 27 | Hecho: 3.47.4 (hoy 3.47.5), que además trae el arreglo de la pantalla blanca al depurar (#189284) |
+| Flutter con soporte de Xcode 27 | Hecho: 3.47.4 (hoy 3.47.6), que además trae el arreglo de la pantalla blanca al depurar (#189284) |
 | Deployment target ≥ 15.0 (por debajo, el build falla con "Target Integrity") | Hecho: 15.0 en el proyecto y forzado en los pods por el `post_install` |
 | Plugins compatibles con escenas | Hecho: `firebase_messaging` 16.7.0, `local_auth_darwin` 2.0.4, `url_launcher_ios` 6.4.2, `webview_flutter_wkwebview` 3.26.1 |
 | `LastUpgradeCheck` / `LastUpgradeVersion` | 2700 (Xcode 27) |
@@ -311,7 +333,7 @@ la interfaz de Flutter la pinta la app y no cambia.
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
 
-**Revisado el 2026-09-24 con Flutter 3.47.4, y de nuevo el 2026-09-28 con 3.47.5: sigue sin haberlo, y hay fecha.** Comprobado contra el
+**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 con 3.47.6: sigue sin haberlo, y hay fecha.** Comprobado contra el
 SDK instalado, no contra un artículo:
 `grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
 `$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
@@ -323,7 +345,8 @@ finales de 2026**.
 **2026-10-01: ese paquete ya existe y se llama `cupertino_ui`** (1.1.1 en pub.dev, de flutter.dev).
 Por ahora es una **copia** del Cupertino del SDK: su changelog no menciona Liquid Glass ni ningún
 estilo nuevo. A partir de ahora, la revisión de cada actualización incluye **el changelog de
-`cupertino_ui`**, que es donde aparecerá primero. Flutter sigue en 3.47.5, la última estable.
+`cupertino_ui`**, que es donde aparecerá primero. **2026-10-06:** Flutter 3.47.6 y `cupertino_ui`
+sigue en 1.1.1, sin novedades.
 
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la

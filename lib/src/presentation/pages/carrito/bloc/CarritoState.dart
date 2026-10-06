@@ -26,6 +26,15 @@ class CarritoState extends Equatable {
   /// Mensaje de error si existe.
   final String? errorMessage;
 
+  /// Por qué no se pudieron traer los cargos del servidor al abrir el carrito.
+  ///
+  /// No es lo mismo que [errorMessage]: aquel es el aviso del diálogo y se
+  /// borra en cuanto el usuario lo cierra; éste se queda hasta la siguiente
+  /// carga, para que la pantalla siga diciendo «Error al cargar» con
+  /// Reintentar. Sin él, un fallo de red pintaba «Carrito vacío» aunque el
+  /// usuario tuviera pagos seleccionados.
+  final String? errorDeCarga;
+
   /// Qué hacer además de enseñar [errorMessage], si el cobro de OpenPay no
   /// se pudo crear: volver al login o recargar los cargos. `null` en
   /// cualquier otro error. Se limpia junto con [errorMessage].
@@ -55,6 +64,7 @@ class CarritoState extends Equatable {
     this.isLoading = false,
     this.isProcesandoPago = false,
     this.errorMessage,
+    this.errorDeCarga,
     this.motivoFallo,
     this.pagoData,
     this.pagoExitoso = false,
@@ -69,6 +79,7 @@ class CarritoState extends Equatable {
     bool? isLoading,
     bool? isProcesandoPago,
     String? errorMessage,
+    String? errorDeCarga,
     MotivoFalloCobro? motivoFallo,
     Map<String, dynamic>? pagoData,
     bool? pagoExitoso,
@@ -76,6 +87,7 @@ class CarritoState extends Equatable {
     int? emisorFiscalActivo,
     bool clearError = false,
     bool clearPagoData = false,
+    bool clearErrorDeCarga = false,
   }) {
     return CarritoState(
       alumnos: alumnos ?? this.alumnos,
@@ -83,6 +95,9 @@ class CarritoState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       isProcesandoPago: isProcesandoPago ?? this.isProcesandoPago,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      errorDeCarga: clearErrorDeCarga
+          ? null
+          : (errorDeCarga ?? this.errorDeCarga),
       motivoFallo: clearError ? null : (motivoFallo ?? this.motivoFallo),
       pagoData: clearPagoData ? null : (pagoData ?? this.pagoData),
       pagoExitoso: pagoExitoso ?? this.pagoExitoso,
@@ -207,6 +222,7 @@ class CarritoState extends Equatable {
         isLoading,
         isProcesandoPago,
         errorMessage,
+        errorDeCarga,
         motivoFallo,
         pagoData,
         pagoExitoso,

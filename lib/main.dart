@@ -11,6 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/cambiar_contrasena/CambiarContrasenaPage.dart';
+import 'package:arjipagos/src/presentation/pages/configuraciones/ConfiguracionesPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta/EdoCtaPage.dart';
 import 'package:arjipagos/src/presentation/pages/edo_cta_pagados/EdoCtaPagadosPage.dart';
 import 'package:arjipagos/src/presentation/pages/ticket/TicketPage.dart';
@@ -174,6 +175,8 @@ class MyApp extends StatelessWidget {
           'facturas': (BuildContext context) => const FacturasPage(),
           'aviso_de_privacidad': (BuildContext context) =>
               const AvisoDePrivacidadPage(),
+          'configuraciones': (BuildContext context) =>
+              const ConfiguracionesPage(),
         },
         initialRoute: 'splash',
       ),

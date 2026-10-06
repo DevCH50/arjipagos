@@ -4,10 +4,15 @@ import 'package:arjipagos/src/domain/models/EstadoBiometria.dart';
 import 'package:arjipagos/src/presentation/pages/biometria/bloc/BiometriaBloc.dart';
 import 'package:arjipagos/src/presentation/pages/biometria/bloc/BiometriaEvent.dart';
 import 'package:arjipagos/src/presentation/pages/biometria/bloc/BiometriaState.dart';
+import 'package:arjipagos/src/presentation/widgets/IconoDeMenu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Interruptor del bloqueo biométrico, para el drawer del menú principal.
+/// Interruptor del bloqueo biométrico, en la pantalla de Configuraciones.
+///
+/// Se dibuja con el mismo aspecto que las opciones del Menú Principal
+/// —[IconoDeMenu] y título en `titleMedium` seminegrita—, porque
+/// Configuraciones es una pantalla tipo menú y no un drawer.
 ///
 /// Se dibuja **siempre**, incluso cuando el aparato no admite biometría: en ese
 /// caso sale apagado, deshabilitado y con la razón escrita debajo. Esconderlo
@@ -31,7 +36,8 @@ class InterruptorBiometria extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
 
     return BlocBuilder<BiometriaBloc, BiometriaState>(
       buildWhen: (BiometriaState anterior, BiometriaState actual) =>
@@ -51,19 +57,28 @@ class InterruptorBiometria extends StatelessWidget {
                   .read<BiometriaBloc>()
                   .add(BiometriaBloqueoCambiado(activar: activar))
               : null,
-          secondary: Icon(
-            estado.activado ? Icons.lock_outline : Icons.lock_open_outlined,
-            color: habilitado
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
+          secondary: IconoDeMenu(
+            icono: estado.activado
+                ? Icons.lock_outline
+                : Icons.lock_open_outlined,
+            habilitado: habilitado,
           ),
-          title: const Text(AppStrings.biometriaTituloAjuste),
+          title: Text(
+            AppStrings.biometriaTituloAjuste,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           subtitle: Text(
             _subtitulo(estado),
             style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
-          // El drawer ya trae su propio padding horizontal en los ListTile.
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          // El mismo margen que `MenuItemTile`, para que los iconos de las
+          // opciones queden alineados en columna.
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 8,
+          ),
         );
       },
     );

@@ -1,5 +1,4 @@
 import 'package:arjipagos/src/core/constants/app_strings.dart';
-import 'package:arjipagos/src/presentation/pages/biometria/widgets/InterruptorBiometria.dart';
 import 'package:arjipagos/src/presentation/widgets/CloseSession.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalBloc.dart';
 import 'package:arjipagos/src/presentation/pages/menu_principal/bloc/MenuPrincipalState.dart';
@@ -148,10 +147,25 @@ class UserDrawer extends StatelessWidget {
                       const Divider(),
                       // Sección: Cuenta
                       const SectionHeader(title: AppStrings.drawerMiCuenta),
-                      // Bloqueo biométrico. Va aquí, antes de cambiar la
-                      // contraseña, porque es lo que protege el acceso a la app;
-                      // el resto de la sección son trámites de la cuenta.
-                      const InterruptorBiometria(),
+                      // Ajustes de la app (bloqueo biométrico, calificar la
+                      // app). Va primero porque es la puerta a todo lo que el
+                      // usuario puede cambiar; el resto son trámites de la cuenta.
+                      ListTile(
+                        leading: Icon(
+                          Icons.settings_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
+                        title: const Text(AppStrings.configuracionesTitulo),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          // Cerrar el drawer antes de navegar
+                          Navigator.pop(context);
+                          Navigator.restorablePushNamed(context, 'configuraciones');
+                        },
+                      ),
                       ListTile(
                         leading: Icon(
                           Icons.lock_reset,

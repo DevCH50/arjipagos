@@ -12,6 +12,77 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-06 — Pantalla «Configuraciones»
+
+Encargo de Carlos. `git fetch` previo: nada que bajar.
+
+- **`ConfiguracionesPage`** (`pages/configuraciones/`), ruta `'configuraciones'` en `main.dart`.
+  Mismo aspecto que el Menú Principal: opciones a todo lo ancho con icono en recuadro y divisores.
+  Dos opciones: **Bloqueo al abrir la app** (Face ID / huella) y **Calificar la app**.
+- **Drawer:** sale `InterruptorBiometria` y entra «Configuraciones» (primera de «Mi cuenta»).
+- **Menú Principal:** sale «Calificar la app» (queda en 4 opciones). Se quitan
+  `kMenuCalificarAppId` y la intercepción de `MenuPrincipalPage`, que ya no tienen uso; el
+  `_abrirFichaTienda` se mudó a la pantalla nueva, con su `AlertDialog` de error.
+- **`IconoDeMenu`** (`presentation/widgets/`): el icono en recuadro, compartido por `MenuItemTile`
+  y Configuraciones para que se vean igual. `InterruptorBiometria` adopta ese estilo.
+- Calificar lleva `open_in_new` en vez del chevron: sale de la app.
+- `AppStrings`: `configuracionesTitulo`, `configuracionesCalificarApp` (sustituye a
+  `menuCalificarApp`).
+- **Tests:** `test/widgets/configuraciones/configuraciones_page_test.dart` (7: pantalla en claro y
+  oscuro, interruptor → `BiometriaBloqueoCambiado`, calificar abre la ficha, error sin detalle
+  técnico, drawer sin interruptor y navegando a Configuraciones); ajustado
+  `menu_principal_bloc_test.dart`. `flutter analyze` limpio, **1104 tests en verde**.
+- **Verificado en el Oppo** (debug, CATutorP811): menú con 4 opciones, drawer con
+  «Configuraciones», la pantalla en claro y oscuro, el interruptor lanza el `BiometricPrompt` y al
+  cancelarlo queda apagado, «Calificar la app» abre la ficha en Play, el menú sigue navegando.
+  Logcat sin errores. Hubo que desinstalar la 1.0.32 de la tienda para poner el debug.
+- **Revisión para release (misma fecha):** `dart format` aplicado a los archivos nuevos; test
+  añadido de pantalla pequeña (320 × 568, letra al 130 %) sin desbordes → 8 tests en el archivo.
+  `flutter analyze` limpio y suite completa en verde. Ningún cambio toca `ios/` ni `android/`:
+  en iOS corren los mismos caminos ya publicados (`NSFaceIDUsageDescription` presente,
+  `openStoreListing` con `appStoreId`). **No compilado en iPhone** (eso es en la Mac).
+- **Arreglo del carrito sin red (2026-10-01 (e)) verificado por fin en el Oppo:** con PAGO 3 de
+  P811 seleccionado y wifi/datos apagados, el carrito muestra «Error al cargar — Sin conexión» con
+  Reintentar (antes «Carrito vacío»); con la red de vuelta, Reintentar trae el pago. Red
+  restaurada y comprobada.
+- **Actualización (autorizada por Carlos):** Flutter **3.47.5 → 3.47.6** y `flutter pub upgrade`
+  sin mayores: `package_info_plus` 10.2.2, `share_plus` 13.3.1, `shared_preferences` 2.5.6,
+  `url_launcher` 6.3.3, `webview_flutter_wkwebview` 3.27.0, `jni_flutter` 1.0.4+1 (la 1.0.4
+  estaba retirada), `sqflite` 2.4.4+1, `sqflite_common` 2.5.13+1, `frontend_server_client` 4.1.0.
+  El lock exige ahora Flutter ≥ 3.47.0. Las mayores siguen bloqueadas por lo documentado.
+  Liquid Glass: 3.47.6 no lo trae y `cupertino_ui` sigue en 1.1.1. El aviso «Built-in Kotlin»
+  sigue igual (`firebase_core`, `in_app_review`, `pdfx`), solo aviso.
+- Tras actualizar: `flutter analyze` limpio, **1105 tests en verde**, y en el Oppo con el debug
+  1.0.33+42: arranque con sesión guardada, `v1.0.33` en el drawer, Configuraciones, ticket PDF y
+  hoja de compartir. Logcat sin errores.
+- **Release 1.0.33+42** (`pubspec.yaml`). APK 65.5 MB y AAB 64.2 MB, generados en la Linux.
+  El AAB falló en paralelo (`llvm-strip` sobre un `libflutter.so` a medio escribir, el choque de
+  `build/` ya documentado) y compiló solo a la primera. Comprobado: las 12 `.so` del AAB son ELF
+  válidos e idénticas a las del APK; pesa más que el de la 1.0.32 (50.7) porque ahora sí trae los
+  `libflutter.so.sym` de arm64/x86_64 en `BUNDLE-METADATA`, que no llegan al usuario.
+- **Pendiente en la Mac** (anotado en `CLAUDE.md`, sección «Pendiente en la Mac»): `git pull`,
+  `flutter upgrade` a 3.47.6, limpieza + `pod install`, probar en el iPhone la webview del pago
+  (sube `webview_flutter_wkwebview`), compartir y Configuraciones, y después el Archive.
+
+### 2026-10-01 (e) — El carrito sin red ya no dice «Carrito vacío»
+
+Arreglo del hallazgo de la sesión (b).
+
+- **`CarritoState.errorDeCarga`**: el motivo por el que no se pudieron traer los cargos. Lo fija
+  `_onInitial` en las dos ramas de fallo (`Error` y excepción) y lo limpia al empezar cada carga.
+  Hacía falta un campo aparte porque `errorMessage` se borra al cerrar el diálogo.
+- **`carrito_body.dart`**: si no hay nada que enseñar y hubo `errorDeCarga`, pinta
+  `EdoCtaErrorWidget` («Error al cargar», el mensaje y **Reintentar**, que relanza
+  `CarritoInitialEvent`). Se reutiliza el de Estados de Cuenta en lugar de duplicarlo. Sin
+  selección guardada sigue saliendo «Carrito vacío».
+- **Test:** `test/unit/blocs/carrito_error_de_carga_test.dart` (7): BLoC (fallo, excepción, cerrar
+  el diálogo no lo borra, reintentar con red lo limpia) y pantalla montada (error con Reintentar,
+  Reintentar vuelve a pedir, vacío de verdad). Comprobado que el de pantalla **falla sin el
+  arreglo**. `flutter analyze` limpio, **1097 tests en verde**.
+- **Sin verificar en el Oppo todavía:** Carlos lo estaba usando; el APK de debug está compilado.
+- **No va en la 1.0.32**, que ya está publicada en las dos tiendas (ver (c)). Irá en el próximo
+  release, **1.0.33+42**, cuando Carlos lo pida; los AAB/APK de las 08:04 son los de la 1.0.32.
+
 ### 2026-10-01 (d) — Liberar espacio en la Mac, y la trampa de los runtimes de simulador
 
 Encargo de Carlos, ajeno al proyecto: liberar disco sin romper nada. **Se rompió algo y se

@@ -75,7 +75,13 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
     CarritoInitialEvent event,
     Emitter<CarritoState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        clearError: true,
+        clearErrorDeCarga: true,
+      ),
+    );
 
     try {
       // Cargar pagos seleccionados del storage
@@ -119,8 +125,13 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
           );
         }
       } else {
+        final mensaje = (result as Error).msg;
         emit(
-          state.copyWith(isLoading: false, errorMessage: (result as Error).msg),
+          state.copyWith(
+            isLoading: false,
+            errorMessage: mensaje,
+            errorDeCarga: mensaje,
+          ),
         );
       }
     } catch (e) {
@@ -129,7 +140,14 @@ class CarritoBloc extends Bloc<CarritoEvent, CarritoState> {
         error: e,
         tag: 'Carrito',
       );
-      emit(state.copyWith(isLoading: false, errorMessage: mensajeErrorRed(e)));
+      final mensaje = mensajeErrorRed(e);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: mensaje,
+          errorDeCarga: mensaje,
+        ),
+      );
     }
   }
 

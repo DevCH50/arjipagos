@@ -6,6 +6,7 @@ import 'package:arjipagos/src/presentation/pages/carrito/tras_fallo_cobro.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_alumno_card.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_empty_widget.dart';
 import 'package:arjipagos/src/presentation/pages/carrito/widgets/carrito_loading_widget.dart';
+import 'package:arjipagos/src/presentation/pages/edo_cta/widgets/error_widget.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/pago_webview_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,6 +25,15 @@ class CarritoBody extends StatelessWidget {
         }
 
         if (state.itemsCarrito.isEmpty) {
+          // Sin cargos del servidor no se sabe qué hay en el carrito: decir
+          // «Carrito vacío» sería mentir a quien sí seleccionó pagos.
+          if (state.errorDeCarga != null) {
+            return EdoCtaErrorWidget(
+              message: state.errorDeCarga!,
+              onRetry: () =>
+                  context.read<CarritoBloc>().add(const CarritoInitialEvent()),
+            );
+          }
           return const CarritoEmptyWidget();
         }
 

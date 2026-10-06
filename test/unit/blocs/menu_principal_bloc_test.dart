@@ -126,15 +126,15 @@ void main() {
       });
     });
 
-    test('defaultMenuItems contiene los items de pagos, facturas y calificar',
-        () {
+    test('defaultMenuItems contiene los items de pagos y facturas', () {
       // Act
       final items = MenuPrincipalState.defaultMenuItems;
 
       // Assert
       // 'otros_pagos' son los pagos del emisor fiscal 2: van por otro contrato
       // de Adquira y a otra cuenta bancaria, así que tienen su propia entrada.
-      expect(items, hasLength(5));
+      // 'Calificar la app' ya no está aquí: se mudó a Configuraciones.
+      expect(items, hasLength(4));
       expect(
         items.map((i) => i.id),
         containsAll([
@@ -142,7 +142,6 @@ void main() {
           'otros_pagos',
           'pagos_realizados',
           'facturas',
-          kMenuCalificarAppId,
         ]),
       );
     });
@@ -162,13 +161,12 @@ void main() {
       expect(rutasPorId['facturas'], equals('facturas'));
     });
 
-    test('el item de calificar no tiene ruta', () {
-      // No navega dentro de la app: abre la ficha de la tienda. Si algún día
-      // se le pusiera una ruta, MenuPrincipalPage intentaría navegar a ella.
-      final calificar = MenuPrincipalState.defaultMenuItems
-          .firstWhere((i) => i.id == kMenuCalificarAppId);
-
-      expect(calificar.ruta, isNull);
+    test('todos los items del menú navegan a una ruta', () {
+      // Desde que "Calificar la app" se mudó a Configuraciones, el menú ya no
+      // tiene items especiales: MenuPrincipalPage solo sabe navegar.
+      for (final item in MenuPrincipalState.defaultMenuItems) {
+        expect(item.ruta, isNotNull, reason: item.id);
+      }
     });
   });
 
