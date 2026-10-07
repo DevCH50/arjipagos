@@ -333,7 +333,7 @@ la interfaz de Flutter la pinta la app y no cambia.
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
 
-**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 con 3.47.6: sigue sin haberlo, y hay fecha.** Comprobado contra el
+**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6: sigue sin haberlo, y hay fecha.** Comprobado contra el
 SDK instalado, no contra un artículo:
 `grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
 `$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
@@ -346,7 +346,8 @@ finales de 2026**.
 Por ahora es una **copia** del Cupertino del SDK: su changelog no menciona Liquid Glass ni ningún
 estilo nuevo. A partir de ahora, la revisión de cada actualización incluye **el changelog de
 `cupertino_ui`**, que es donde aparecerá primero. **2026-10-06:** Flutter 3.47.6 y `cupertino_ui`
-sigue en 1.1.1, sin novedades.
+sigue en 1.1.1, sin novedades. **2026-10-07:** `cupertino_ui` 1.1.2, solo arreglos (`CupertinoMagnifier`,
+`showCupertinoSheet`); `grep -i liquid` en su `lib/` no devuelve nada.
 
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la
@@ -1091,6 +1092,14 @@ quita APIs deprecadas que este proyecto **ya no usa** (`SecureStorage` está mig
 usan aquí. Cero beneficio, riesgo de toolchain alto.
 
 Reintentar solo cuando AGP estable soporte API 37 **y** el plugin declare la versión menor.
+
+**2026-10-07: el bloqueo de toolchain ya no aplica.** La **11.2.0** declara
+`compileSdk = flutter.compileSdkVersion`, no 37. Pero **sigue sin subirse**, y ahora por otro motivo:
+la serie 11 reescribe el almacén en Android (claves con prefijo, *namespaces*, `checkUpgradeStatus`
+que distingue «recuperación pendiente» de «pérdida de datos») y ahí viven la sesión, el `device_id`
+y la preferencia del bloqueo biométrico. Una migración fallida cierra la sesión o duplica el aparato
+en el backend, en silencio. Subirla es una tarea aparte, decidida por Carlos y probada actualizando
+**encima** de una instalación con sesión en el Oppo y en el iPhone, nunca dentro de un release.
 
 **`injectable_generator` se queda en 3.0.2** — no puede subir a 3.1.x porque el SDK fija
 `test_api` en 0.7.11. No forzar con `dependency_overrides`.

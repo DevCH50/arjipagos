@@ -12,6 +12,28 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-07 — Revisión completa y binarios de la 1.0.33+42
+
+Encargo de Carlos: revisar, actualizar, release, commit, push y APK + AAB. `git fetch` previo:
+nada que bajar.
+
+- **Versión:** se queda en **1.0.33+42**. Las dos tiendas tienen la 1.0.32 (App Store por
+  `itunes.apple.com/lookup`; `GET /api/v1/app/version` da 1.0.32 para `android` e `ios`) y la
+  1.0.33 no se ha subido a ninguna, así que no se crea versión nueva.
+- **Revisión:** `flutter analyze` sin issues, **1105 tests en verde**. Comprobado a mano:
+  `ApiConfig.isProduction = true`, permiso INTERNET, `NSFaceIDUsageDescription`,
+  `UIApplicationSceneManifest`, `LastUpgradeCheck`/`LastUpgradeVersion` = 2700, Launch y Archive
+  en `Release`, AppIcon sin huérfanos ni fantasmas, `kTemporadaForzada = null`.
+- **Actualización:** Flutter 3.47.6 ya es la última estable; `flutter pub upgrade --dry-run` no
+  cambia nada. Los saltos mayores siguen bloqueados por las decisiones de `CLAUDE.md`.
+  `flutter_secure_storage` 11.2.0 ya no exige API 37, pero migra el almacén de la sesión y el
+  `device_id`: **no se sube** sin decisión de Carlos (anotado en `CLAUDE.md`).
+- **Pendientes permanentes:** Liquid Glass sigue sin estar (SDK 3.47.6 y `cupertino_ui` 1.1.2,
+  solo arreglos). `firebase_core`, `in_app_review` y `pdfx` sin versión migrada a Built-in Kotlin.
+- **iOS:** no compilable desde la Linux; nada del código cambió desde la revisión del 2026-10-06,
+  así que sigue en pie «Pendiente en la Mac» de `CLAUDE.md`.
+- APK y AAB regenerados en la Linux (ver tamaños en el commit siguiente de progreso si cambian).
+
 ### 2026-10-06 — Pantalla «Configuraciones»
 
 Encargo de Carlos. `git fetch` previo: nada que bajar.
