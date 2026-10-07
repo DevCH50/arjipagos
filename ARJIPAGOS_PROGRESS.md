@@ -32,7 +32,9 @@ nada que bajar.
   solo arreglos). `firebase_core`, `in_app_review` y `pdfx` sin versión migrada a Built-in Kotlin.
 - **iOS:** no compilable desde la Linux; nada del código cambió desde la revisión del 2026-10-06,
   así que sigue en pie «Pendiente en la Mac» de `CLAUDE.md`.
-- APK y AAB regenerados en la Linux (ver tamaños en el commit siguiente de progreso si cambian).
+- **Binarios del 2026-10-07, desde `e553b49`:** APK 65.5 MB (10:50) y AAB 64.2 MB (10:51), en la
+  Linux. Mismo contenido que los del 2026-10-06 —Gradle dio el AAB por al día y hubo que borrarlo
+  para que se regenerara—. **Sin instalar** en el Oppo y **sin subir** a Play.
 
 ### 2026-10-06 — Pantalla «Configuraciones»
 
