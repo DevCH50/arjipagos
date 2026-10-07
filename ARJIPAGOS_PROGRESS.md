@@ -12,7 +12,12 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
-### 2026-10-07 — 1.0.33+42 publicada en Google Play
+### 2026-10-07 — 1.0.33+42 publicada en las DOS tiendas
+
+**Apple la aprobó** (aviso de Carlos, mismo día). Al anotarlo, el lookup seguía dando 1.0.32: es el
+retraso habitual de esa API tras la aprobación, no un rechazo. Las dos plataformas vuelven a ir a la
+par, y el próximo release sube a **1.0.34+43**, solo cuando Carlos lo pida.
+
 
 Carlos: la 1.0.33 está publicada en Play Store. En iOS se mandó a revisión el mismo día, pero a las
 horas de anotarlo `itunes.apple.com/lookup?id=6760574386` seguía dando **1.0.32** (del
