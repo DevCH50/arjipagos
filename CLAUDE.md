@@ -158,28 +158,6 @@ Dos consecuencias prácticas:
 - **Al listar lo que falta para publicar, separar por máquina.** Que iOS esté subido no dice
   nada del estado de Android, y al revés.
 
-### Pendiente en la Mac — tras la actualización del 2026-10-06
-
-En la Linux se subió **Flutter 3.47.5 → 3.47.6** y `flutter pub upgrade` (solo versiones
-compatibles, sin tocar `pubspec.yaml`). Desde entonces el `pubspec.lock` exige **Flutter ≥ 3.47.0**.
-**Antes del Archive de la 1.0.33+42, en la Mac y en este orden:**
-
-```bash
-git pull                     # trae el pubspec.lock y la versión 1.0.33+42
-flutter upgrade              # a 3.47.6; comprobar con flutter --version
-flutter clean
-flutter pub get
-cd ios && pod install && cd ..   # los pods/SPM de los plugins que subieron
-./scripts/build_ios.sh
-```
-
-Luego el checklist de Archive de siempre. **Probar en el iPhone, antes de distribuir, la webview
-del pago**: subió `webview_flutter_wkwebview` 3.26.2 → 3.27.0, que es solo de iOS y desde la Linux
-no se puede ver. Abrir «Otros pagos» → Pagar con CATutorP811 (formulario de OpenPay) y cerrar con
-la ✕ sin pagar; y «Pagos Pendientes» si hay cargos (Adquira). También: compartir un ticket
-(`share_plus` 13.3.1) y la pantalla nueva **Configuraciones** (Face ID y «Calificar la app», que en
-iOS abre la App Store). Al terminar, borrar esta sección.
-
 ## Instrucciones para Release (Agente)
 
 > **Esto se ejecuta en la máquina Linux.** Ver la sección anterior.
@@ -272,6 +250,57 @@ Revisado el 2026-09-17, con iOS 27 ya publicado (14-sep-2026) y Xcode 27 admitie
 **Compilar con el SDK de iOS 27 no es obligatorio hasta abril de 2027**, pero lo que rompe al
 compilar con él ya está resuelto:
 
+### 🔴 Abril de 2027: ESTA Mac ya no podrá publicar en iOS
+
+Revisado el 2026-10-07, a raíz del aviso de App Store Connect al publicar la 1.0.33. Desde **abril
+de 2027** se juntan dos requisitos:
+
+1. **Todo lo que se suba tiene que compilarse con el SDK de iOS 27** (Xcode 27 o posterior).
+2. **Capturas del iPhone Duo**, obligatorias para las apps que usen el SDK de **iOS 27.1** o
+   posterior —es decir, en la práctica, para cualquiera que compile con el Xcode de ese momento—.
+
+**Y esta Mac no puede con ninguno de los dos.** Es una **MacBook Pro 15" de 2018, Intel**
+(`MacBookPro15,1`, `sysctl -n hw.model`):
+
+- **Xcode 27 solo instala y corre en Apple silicon**, y pide macOS Tahoe 26.6.
+- **macOS Tahoe no admite la MacBook Pro de 2018**: entre las Intel solo entran la 16" de 2019, la
+  13" de 2020 con cuatro Thunderbolt, el iMac de 2020 y el Mac Pro de 2019. Esta Mac se queda en
+  **macOS Sequoia 15** para siempre.
+
+Hasta abril de 2027 se sigue publicando desde aquí con Xcode 26.3 sin problemas. **Antes de esa
+fecha hace falta una Mac con Apple silicon** (M1 o posterior); sin ella no sale ni una versión más
+de iOS. Esa máquina es la que hará Xcode 27.1, las capturas y las pruebas del Duo.
+
+**El iPhone Duo** (a la venta el 23-oct-2026, con iOS 27; plegable, dos pantallas):
+
+| | Pantalla exterior | Pantalla interior |
+| --- | --- | --- |
+| Capturas para App Store Connect | 1398 × 2034 px | 2007 × 2853 px |
+| Tamaño aproximado en puntos (÷ 3) | ~466 × 678 | ~669 × 951, casi cuadrada (1.42 : 1) |
+
+Las dos admiten vertical y horizontal; las vistas previas en video son 886 × 1920. Una app que **no**
+se compila con el SDK 27.1 corre en la pantalla interior a su tamaño de siempre, en modo
+compatibilidad; con el 27.1 ocupa la pantalla entera y tiene que **redimensionarse en vivo** al
+plegar y desplegar.
+
+**Qué toca a esta app:**
+
+- **Solo vertical.** `Info.plist` declara solo `UIInterfaceOrientationPortrait`, lleva
+  `UIRequiresFullScreen = true` y `main.dart` fija `portraitUp`. En una pantalla casi cuadrada eso
+  puede no bastar; **no cambiarlo hasta tener el SDK 27.1 y el Duo (o su simulador) delante**, porque
+  hoy Apple no ha publicado cómo trata esa combinación.
+- **Ancho de ~669 pt** en la pantalla interior, el doble de un iPhone pequeño. **Cubierto desde el
+  2026-10-07** por `test/widgets/iphone_duo/pantallas_iphone_duo_test.dart`: Login, Menú, Estados de
+  Cuenta (los dos emisores), Carrito con un pago, Pagos Realizados, Facturas, Notificaciones y
+  Configuraciones, en las dos pantallas del Duo, claro y oscuro, letra al 100 % y 130 % (72 casos).
+  Falla con cualquier desborde —comprobado metiendo uno a propósito—. Los tamaños viven en
+  `test/helpers/pantallas_iphone_duo.dart`; si el simulador da otros puntos, se cambian **solo
+  ahí**. Al añadir una pantalla nueva, darla de alta en la lista del test. Lo que **no** cubre es si
+  se ve bien estirada: eso se mira en el simulador.
+- **Flutter no da en iOS la bisagra ni las zonas de la pantalla** (`MediaQuery.displayFeatures` solo
+  se llena en Android). Esta app no necesita saber dónde está la bisagra: con que se redimensione bien
+  es suficiente, y **no se mete ningún paquete de terceros** para eso.
+
 | Requisito | Estado |
 | --- | --- |
 | Ciclo de vida **UIScene** (sin él la app **no arranca**, no es un aviso) | Hecho: `UIApplicationSceneManifest` en `Info.plist` y `FlutterImplicitEngineDelegate` en el `AppDelegate` |
@@ -293,9 +322,9 @@ tenerlo desbloqueado y sin Modo de bajo consumo. **No desconectar ni cerrar Xcod
 pasa una vez por versión de iOS; las carpetas de versiones que ya no lleva ningún aparato se pueden
 borrar (pesan lo mismo cada una).
 
-**Al 2026-09-18 la Mac sigue en macOS 15.8 y Xcode 26.3, y el App Store no le ofrece Xcode 27**,
-porque oculta las versiones que el macOS instalado no admite. Primero va la actualización del
-sistema (`sw_vers -productVersion` para ver en cuál está), y después ya aparece Xcode 27.
+**La Mac está en macOS 15.8.1 y Xcode 26.3, y el App Store no le ofrece Xcode 27** porque oculta lo
+que el macOS instalado no admite. **No es cuestión de actualizar el sistema**, como se creyó el
+2026-09-18: esta Mac no admite Tahoe y Xcode 27 no corre en Intel. Ver «Abril de 2027» arriba.
 
 Lo que eso bloquea y lo que no:
 
@@ -324,7 +353,7 @@ Lo que eso bloquea y lo que no:
 | Push con la app **abierta** | Sale el banner y se actualiza la lista de avisos — lo que estaba roto desde abril |
 | Webview del pago | Abre y navega |
 | Ticket PDF y factura ZIP, share sheet | Abren y se comparten |
-| **Face ID** | **Sin probar todavía** |
+| Face ID | Funciona: probado el 2026-10-01 con la 1.0.32+41, y el 2026-10-07 con la 1.0.33+42 desde el interruptor de Configuraciones |
 
 En iOS 27 el sistema aplica Liquid Glass a lo nativo (share sheet, diálogo de Face ID, webview);
 la interfaz de Flutter la pinta la app y no cambia.
@@ -445,7 +474,9 @@ recorrer todos los módulos de la app, y de nuevo el 2026-08-26 con la 1.0.28+37
 `non-launching port` se añadieron el 2026-09-18 con la 1.0.31+40 en **iOS 27**, recorriendo pago,
 tickets, facturas y los push en los dos planos; se buscaron también en los paquetes SPM y en los
 plugins de `~/.pub-cache`. La fila de `RBSAssertionErrorDomain Code=2` se añadió el 2026-10-01 con
-la 1.0.32+41, al abrir el formulario de OpenPay en el iPhone 17. Ninguno de estos símbolos aparece
+la 1.0.32+41, al abrir el formulario de OpenPay en el iPhone 17. Las de `InAppReviewPlugin`,
+`/app/id6760574386` y `TUIKeyplaneView` se añadieron el 2026-10-07 con la 1.0.33+42, probando
+Configuraciones. Ninguno de estos símbolos aparece
 en `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
@@ -479,6 +510,9 @@ en `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de
 | `cannot add handler to 0 from 0 - dropping` | Ruido interno de iOS, a ráfagas durante el uso normal |
 | `… may only be set for UIKBDynamicRenderFactory, changes not saved` | El teclado de iOS configurándose. Cinco líneas cada vez que aparece |
 | `Unable to simultaneously satisfy constraints` con `TUIPredictionViewCell` / `TUICandidateGradientContentLabel` | Como el de `_UIModernBarButton`, pero en la barra de predicciones del teclado. UIKit se autorepara |
+| `Unable to simultaneously satisfy constraints` con `TUIKeyplaneView` / `TUIKeyboardContentView` / `UIKeyboardImpl` | El mismo, en el cuerpo del teclado (`_UITemporaryLayoutHeight` contra `TUIKeyplane.height`). Clases de UIKit; se autorepara |
+| `InAppReviewPlugin: handle openStoreListing` | El plugin `in_app_review` avisando de que abre la ficha de la tienda. Sale al pulsar «Calificar la app» en Configuraciones |
+| `sandbox_extension_issue_file failed for /app/id6760574386` / `unable to make sandbox extension` | iOS intentando tratar la ruta de la URL de la App Store como un archivo. `6760574386` es nuestro `AppUrls.appStoreId`, así que apunta a la ficha correcta, y la App Store abre igual |
 | `Conversion error! {{0, 956}, {440, 320}} was converted to …` | UIKit recalculando el marco del teclado (`440 × 956` es la pantalla del 17 Pro Max) mientras la ventana se encoge al minimizar, o con alto `0` si el teclado ya estaba oculto. Una línea por fotograma |
 | `Client not entitled … com.apple.runningboard.process-state` / `elapsedCPUTimeForFrontBoard couldn't generate a task port` | iOS intentando medir la CPU de la app con un permiso que una app normal no tiene |
 | `Message from debugger: killed` | **No es un crash.** Es el depurador terminando el proceso: sale al pulsar Stop en Xcode o al relanzar. Un crash de verdad trae otra firma —una señal (`EXC_BAD_ACCESS`, `SIGABRT`) o una línea `Fatal error:`— y ninguna de las dos aparece aquí |

@@ -12,6 +12,53 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-07 — iPhone Duo y abril de 2027: lo que pide Apple
+
+Aviso de App Store Connect al publicar la 1.0.33. Investigado y anotado en `CLAUDE.md`, sección
+«Abril de 2027: ESTA Mac ya no podrá publicar en iOS».
+
+- Desde abril de 2027: SDK de iOS 27 obligatorio y capturas del **iPhone Duo** (plegable, a la
+  venta el 23-oct-2026; interior ~669 × 951 pt, exterior ~466 × 678 pt).
+- **Esta Mac (MacBook Pro 2018, Intel) no puede**: Xcode 27 solo corre en Apple silicon y Tahoe no
+  la admite. Se corrigió en `CLAUDE.md` la idea de que bastaba con actualizar macOS.
+- **Tests a los tamaños del Duo, hechos** (plan aprobado por Carlos):
+  - `test/helpers/pantallas_iphone_duo.dart`: `kDuoExterior` (1398 × 2034 px, ~466 × 678 pt) y
+    `kDuoInterior` (2007 × 2853 px, ~669 × 951 pt), a 3x, y `fijarPantalla()`.
+  - `test/widgets/iphone_duo/pantallas_iphone_duo_test.dart`: 9 pantallas × 2 pantallas del Duo ×
+    claro/oscuro × letra 100/130 % = **72 casos, todos en verde a la primera**: ninguna pantalla se
+    desborda en el Duo. Comprobado que el test sirve: con un desborde metido a propósito en
+    Configuraciones cayeron sus 8 casos; deshecho con `git checkout`.
+  - Los temas se construyen dentro de cada caso: `AppTheme` usa `google_fonts`, que sin binding
+    llenaba la salida de errores.
+  - `flutter analyze` sin issues, **1177 tests en verde**. Sin tocar `lib/`.
+- **`AppStrings`:** los dos textos de «¿No tienes una cuenta?» del login, que estaban escritos a
+  mano en `LoginContent.dart`, pasan a `loginSinCuentaTitulo` y `loginSinCuentaMensaje`. Mismo texto.
+- Pendiente para la Mac con Apple silicon: simulador del Duo, ver si se ve bien estirada a 669 pt,
+  cómo trata iOS 27.1 a una app solo vertical, y las capturas.
+
+### 2026-10-07 — Mac: preparación iOS de la 1.0.33+42
+
+Primera parte de «Pendiente en la Mac» de `CLAUDE.md`, hecha:
+
+- `git pull` (fast-forward `f30e74e..9c14e02`), `flutter upgrade` **3.47.5 → 3.47.6**.
+- Limpieza obligatoria: `flutter clean`, `flutter pub get`, `pod install`. `Package.swift` quedó en
+  `.iOS("15.0")`. El aviso de CocoaPods sobre la *base configuration* de `Profile` es el de siempre.
+- `./scripts/build_ios.sh` → `Runner.app` 26.7 MB, 1.0.33+42, `LastUpgradeCheck`/`LastUpgradeVersion`
+  en 2700. El árbol de git quedó limpio tras el build.
+- **Limpieza a fondo** (encargo de Carlos, mismo día): borrado `DerivedData` entero (2 GB, se
+  regenera), `ios/Pods`, `ios/.symlinks`, `ios/Flutter/ephemeral` e `ios/build`; `flutter clean`,
+  `pub get`, `pod install --repo-update` y `./scripts/build_ios.sh` de nuevo: compila, `Info.plist`
+  del `.app` en 1.0.33 (42). Verificado: AppIcon sin huérfanos ni fantasmas, Launch y Archive en
+  `Release`, `isProduction = true`, «Any iOS Device» bajo *Available*. Los `Package.resolved` de SPM
+  (Firebase) no cambiaron. No se tocó la caché de SwiftPM ni los runtimes de simulador.
+- **Probado en el iPhone 17 (iOS 27) por Carlos**, con Run desde Xcode 26.3: todo bien. Webview
+  del pago con OpenPay (cerrar con la ✕ sin pagar → «No se completó el pago») y con Adquira,
+  ticket PDF con la hoja de compartir, Configuraciones con Face ID (ya probado el 2026-10-01; ahora desde el interruptor nuevo) y
+  «Calificar la app» abriendo la ficha en la App Store. Consola sin crashes; tres líneas nuevas
+  anotadas como ruido en `CLAUDE.md` (`InAppReviewPlugin`, `/app/id6760574386`, `TUIKeyplaneView`).
+- Borrada la sección «Pendiente en la Mac» de `CLAUDE.md`, y la fila de Face ID de la tabla de iOS 27 pasa a «Funciona».
+- **Archive y Distribute a App Store Connect hechos por Carlos** (1.0.33 (42)), sin errores. Queda la revisión de Apple y, en la Linux, subir el AAB a Play.
+
 ### 2026-10-07 — Revisión completa y binarios de la 1.0.33+42
 
 Encargo de Carlos: revisar, actualizar, release, commit, push y APK + AAB. `git fetch` previo:

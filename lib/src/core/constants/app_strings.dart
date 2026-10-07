@@ -349,6 +349,11 @@ class AppStrings {
   static const String loginCamposIncompletosMsg =
       'Por favor, completa todos los campos para continuar.';
 
+  /// Aviso para quien no tiene cuenta: las cuentas las da el colegio.
+  static const String loginSinCuentaTitulo = '¿No tienes una cuenta?';
+  static const String loginSinCuentaMensaje =
+      'Ponte en contacto con tu colegio para que te proporcionen tu cuenta.';
+
   // ============================================================================
   // REGISTRO — EXTRAS
   // ============================================================================

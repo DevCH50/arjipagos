@@ -132,9 +132,8 @@ class LoginContent extends StatelessWidget {
                 const SizedBox(height: 8),
                 const NoTienesCuentaAun(
                   textColor: AppColors.authTextSecondary,
-                  mensaje:
-                      'Ponte en contacto con tu colegio para que te proporcionen tu cuenta.',
-                  titulo: '¿No tienes una cuenta?',
+                  mensaje: AppStrings.loginSinCuentaMensaje,
+                  titulo: AppStrings.loginSinCuentaTitulo,
                   icono: Icons.school,
                 ),
               ],
