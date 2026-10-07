@@ -12,6 +12,14 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-07 — 1.0.33+42 publicada en Google Play
+
+Carlos: la 1.0.33 está publicada en Play Store. En iOS se mandó a revisión el mismo día, pero a las
+horas de anotarlo `itunes.apple.com/lookup?id=6760574386` seguía dando **1.0.32** (del
+2026-10-02): o Apple aún no la aprueba, o el lookup va con retraso. **No dar la 1.0.33 por publicada
+en el App Store hasta que el lookup lo diga.** Después, si se quiere, subir
+`version_minima`/`version_recomendada` a 1.0.33 en `/app/version` (backend).
+
 ### 2026-10-07 — iPhone Duo y abril de 2027: lo que pide Apple
 
 Aviso de App Store Connect al publicar la 1.0.33. Investigado y anotado en `CLAUDE.md`, sección
