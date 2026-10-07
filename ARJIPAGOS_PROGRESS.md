@@ -33,6 +33,9 @@ Aviso de App Store Connect al publicar la 1.0.33. Investigado y anotado en `CLAU
   - `flutter analyze` sin issues, **1177 tests en verde**. Sin tocar `lib/`.
 - **`AppStrings`:** los dos textos de «¿No tienes una cuenta?» del login, que estaban escritos a
   mano en `LoginContent.dart`, pasan a `loginSinCuentaTitulo` y `loginSinCuentaMensaje`. Mismo texto.
+- **Vuelto a probar en el iPhone 17 por Carlos tras el commit `167b93d`:** todo bien —webview del
+  pago, ticket PDF y factura ZIP con la hoja de compartir, teclado—. Consola sin crashes y sin
+  ninguna línea nueva: todo está ya en la tabla de ruido de `CLAUDE.md`.
 - Pendiente para la Mac con Apple silicon: simulador del Duo, ver si se ve bien estirada a 669 pt,
   cómo trata iOS 27.1 a una app solo vertical, y las capturas.
 
