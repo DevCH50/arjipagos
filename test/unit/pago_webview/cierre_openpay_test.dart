@@ -375,5 +375,34 @@ void main() {
       ).called(1);
       verifyNever(() => openpay.verificarCobro(any()));
     });
+
+    testWidgets(
+      'el código 5 no es un rechazo: sin «Reintentar», vacía y va a la lista',
+      (tester) async {
+        // «Ya se encuentra un pago con esa referencia»: lo más probable es que
+        // se cobrara antes y el aviso no llegara. Con «Reintentar» delante, el
+        // tutor seguiría intentando pagar algo que quizá ya pagó.
+        await abrirPago(tester, orderId: null);
+
+        webview.enviarPorCanal(
+          'PagoResultado',
+          '{"success":false,"codigo":5,'
+              '"message":"Ya se encuentra un pago con esa referencia"}',
+        );
+        await asentar(tester);
+
+        expect(find.text(AppStrings.adquiraReferenciaUsadaTitle), findsOneWidget);
+        expect(find.text(AppStrings.adquiraReferenciaUsadaMsg), findsOneWidget);
+        expect(find.text(AppStrings.pagoErrorTitle), findsNothing);
+        expect(find.text(AppStrings.retry), findsNothing);
+
+        await aceptar(tester);
+
+        verify(() => carrito.add(const CarritoLimpiarEvent())).called(1);
+        verify(() => lista.add(const EdoCtaListRefreshEvent())).called(1);
+        expect(find.text(_rutaLista), findsOneWidget);
+        verifyNever(() => openpay.verificarCobro(any()));
+      },
+    );
   });
 }

@@ -43,8 +43,9 @@ void main() async {
   ]);
 
   // Android 15 (SDK 35): activar edge-to-edge explícitamente.
-  // Equivale a enableEdgeToEdge() nativo; resuelve la advertencia de Play Store
-  // y asegura que el contenido se dibuje de borde a borde correctamente.
+  // Asegura que el contenido se dibuje de borde a borde. OJO: esto NO quita el
+  // aviso de Play Store —Play revisa la Activity—; eso lo hace el
+  // enableEdgeToEdge() nativo de MainActivity. Hacen falta los dos.
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Barra de estado transparente con iconos claros para el splash/auth (fondo oscuro).

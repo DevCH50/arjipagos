@@ -12,6 +12,67 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-08 — Release 1.0.34+43 (Linux)
+
+Las dos tiendas en 1.0.33 (comprobado contra iTunes y la ficha de Play): `pubspec` sube a
+**1.0.34+43**. Lleva el código 5 de Adquira y el `enableEdgeToEdge()` nativo (las dos entradas de
+abajo).
+
+- Sincronizado con `origin/main` antes de empezar: sin commits nuevos de la Mac.
+- Flutter 3.47.6 ya es el último estable; todas las dependencias, en la última versión que admiten
+  sus restricciones. Lo que queda son los saltos mayores bloqueados en `CLAUDE.md`. `cupertino_ui`
+  sigue en 1.1.2: sin Liquid Glass.
+- 1188 tests, `analyze` limpio, `isProduction = true`, permiso INTERNET, `kTemporadaForzada = null`.
+- iOS sin un solo cambio en `ios/`; icono sin huérfanos ni fantasmas, `LastUpgradeCheck = 2700`,
+  Launch y Archive en Release. **No compilable aquí**: el Archive y la prueba en el iPhone son de la Mac.
+- `CLAUDE.md`: secciones nuevas del edge-to-edge (las dos mitades) y del código 5.
+
+**Falta:** subir el AAB a Play (Linux) y, en la Mac, pull + limpieza + Archive.
+
+### 2026-10-08 — Edge-to-edge: `enableEdgeToEdge()` nativo y test guardián
+
+Play Console volvió a avisar «Es posible que la vista de extremo a extremo no funcione para todos
+los usuarios» con la 1.0.33 (build 42). Los cuatro `styles.xml` seguían limpios: el motivo era que
+la app **nunca llamó a `enableEdgeToEdge()` nativo**, y Play revisa la `Activity`, no el
+`SystemChrome.setEnabledSystemUIMode(edgeToEdge)` de Dart. Antes no se podía (`FlutterActivity` no
+es `ComponentActivity`); desde que la base es `FlutterFragmentActivity`, sí.
+
+- `MainActivity.onCreate`: `enableEdgeToEdge()` después de `super.onCreate` (y no en la instancia
+  que la guarda del launcher descarta). Sin dependencias nuevas.
+- **Test guardián** `test/unit/edge_to_edge_android_test.dart` (8 casos): la llamada, su orden, la
+  clase base, `windowDrawsSystemBarBackgrounds` ausente en los cuatro estilos y el modo de Dart.
+  Comprobado que falla con el `MainActivity` anterior.
+- Corregido el comentario de `main.dart`, que decía que lo de Dart quitaba el aviso.
+- **Oppo (Android 16, navegación por gestos)**: menú, Estados de Cuenta y Carrito con su barra
+  inferior, WebView de Adquira, en claro y oscuro, y el splash en arranque en frío. Guarda del
+  launcher repetida (ticket → «Abrir con» → icono → atrás): una sola instancia y la pila intacta.
+- 1188 tests en verde, `analyze` limpio. El aviso de Play desaparecerá con la **1.0.34+43**.
+
+### 2026-10-08 — Adquira: el código 5 ya no se presenta como «rechazado»
+
+Origen: a **crgsp4716** le salió `pago_rechazado` con la referencia `22225I19627` (colegiaturas de
+octubre de SANTIAGO y MATEO, desde iPhone). Era el **código 5** de Adquira, «Ya se encuentra un pago
+con esa referencia»: lo más probable es que se cobrara antes y el aviso de vuelta no llegara.
+
+- **Backend** (`a928cc165`, encargo `ENCARGO_ADQUIRA_ESTADO_Y_CODIGO_5.md` en ArjiApp): el rechazo
+  móvil manda `{success, codigo, message}` y `message` nunca va vacío. El endpoint de estado que se
+  pidió **no se puede hacer**: Adquira no ofrece consulta del cobro. Descartado.
+- **App**: `PagoResult` lee `codigo` (número o texto) → `referenciaYaCobrada`. Con un 5 sale
+  «Tu pago pudo haberse cobrado» (`AvisoCierreCobro.referenciaYaCobrada`), **sin «Reintentar»**,
+  vacía el carrito y vuelve a la lista recargada. Cualquier otro código, igual que antes.
+- **Tests**: parseo del `codigo` y pantalla montada con un 5. 1180 en verde, `analyze` limpio.
+- **Probado en el Oppo con el código 5 REAL**, con crgsp4716: forzando temporalmente el separador a
+  `I` en `PoliticaEmisor.separador` (ya revertido con `git checkout`), Adquira contestó
+  `{"success":false,"codigo":5,…}` al instante, sin formulario ni tarjeta; el aviso salió bien y al
+  aceptar volvió a la lista con 0 seleccionados.
+
+**Hallazgo: la referencia depende de la plataforma.** Con el separador `A`, los mismos cargos dan
+`22225A19627`, y Adquira abrió un formulario de cobro **nuevo** por $15,744 (se cerró sin
+rellenar). El 5 solo frena un reintento desde el mismo tipo de aparato: desde Android o la web, la
+familia **podría pagar dos veces**. Si `22225I19627` está cobrado, hay que aplicarlo a mano.
+
+**Estado:** sin commit. El Oppo quedó con el build de depuración y la sesión de crgsp4716.
+
 ### 2026-10-07 — 1.0.33+42 publicada en las DOS tiendas
 
 **Apple la aprobó** (aviso de Carlos, mismo día). Al anotarlo, el lookup seguía dando 1.0.32: es el

@@ -2,6 +2,7 @@ package mx.moriah.arjipagos
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import io.flutter.embedding.android.FlutterFragmentActivity
 
 /**
@@ -38,6 +39,22 @@ import io.flutter.embedding.android.FlutterFragmentActivity
  * la guarda de arriba sigue intacta. Aun así **hay que volver a probarla a mano**
  * después de tocar este archivo: abrir un ticket, aceptar el diálogo "Abrir con",
  * volver por el icono del launcher y comprobar que el atrás no cierra la app.
+ *
+ * ## Edge-to-edge (Android 15, SDK 35)
+ *
+ * Play Console avisa «Es posible que la vista de extremo a extremo no funcione
+ * para todos los usuarios» mientras la app no llame a `enableEdgeToEdge()`
+ * nativo. El `SystemChrome.setEnabledSystemUIMode(edgeToEdge)` de `main.dart`
+ * hace lo mismo en la práctica, pero Play no lo ve: lo que revisa es la
+ * `Activity`. Siguió saliendo en la 1.0.33+42 por eso.
+ *
+ * Antes no se podía: `FlutterActivity` extiende `android.app.Activity`, y
+ * `enableEdgeToEdge()` es de `ComponentActivity`. Desde que la base es
+ * `FlutterFragmentActivity` (que sí desciende de `ComponentActivity`), sí.
+ *
+ * Va **después** de `super.onCreate`: ahí dentro Flutter cambia del tema del
+ * splash al normal, y tocar la ventana antes podría dejar ese cambio atrás.
+ * Hay test guardián: `test/unit/edge_to_edge_android_test.dart`.
  */
 class MainActivity : FlutterFragmentActivity() {
 
@@ -53,6 +70,9 @@ class MainActivity : FlutterFragmentActivity() {
         // del usuario más abajo en la pila. Esta sobra.
         if (!isTaskRoot && relanzadaDesdeElLauncher) {
             finish()
+            return
         }
+
+        enableEdgeToEdge()
     }
 }

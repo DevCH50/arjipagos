@@ -163,6 +163,10 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
     setState(() => _respuestaRecibida = true);
     if (result.success) {
       _desenlace.exito(context);
+    } else if (result.referenciaYaCobrada) {
+      // Adquira dice que esa referencia ya se usó: lo más probable es que se
+      // cobrara antes. Sin «Reintentar» y con el carrito vacío.
+      _desenlace.avisoDeCierre(context, AvisoCierreCobro.referenciaYaCobrada);
     } else if (_currentArgs?.verificaAlCerrar ?? false) {
       // En OpenPay un retorno fallido no se cree sin más: puede ser «pagaste
       // pero no identificamos los cargos», donde el dinero sí salió. Manda el

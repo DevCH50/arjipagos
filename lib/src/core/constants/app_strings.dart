@@ -216,6 +216,14 @@ class AppStrings {
       'siguen en el carrito.';
 
   /// Puede que sí se cobrara: lo importante es que no pague dos veces.
+  // Adquira rechaza con código 5 una referencia que ya se usó: lo más probable
+  // es que ese pago ya se cobrara y el aviso no llegara.
+  static const String adquiraReferenciaUsadaTitle =
+      'Tu pago pudo haberse cobrado';
+  static const String adquiraReferenciaUsadaMsg =
+      'Es posible que tu pago ya se haya cobrado. No vuelvas a pagar; '
+      'comunícate con el colegio.';
+
   static const String openpaySinConfirmarTitle = 'No pudimos confirmar tu pago';
   static const String openpaySinConfirmarMsg =
       'NO vuelvas a pagar. Revisa tu estado de cuenta en unos minutos: si los '

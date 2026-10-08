@@ -90,6 +90,22 @@ distinto de la que se usó en su día. Si alguien lo ejecuta por error:
 Cambiar el splash implica rehacer a mano el edge-to-edge después. Los drawables
 y el storyboard ya generados están versionados; ahí es donde se toca.
 
+## Edge-to-edge de Android 15: hacen falta las DOS mitades
+
+El aviso de Play «Es posible que la vista de extremo a extremo no funcione para todos los
+usuarios» salió **tres veces** (1.0.22, y 1.0.33 con todo lo demás limpio). Se quita con dos cosas a
+la vez, y ninguna basta sola:
+
+1. **`enableEdgeToEdge()` nativo en `MainActivity.onCreate`**, después de `super.onCreate`. Play
+   revisa la `Activity`: el `SystemChrome.setEnabledSystemUIMode(edgeToEdge)` de `main.dart` dibuja
+   igual, pero Play no lo ve. Solo es posible porque la base es `FlutterFragmentActivity`
+   (desciende de `ComponentActivity`); con `FlutterActivity` no compila.
+2. **Ningún `windowDrawsSystemBarBackgrounds`** en los CUATRO `styles.xml` (`values`,
+   `values-night`, `values-v31`, `values-night-v31`). `flutter_native_splash:create` lo vuelve a
+   meter.
+
+Test guardián: `test/unit/edge_to_edge_android_test.dart`. Desde el 2026-10-08 (1.0.34+43).
+
 ## NO borrar los runtimes de simulador (aunque el proyecto no los use)
 
 **En Xcode 26 el soporte de dispositivo y el runtime del simulador son UN SOLO componente.**
@@ -884,6 +900,23 @@ el hecho de haber pasado a OpenPay. El aviso de `AppLogger` ahora sale **solo en
 Adquira**, que es donde significa algo.
 
 El plan completo está en `Plan OpenPay Frontend.md`; lo que falta del servidor, en su §7.
+
+### Adquira: el código 5 no es un rechazo
+
+**Adquira rechaza con `codigo: 5` («Ya se encuentra un pago con esa referencia») una referencia que
+ya cobró.** Casi siempre es un pago hecho cuyo aviso de vuelta se perdió (se cerró la app, se cayó la
+red). Desde el 2026-10-08 el backend manda `codigo` en el JSON del rechazo, y la app, con un 5,
+enseña «Tu pago pudo haberse cobrado… No vuelvas a pagar», **sin «Reintentar»**, vacía el carrito y
+vuelve a la lista recargada (`PagoResult.referenciaYaCobrada`, `AvisoCierreCobro.referenciaYaCobrada`).
+
+- **Adquira no tiene consulta de estado.** No hay `/adquira/estado` posible; no volver a pedirlo. Y
+  la app **no** le avisa al servidor de que algo está pagado: `/pago-realizado` es pública y no
+  verifica el `hash`.
+- **La referencia lleva la plataforma** (`I` iOS, `A` Android, `W` web). El 5 solo frena un
+  reintento desde el mismo tipo de aparato: con los mismos cargos desde otra plataforma, Adquira
+  abre un cobro nuevo. Un 5 hay que resolverlo en el colegio, aplicando el pago a mano.
+- **Para reproducir un 5 desde el Oppo** se fuerza temporalmente `PoliticaEmisor.separador` a
+  `separadorIOS` y se revierte con `git checkout` al terminar. Así se probó con un 5 real.
 
 ## «No hay…» no es «Error al cargar»
 

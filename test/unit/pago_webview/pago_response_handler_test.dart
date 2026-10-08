@@ -31,6 +31,32 @@ void main() {
       expect(r.message, 'Tarjeta rechazada');
     });
 
+    test('lee el `codigo` de Adquira, en número o en texto', () {
+      final n = PagoResponseHandler.procesarJson(
+          '{"success": false, "codigo": 5, "message": "Ya se encuentra un pago"}');
+      final t = PagoResponseHandler.procesarJson(
+          '{"success": false, "codigo": " 5 ", "message": "x"}');
+
+      expect(n.codigo, 5);
+      expect(n.referenciaYaCobrada, isTrue);
+      expect(t.codigo, 5);
+      expect(t.referenciaYaCobrada, isTrue);
+    });
+
+    test('otro código, o sin código, no es «referencia ya cobrada»', () {
+      final otro = PagoResponseHandler.procesarJson(
+          '{"success": false, "codigo": 1, "message": "Tarjeta rechazada"}');
+      final sin = PagoResponseHandler.procesarJson(
+          '{"success": false, "message": "Tarjeta rechazada"}');
+      final basura = PagoResponseHandler.procesarJson(
+          '{"success": false, "codigo": "abc", "message": "x"}');
+
+      expect(otro.referenciaYaCobrada, isFalse);
+      expect(sin.codigo, isNull);
+      expect(sin.referenciaYaCobrada, isFalse);
+      expect(basura.codigo, isNull);
+    });
+
     test('usa mensaje por defecto cuando falla sin message', () {
       final r = PagoResponseHandler.procesarJson('{"success": false}');
 

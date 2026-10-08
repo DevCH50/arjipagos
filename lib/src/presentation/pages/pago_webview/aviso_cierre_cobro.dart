@@ -2,7 +2,8 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/domain/models/EstadoCobroOpenpay.dart';
 
 /// Qué se le dice al tutor, y a dónde se le lleva, según en qué quedó un cobro
-/// de OpenPay que se cerró sin retorno.
+/// de OpenPay que se cerró sin retorno —o uno de Adquira rechazado con el
+/// código 5, ver [AvisoCierreCobro.referenciaYaCobrada]—.
 ///
 /// Es la tabla acordada con el backend el 2026-09-28, sin nada de Flutter para
 /// poder probarla sola. El caso `pagado` no está aquí: usa el diálogo de éxito
@@ -46,6 +47,19 @@ class AvisoCierreCobro {
     required this.mensaje,
     required this.vaciarCarrito,
   });
+
+  /// Adquira rechazó con código 5: la referencia ya se había usado.
+  ///
+  /// Es el mismo caso que «sin confirmar»: puede que el dinero ya saliera,
+  /// así que se vacía el carrito y se vuelve a la lista recargada, sin
+  /// «Reintentar». Adquira no tiene consulta de estado, así que aquí no hay
+  /// `message` del backend que valga más que el texto propio.
+  static const AvisoCierreCobro referenciaYaCobrada = AvisoCierreCobro._(
+    tipo: TipoAvisoCierre.advertencia,
+    titulo: AppStrings.adquiraReferenciaUsadaTitle,
+    mensaje: AppStrings.adquiraReferenciaUsadaMsg,
+    vaciarCarrito: true,
+  );
 
   /// El aviso de [resultado], o `null` si el cobro está pagado.
   ///
