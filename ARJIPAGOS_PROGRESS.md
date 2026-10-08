@@ -29,6 +29,18 @@ abajo).
 
 **Falta:** subir el AAB a Play (Linux) y, en la Mac, pull + limpieza + Archive.
 
+**Release probado en el Oppo** (APK de `d54a2b8`, instalado a petición de Carlos tras desinstalar
+el debug; `versionCode 43`, no depurable), con crgsp4716: splash y permiso de notificaciones,
+login, menú (pie «v1.0.34 · Android»), Pagos Pendientes con «Actualizar» y selección de los dos
+cargos, carrito, Adquira abre con `22225A19627` (cancelado sin rellenar), Otros pagos vacío con
+Reintentar (esperado: conceptos del emisor 2 apagados), Pagos Realizados y ticket PDF, Facturas,
+Notificaciones vacías, Configuraciones y el `BiometricPrompt` (sale; cancelado), modo oscuro.
+`logcat`: cero `FATAL` y cero errores de Flutter.
+
+**Segunda revisión completa** (misma tarde): sin commits nuevos en el remoto, tiendas aún en 1.0.33
+(se mantiene 1.0.34+43, regla 2), Flutter y dependencias sin novedades, 1188 tests, `analyze`
+limpio, comprobaciones de iOS igual (sin cambios en `ios/` desde la 1.0.33). APK y AAB regenerados.
+
 ### 2026-10-08 — Edge-to-edge: `enableEdgeToEdge()` nativo y test guardián
 
 Play Console volvió a avisar «Es posible que la vista de extremo a extremo no funcione para todos
