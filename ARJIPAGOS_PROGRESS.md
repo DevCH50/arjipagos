@@ -37,6 +37,15 @@ del Archive, ya con el cambio, con Flutter 3.47.6; blindajes verificados.
   resuelto con las dos mitades (`enableEdgeToEdge()` nativo y ningún
   `windowDrawsSystemBarBackgrounds`).
 
+### 2026-10-08 (20:18) — Linux: revisión tras el pull y binarios de la 1.0.34+43 desde `5469195`
+
+- Pull de `ed11fa7` y `5469195` (Mac). Revisado `PagoResponseHandler`: solo cambia `debugPrint` por
+  `AppLogger`, la lógica de éxito, rechazo y código 5 queda igual. `flutter analyze` limpio y
+  1194 tests en verde.
+- **Se queda en 1.0.34+43, por decisión de Carlos**, aunque las dos tiendas ya la tienen.
+- APK (65.5 MB) y AAB (64.2 MB) regenerados a las 20:18, **ya con `ed11fa7`**. Ojo: el AAB que
+  había antes en esta máquina era de las 18:07, desde `7ac3b6d`, **sin** ese arreglo.
+
 ### 2026-10-08 — OpenPay: la letra del 3D Secure salía diminuta en el iPhone
 
 **Publicado en App Store con la 1.0.34+43 (2026-10-08). Probado en el iPhone 17 por Carlos: la
