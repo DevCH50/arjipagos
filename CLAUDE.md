@@ -288,6 +288,12 @@ Hasta abril de 2027 se sigue publicando desde aquí con Xcode 26.3 sin problemas
 fecha hace falta una Mac con Apple silicon** (M1 o posterior); sin ella no sale ni una versión más
 de iOS. Esa máquina es la que hará Xcode 27.1, las capturas y las pruebas del Duo.
 
+**Y Flutter también se va de Intel.** Desde la 3.47.7 (2026-10-08), `flutter doctor` avisa en esta
+Mac: *«Flutter is deprecating support for Intel-based Macs. A future version of Flutter will require
+an Apple Silicon Mac to build applications.»* Sin fecha todavía, y puede llegar **antes** de abril de
+2027: el día que una versión de Flutter deje de compilar aquí, **no actualizar Flutter en esta Mac**
+hasta tener la Apple silicon, o la publicación de iOS se corta antes de tiempo.
+
 **El iPhone Duo** (a la venta el 23-oct-2026, con iOS 27; plegable, dos pantallas):
 
 | | Pantalla exterior | Pantalla interior |
@@ -321,7 +327,7 @@ plegar y desplegar.
 | Requisito | Estado |
 | --- | --- |
 | Ciclo de vida **UIScene** (sin él la app **no arranca**, no es un aviso) | Hecho: `UIApplicationSceneManifest` en `Info.plist` y `FlutterImplicitEngineDelegate` en el `AppDelegate` |
-| Flutter con soporte de Xcode 27 | Hecho: 3.47.4 (hoy 3.47.6), que además trae el arreglo de la pantalla blanca al depurar (#189284) |
+| Flutter con soporte de Xcode 27 | Hecho: 3.47.4 (hoy 3.47.7), que además trae el arreglo de la pantalla blanca al depurar (#189284) |
 | Deployment target ≥ 15.0 (por debajo, el build falla con "Target Integrity") | Hecho: 15.0 en el proyecto y forzado en los pods por el `post_install` |
 | Plugins compatibles con escenas | Hecho: `firebase_messaging` 16.7.0, `local_auth_darwin` 2.0.4, `url_launcher_ios` 6.4.2, `webview_flutter_wkwebview` 3.26.1 |
 | `LastUpgradeCheck` / `LastUpgradeVersion` | 2700 (Xcode 27) |
@@ -379,7 +385,7 @@ la interfaz de Flutter la pinta la app y no cambia.
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
 
-**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6: sigue sin haberlo, y hay fecha.** Comprobado contra el
+**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6 y el 2026-10-08 con 3.47.7: sigue sin haberlo, y hay fecha.** Comprobado contra el
 SDK instalado, no contra un artículo:
 `grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
 `$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
@@ -393,7 +399,8 @@ Por ahora es una **copia** del Cupertino del SDK: su changelog no menciona Liqui
 estilo nuevo. A partir de ahora, la revisión de cada actualización incluye **el changelog de
 `cupertino_ui`**, que es donde aparecerá primero. **2026-10-06:** Flutter 3.47.6 y `cupertino_ui`
 sigue en 1.1.1, sin novedades. **2026-10-07:** `cupertino_ui` 1.1.2, solo arreglos (`CupertinoMagnifier`,
-`showCupertinoSheet`); `grep -i liquid` en su `lib/` no devuelve nada.
+`showCupertinoSheet`); `grep -i liquid` en su `lib/` no devuelve nada. **2026-10-08:** Flutter 3.47.7 y
+`cupertino_ui` sigue en 1.1.2, sin novedades.
 
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la

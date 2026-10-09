@@ -12,6 +12,18 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-08 — Flutter 3.47.7 (Mac)
+
+- `flutter upgrade` de 3.47.6 a **3.47.7**. `flutter analyze` limpio y suite completa, **1194 en
+  verde**. Limpieza iOS obligatoria y `./scripts/build_ios.sh` correctos; blindajes intactos
+  (`LastUpgradeCheck` 2700, `Package.swift` en 15.0). Sin cambios en `pubspec.lock`.
+- **Liquid Glass**: sigue sin haberlo (`grep` en el SDK vacío, `cupertino_ui` sigue en 1.1.2).
+- **Kotlin Gradle Plugin**: `firebase_core`, `in_app_review` y `pdfx` siguen en su última versión,
+  sin la migrada. El aviso de Android hay que mirarlo en la Linux.
+- **Nuevo en `flutter doctor`**: Flutter anuncia que dejará de admitir Macs Intel. Anotado en
+  `CLAUDE.md`, sección «Abril de 2027».
+- **Pendiente (Linux)**: actualizar también a 3.47.7 y compilar el APK para ver el aviso de Kotlin.
+
 ### 2026-10-08 — iPhone 17: la respuesta del cobro salía en la consola en Release (Mac)
 
 **1.0.34+43 PUBLICADA en App Store el 2026-10-08, con este arreglo dentro**
