@@ -12,10 +12,31 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-08 — iPhone 17: la respuesta del cobro salía en la consola en Release (Mac)
+
+**1.0.34+43 PUBLICADA en App Store el 2026-10-08, con este arreglo dentro**
+(Archive y Distribute desde Xcode 26.3, sin errores). Limpieza iOS obligatoria repetida justo antes
+del Archive, ya con el cambio, con Flutter 3.47.6; blindajes verificados.
+
+- **Visto en el iPhone 17**, al pagar por Adquira con el botón Run (Release): el pago entró bien,
+  pero salieron `flutter: Respuesta JSON: {…}` y `flutter: Pago exitoso: …`. Con Release no
+  debería salir **ninguna** línea de la app.
+- **Causa**: `PagoResponseHandler` usaba `debugPrint`, que escribe también en Release —y en la app
+  publicada, en el registro del teléfono—. **Arreglo**: los cuatro pasan a `AppLogger` (tag
+  `Pago`), que solo habla en Debug. Era el único archivo de `lib/` con `debugPrint` suelto.
+- **Test guardián nuevo**: `test/unit/sin_debugprint_en_lib_test.dart`. Comprobado en rojo con el
+  código anterior (señala las cuatro líneas) y en verde con el nuevo. Suite completa: 1194 en verde.
+- El resto del log es ruido del sistema. Cuatro mensajes nuevos (`sandbox_extension` sobre
+  `Runner.app`, `UAFAssetSetConsistencyToken`, `RTIInputSystemClient` de sugerencias/emoji y
+  `extensionKit … Code=18`) comprobados con `grep` fuera de `lib/`, `ios/Runner/` y los Pods, y
+  añadidos a la tabla de `CLAUDE.md`.
+- **Pendiente (Linux)**: el AAB/APK de la 1.0.34+43 generado antes **no lleva este cambio**:
+  regenerarlo desde este commit antes de subir a Play.
+
 ### 2026-10-08 — OpenPay: la letra del 3D Secure salía diminuta en el iPhone
 
-**Subido a `main` dentro de la 1.0.34+43 (sin publicar; tiendas en 1.0.33). Falta probarlo en el
-iPhone (Mac).** APK y AAB regenerados en la Linux.
+**Publicado en App Store con la 1.0.34+43 (2026-10-08). Probado en el iPhone 17 por Carlos: la
+letra del 3D Secure ya sale bien.**
 
 - **Causa**, inspeccionada en vivo con DevTools en el Oppo: el simulador de 3D Secure
   (`sandbox-api.openpay.mx/v1/vpos/3dsecure-auth-simulator-v2/…`) **no declara `viewport`** y va
@@ -29,7 +50,6 @@ iPhone (Mac).** APK y AAB regenerados en la Linux.
   antes. Tests: cinco nuevos en `peticion_webview_test.dart` (las dos ramas y el contenido del
   script: respeta el `viewport` propio y no bloquea el pellizco); `flutter analyze` limpio y suite
   completa, 1193 en verde. Documentado en `CLAUDE.md`, sección de OpenPay.
-- **Pendiente**: en el iPhone, llegar al simulador de Seglan y confirmar que la letra crece.
 
 ### 2026-10-08 — Release 1.0.34+43 (Linux)
 

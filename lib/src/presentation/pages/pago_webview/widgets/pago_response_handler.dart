@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:arjipagos/src/core/constants/app_strings.dart';
-import 'package:flutter/material.dart';
+import 'package:arjipagos/src/core/utils/app_logger.dart';
 
 /// Código con el que Adquira rechaza una referencia que ya se usó: «Ya se
 /// encuentra un pago con esa referencia».
@@ -55,7 +55,9 @@ class PagoResponseHandler {
   ///
   /// Retorna [PagoResult] con el resultado del pago.
   static PagoResult procesarJson(String jsonString) {
-    debugPrint('Respuesta JSON: $jsonString');
+    // Por AppLogger, no por debugPrint: debugPrint escribe también en Release,
+    // y el botón Run de Xcode usa Release (ver CLAUDE.md).
+    AppLogger.debug('Respuesta JSON: $jsonString', tag: 'Pago');
 
     try {
       final respuesta = json.decode(jsonString) as Map<String, dynamic>;
@@ -63,14 +65,10 @@ class PagoResponseHandler {
       final message = respuesta['message']?.toString() ?? '';
 
       if (success) {
-        debugPrint('Pago exitoso: $message');
-        return PagoResult(
-          success: true,
-          message: message,
-          processed: true,
-        );
+        AppLogger.info('Pago exitoso: $message', tag: 'Pago');
+        return PagoResult(success: true, message: message, processed: true);
       } else {
-        debugPrint('Pago fallido: $message');
+        AppLogger.warning('Pago fallido: $message', tag: 'Pago');
         final errorMsg = message.isNotEmpty
             ? message
             : AppStrings.pagoNoProcesado;
@@ -82,7 +80,7 @@ class PagoResponseHandler {
         );
       }
     } catch (e) {
-      debugPrint('Error parseando JSON: $e');
+      AppLogger.error('Error parseando JSON', tag: 'Pago', error: e);
       // Intentar detección legacy
       return procesarLegacy(jsonString);
     }

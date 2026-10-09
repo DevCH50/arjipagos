@@ -492,7 +492,8 @@ tickets, facturas y los push en los dos planos; se buscaron también en los paqu
 plugins de `~/.pub-cache`. La fila de `RBSAssertionErrorDomain Code=2` se añadió el 2026-10-01 con
 la 1.0.32+41, al abrir el formulario de OpenPay en el iPhone 17. Las de `InAppReviewPlugin`,
 `/app/id6760574386` y `TUIKeyplaneView` se añadieron el 2026-10-07 con la 1.0.33+42, probando
-Configuraciones. Ninguno de estos símbolos aparece
+Configuraciones. Las cuatro anteriores a `Message from debugger` se añadieron el 2026-10-08 con
+la 1.0.34+43, pagando por Adquira en el iPhone 17. Ninguno de estos símbolos aparece
 en `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de darlos por ruido:
 
 | Mensaje | Qué es |
@@ -531,6 +532,10 @@ en `lib/`, `ios/Runner/` ni en los Pods — se comprueba con `grep -rI` antes de
 | `sandbox_extension_issue_file failed for /app/id6760574386` / `unable to make sandbox extension` | iOS intentando tratar la ruta de la URL de la App Store como un archivo. `6760574386` es nuestro `AppUrls.appStoreId`, así que apunta a la ficha correcta, y la App Store abre igual |
 | `Conversion error! {{0, 956}, {440, 320}} was converted to …` | UIKit recalculando el marco del teclado (`440 × 956` es la pantalla del 17 Pro Max) mientras la ventana se encoge al minimizar, o con alto `0` si el teclado ya estaba oculto. Una línea por fotograma |
 | `Client not entitled … com.apple.runningboard.process-state` / `elapsedCPUTimeForFrontBoard couldn't generate a task port` | iOS intentando medir la CPU de la app con un permiso que una app normal no tiene |
+| `sandbox_extension_issue_file failed for /var/containers/Bundle/Application/…/Runner.app` / `Could not create a sandbox extension` | El sistema intentando emitir una extensión de sandbox sobre el propio paquete de la app, que es de solo lectura. Sale una vez al arrancar |
+| `UAFCommonUtilities copyBootSessionUUID … Operation not permitted` y tandas de `UAFAssetSetConsistencyToken … com.apple.linguisticdata` | El teclado cargando sus datos lingüísticos (predicción, autocorrección). Pide el UUID de arranque del kernel, el sandbox se lo niega y sigue con uno vacío. Sale al abrir el primer teclado |
+| `RTIInputSystemClient … textSuggestionsChanged: Can only set suggestions for an active session` / `performInputOperation … UIEmojiSearchOperations` | De la familia de `dismissAutoFillPanel`: el teclado mandando sugerencias o la búsqueda de emoji a una sesión de texto que Flutter ya cerró |
+| `Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18` con `RBSRequestErrorDomain Code=3` dentro | La misma de `No such process found`, envuelta por ExtensionKit: WebKit cerrando un `WebContent` que ya había salido |
 | `Message from debugger: killed` | **No es un crash.** Es el depurador terminando el proceso: sale al pulsar Stop en Xcode o al relanzar. Un crash de verdad trae otra firma —una señal (`EXC_BAD_ACCESS`, `SIGABRT`) o una línea `Fatal error:`— y ninguna de las dos aparece aquí |
 
 **Con el botón Run no sale NI UNA línea de la app, y es lo esperado**
@@ -545,6 +550,12 @@ configuración provisional de Adquira (`CarritoBloc._cobrarPorAdquira`) y el
 `[Carrito] Cobro por OpenPay — ref: … | Emisor fiscal 2` de `_cobrarPorOpenpay`, que es el rastro
 con el que se sigue un cobro de "Otros pagos"—. Para verlos hace falta `flutter run`, que fuerza
 Debug. Comprobado el 2026-08-28 y de nuevo el 2026-09-24.
+
+**Si sale una línea `flutter:` con el botón Run, es un fallo.** El 2026-10-08 salieron
+`flutter: Respuesta JSON: {…}` y `flutter: Pago exitoso: …`: `PagoResponseHandler` usaba
+`debugPrint`, que **escribe también en Release** —y en la app publicada, en el registro del
+teléfono—. Pasado a `AppLogger`. Test guardián: `test/unit/sin_debugprint_en_lib_test.dart`, que
+falla con cualquier `print`/`debugPrint` en `lib/` fuera de `AppLogger`.
 
 **Error: `Failed to change device orientation ... BSActionErrorDomain Code=1`**
 
