@@ -30,8 +30,12 @@ del Archive, ya con el cambio, con Flutter 3.47.6; blindajes verificados.
   `Runner.app`, `UAFAssetSetConsistencyToken`, `RTIInputSystemClient` de sugerencias/emoji y
   `extensionKit … Code=18`) comprobados con `grep` fuera de `lib/`, `ios/Runner/` y los Pods, y
   añadidos a la tabla de `CLAUDE.md`.
-- **Pendiente (Linux)**: el AAB/APK de la 1.0.34+43 generado antes **no lleva este cambio**:
-  regenerarlo desde este commit antes de subir a Play.
+- **1.0.34+43 PUBLICADA en Google Play el 2026-10-08**, con el AAB regenerado en la Linux desde
+  `ed11fa7` (ya con este arreglo). **Las dos tiendas en 1.0.34+43**: el próximo release sube a
+  1.0.35+44.
+- **El aviso de edge-to-edge de Play ya NO salió con la 1.0.34+43**: confirmado por Carlos. Queda
+  resuelto con las dos mitades (`enableEdgeToEdge()` nativo y ningún
+  `windowDrawsSystemBarBackgrounds`).
 
 ### 2026-10-08 — OpenPay: la letra del 3D Secure salía diminuta en el iPhone
 

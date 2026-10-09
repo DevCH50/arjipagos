@@ -104,7 +104,8 @@ la vez, y ninguna basta sola:
    `values-night`, `values-v31`, `values-night-v31`). `flutter_native_splash:create` lo vuelve a
    meter.
 
-Test guardián: `test/unit/edge_to_edge_android_test.dart`. Desde el 2026-10-08 (1.0.34+43).
+Test guardián: `test/unit/edge_to_edge_android_test.dart`. Desde el 2026-10-08 (1.0.34+43). **Confirmado ese
+mismo día: Play ya no dio el aviso al publicar la 1.0.34+43.**
 
 ## NO borrar los runtimes de simulador (aunque el proyecto no los use)
 
