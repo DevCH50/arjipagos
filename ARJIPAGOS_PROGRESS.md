@@ -12,6 +12,25 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-08 — OpenPay: la letra del 3D Secure salía diminuta en el iPhone
+
+**Subido a `main` dentro de la 1.0.34+43 (sin publicar; tiendas en 1.0.33). Falta probarlo en el
+iPhone (Mac).** APK y AAB regenerados en la Linux.
+
+- **Causa**, inspeccionada en vivo con DevTools en el Oppo: el simulador de 3D Secure
+  (`sandbox-api.openpay.mx/v1/vpos/3dsecure-auth-simulator-v2/…`) **no declara `viewport`** y va
+  en la página de arriba, sin iframe. Android lo pinta a 360 px y el CSS de 20 px se ve bien; el
+  WKWebView de iOS lo pinta a ~980 px y lo encoge para que quepa.
+- **Arreglo**: `WebViewScripts.viewportMovil` añade `width=device-width, initial-scale=1`
+  **solo si la página no trae uno** (la del banco, en producción, se respeta). Se inyecta
+  **solo en OpenPay**: lo decide `PeticionWebView.ajustaViewport` (true en el GET, false en el
+  POST de Adquira). Adquira no cambia en nada.
+- Comprobado en el Oppo inyectándolo sobre la página viva: ancho 360 y letra 20 px, igual que
+  antes. Tests: cinco nuevos en `peticion_webview_test.dart` (las dos ramas y el contenido del
+  script: respeta el `viewport` propio y no bloquea el pellizco); `flutter analyze` limpio y suite
+  completa, 1193 en verde. Documentado en `CLAUDE.md`, sección de OpenPay.
+- **Pendiente**: en el iPhone, llegar al simulador de Seglan y confirmar que la letra crece.
+
 ### 2026-10-08 — Release 1.0.34+43 (Linux)
 
 Las dos tiendas en 1.0.33 (comprobado contra iTunes y la ficha de Play): `pubspec` sube a

@@ -23,10 +23,20 @@ class PeticionWebView {
   /// Cuerpo del formulario, ya codificado. `null` cuando no hay POST.
   final Uint8List? body;
 
+  /// `true` si, al cargar cada página, hay que asegurarle un `viewport` móvil.
+  ///
+  /// **Solo OpenPay.** El simulador de 3D Secure —y en producción, la página
+  /// del banco del tutor— puede no declarar `viewport`. Android lo pinta igual
+  /// al ancho del teléfono, pero el WKWebView de iOS lo pinta a ~980 px y lo
+  /// encoge para que quepa, con la letra incluida: en el iPhone salía
+  /// diminuta. Adquira se queda como estaba, probado y sin tocar.
+  final bool ajustaViewport;
+
   const PeticionWebView({
     required this.esPost,
     required this.headers,
     required this.body,
+    required this.ajustaViewport,
   });
 
   /// Decide cómo abrir la pasarela a partir de los argumentos de la ruta.
@@ -51,6 +61,7 @@ class PeticionWebView {
         esPost: false,
         headers: <String, String>{},
         body: null,
+        ajustaViewport: true,
       );
     }
 
@@ -68,6 +79,7 @@ class PeticionWebView {
         'Authorization': 'Bearer ${args.token}',
       },
       body: Uint8List.fromList(utf8.encode(formulario)),
+      ajustaViewport: false,
     );
   }
 }

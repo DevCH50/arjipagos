@@ -16,6 +16,26 @@ class WebViewScripts {
     })();
   ''';
 
+  /// Le da a la página un `viewport` móvil, **solo si no trae uno propio**.
+  ///
+  /// Sin `viewport`, el WKWebView de iOS pinta la página a ~980 px de ancho y
+  /// la encoge para que quepa: la letra salía diminuta en el 3D Secure de
+  /// OpenPay aunque [estilosResponsivos] la pusiera a 20 px. Si la página ya
+  /// declara el suyo —la del banco, por ejemplo— se respeta y no se toca.
+  ///
+  /// Solo se inyecta en OpenPay; ver `PeticionWebView.ajustaViewport`.
+  static const String viewportMovil = '''
+    (function() {
+      try {
+        if (document.querySelector('meta[name="viewport"]')) return;
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1';
+        document.head.appendChild(meta);
+      } catch (e) {}
+    })();
+  ''';
+
   /// Script para detectar respuesta JSON del servidor.
   static const String detectarRespuestaJson = '''
     (function() {

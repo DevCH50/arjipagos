@@ -8,12 +8,15 @@
 /// - OpenPay (emisor 2) va por **GET** y **sin ni una cabecera**. Mandarle el
 ///   `Bearer` del tutor a un dominio de OpenPay sería entregarle a un tercero
 ///   la credencial con la que se lee su estado de cuenta y sus facturas.
+/// - Solo OpenPay recibe el `viewport` móvil: sin él, el 3D Secure salía
+///   diminuto en el iPhone. Adquira no cambia.
 library;
 
 import 'dart:convert';
 
 import 'package:arjipagos/src/presentation/pages/pago_webview/pago_webview_args.dart';
 import 'package:arjipagos/src/presentation/pages/pago_webview/peticion_webview.dart';
+import 'package:arjipagos/src/presentation/pages/pago_webview/webview_scripts.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const String _token = 'token-secreto-del-tutor';
@@ -44,6 +47,10 @@ void main() {
 
     test('va por POST', () {
       expect(peticion.esPost, isTrue);
+    });
+
+    test('NO ajusta el viewport: Adquira se queda como estaba', () {
+      expect(peticion.ajustaViewport, isFalse);
     });
 
     test('manda el formulario codificado', () {
@@ -90,6 +97,10 @@ void main() {
       expect(peticion.esPost, isFalse);
     });
 
+    test('ajusta el viewport: en iPhone el 3D Secure salía diminuto', () {
+      expect(peticion.ajustaViewport, isTrue);
+    });
+
     test('no lleva cuerpo', () {
       expect(peticion.body, isNull);
     });
@@ -105,6 +116,24 @@ void main() {
       final todo = '${peticion.headers}${peticion.body}';
       expect(todo, isNot(contains(_token)));
       expect(todo.toLowerCase(), isNot(contains('bearer')));
+    });
+  });
+
+  group('El viewport que se inyecta en OpenPay', () {
+    const script = WebViewScripts.viewportMovil;
+
+    test('respeta el viewport que ya traiga la página (la del banco)', () {
+      expect(script, contains('meta[name="viewport"]'));
+      expect(script, contains('return;'));
+    });
+
+    test('pinta al ancho del aparato y sin zoom inicial', () {
+      expect(script, contains('width=device-width, initial-scale=1'));
+    });
+
+    test('no bloquea el pellizco para ampliar', () {
+      expect(script, isNot(contains('user-scalable')));
+      expect(script, isNot(contains('maximum-scale')));
     });
   });
 }

@@ -881,6 +881,14 @@ autocompletado de Google ofrece la **tarjeta real** de Carlos y se queda con lo 
 el 2026-09-28: se canceló a tiempo y no llegó al formulario. **No automatizar por adb el número de
 tarjeta**; esa parte la teclea Carlos.
 
+**En OpenPay, cada página recibe un `viewport` móvil si no trae uno** (`WebViewScripts.viewportMovil`,
+desde el 2026-10-08). El simulador de 3D Secure no lo declara: Android lo pinta igual a 360 px, pero
+el WKWebView de iOS lo pinta a ~980 px y lo encoge, y **en el iPhone la letra salía diminuta** aunque
+`estilosResponsivos` la pusiera a 20 px. Si la página ya trae su `viewport` —la del banco— se respeta.
+**Solo OpenPay**: lo decide `PeticionWebView.ajustaViewport` (true en el GET, false en el POST de
+Adquira), y Adquira no cambia. No le pongas `user-scalable=no` ni `maximum-scale`: el pellizco para
+ampliar tiene que seguir funcionando. Tests en `peticion_webview_test.dart`.
+
 **Por qué la app no llama a OpenPay directamente.** Crear el cobro
 (`POST /v1/{merchant}/checkouts`) va firmado con la **llave privada** `sk_…` —la documentación del
 botón de pago lo dice literal: «HEADER PRIVATE_API_KEY»—, y una `sk_` dentro del APK se saca con

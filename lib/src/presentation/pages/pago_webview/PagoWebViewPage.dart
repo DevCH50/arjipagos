@@ -53,6 +53,10 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
   bool _verificando = false;
   PagoWebViewArgs? _currentArgs;
 
+  /// Si cada página cargada necesita un `viewport` móvil (solo OpenPay).
+  /// Lo decide [PeticionWebView.ajustaViewport] al abrir la pasarela.
+  bool _ajustaViewport = false;
+
   /// Qué pasa al terminar el pago, para el emisor que se está cobrando.
   ///
   /// Si faltara el emisor en los argumentos —no debería—, se asume el
@@ -88,6 +92,9 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
       }),
       onPageFinished: (_) {
         setState(() => _isLoading = false);
+        if (_ajustaViewport) {
+          _controller.runJavaScript(WebViewScripts.viewportMovil);
+        }
         _controller.runJavaScript(WebViewScripts.estilosResponsivos);
         _controller.runJavaScript(WebViewScripts.detectarRespuestaJson);
       },
@@ -123,6 +130,7 @@ class _PagoWebViewPageState extends State<PagoWebViewPage> {
   void _cargarPagina(PagoWebViewArgs args) {
     final Uri url = Uri.parse(args.url);
     final peticion = PeticionWebView.desde(args);
+    _ajustaViewport = peticion.ajustaViewport;
 
     if (!peticion.esPost) {
       _controller.loadRequest(url);
