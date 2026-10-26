@@ -36,6 +36,11 @@ String _sinComentarios(String fuente) => fuente
     .replaceAll(RegExp(r'<!--.*?-->', dotAll: true), '')
     .replaceAll(RegExp(r'//[^\n]*'), '');
 
+/// Quita los comentarios (`#`) de las reglas de R8, para que una regla
+/// comentada no haga pasar el test.
+String _sinComentariosProguard(String reglas) =>
+    reglas.replaceAll(RegExp(r'#[^\n]*'), '');
+
 void main() {
   group('Edge-to-edge en Android 15', () {
     late String actividad;
@@ -78,6 +83,57 @@ void main() {
       final String main = File('lib/main.dart').readAsStringSync();
 
       expect(main, contains('SystemUiMode.edgeToEdge'));
+    });
+  });
+
+  // El segundo aviso de Play: «Tu aplicación usa APIs o parámetros obsoletos
+  // para la vista de extremo a extremo» (`Window.setStatusBarColor` /
+  // `setNavigationBarColor`, en `d.s.M`, `d.t.M`, `d.v.M`). Salió en la
+  // 1.0.34+43, la primera con `enableEdgeToEdge()`: esas tres clases son las
+  // ramas para Android < 15 del propio androidx.activity, ofuscadas por R8.
+  group('APIs obsoletas de edge-to-edge (Android 15)', () {
+    test('R8 no ofusca las clases EdgeToEdge de androidx.activity', () {
+      final String reglas = _sinComentariosProguard(
+        File('android/app/proguard-rules.pro').readAsStringSync(),
+      );
+
+      expect(
+        reglas,
+        contains('-keepnames class androidx.activity.EdgeToEdge* { *; }'),
+      );
+    });
+
+    test('release.sh verifica el binario con verificar_edge_to_edge_dex.sh',
+        () {
+      // El test de arriba solo ve las reglas; lo que R8 produce de verdad lo
+      // revisa ese script en el dex del APK/AAB. Que el release lo llame.
+      final File script = File('scripts/verificar_edge_to_edge_dex.sh');
+      final String release = File('scripts/release.sh')
+          .readAsStringSync()
+          .replaceAll(RegExp(r'#[^\n]*'), '');
+
+      expect(script.existsSync(), isTrue);
+      expect(release, contains('./scripts/verificar_edge_to_edge_dex.sh'));
+    });
+
+    test('el código nativo propio no llama a las APIs obsoletas', () {
+      // Estas sí serían nuestras, con o sin ofuscar: Play las señalaría.
+      final Iterable<File> fuentes = Directory('android/app/src/main')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.kt') || f.path.endsWith('.java'));
+
+      expect(fuentes, isNotEmpty);
+      for (final File fuente in fuentes) {
+        final String codigo = _sinComentarios(fuente.readAsStringSync());
+
+        expect(
+          codigo,
+          isNot(matches(RegExp(r'statusBarColor|navigationBarColor',
+              caseSensitive: false))),
+          reason: fuente.path,
+        );
+      }
     });
   });
 }

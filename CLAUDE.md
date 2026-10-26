@@ -107,6 +107,29 @@ la vez, y ninguna basta sola:
 Test guardián: `test/unit/edge_to_edge_android_test.dart`. Desde el 2026-10-08 (1.0.34+43). **Confirmado ese
 mismo día: Play ya no dio el aviso al publicar la 1.0.34+43.**
 
+### Y el aviso hermano: «APIs o parámetros obsoletos» — que R8 no ofusque androidx
+
+Arreglar el primero **destapó otro** en la misma 1.0.34+43: *«Tu aplicación usa APIs o parámetros
+obsoletos para la vista de extremo a extremo»*, señalando `Window.setStatusBarColor` /
+`setNavigationBarColor` en `d.s.M`, `d.t.M`, `d.v.M`. Eran las ramas para Android < 15 del propio
+`enableEdgeToEdge()` (`androidx.activity.EdgeToEdgeApi23/26/29`), **ofuscadas por R8**: con el nombre
+perdido, Play no las atribuye a la librería y las cuenta como nuestras. Las mismas llamadas del motor
+de Flutter, que conserva su nombre, no las señala.
+
+- **La regla:** `-keepnames class androidx.activity.EdgeToEdge* { *; }` en
+  `android/app/proguard-rules.pro`. Solo conserva nombres; R8 sigue quitando lo que no se use.
+- **Quitar `enableEdgeToEdge()` no es salida**: vuelve el aviso de la sección anterior.
+- **No llamar nunca a `statusBarColor`/`navigationBarColor` desde `MainActivity`** ni desde Kotlin
+  propio: esas sí serían nuestras, con nombre o sin él. El test lo vigila.
+- **El test unitario solo ve el archivo de reglas, no lo que R8 produce.** Lo que mira el binario
+  es `./scripts/verificar_edge_to_edge_dex.sh [apk|aab]`: saca el dex con `dexdump` y falla si una
+  clase que no sea `androidx` ni `io.flutter` llama a esas APIs. `release.sh` lo ejecuta solo.
+  Comprobado el 2026-10-26 en los dos sentidos: con el AAB de antes de la regla da `Ld/s; Ld/t;
+  Ld/v;` —lo mismo que Play— y con la regla pasa el APK y el AAB.
+- **Si un día falla con otra clase**, es que una actualización de androidx, de un plugin o de AGP
+  metió otro llamador: si es de androidx, ampliar el `-keepnames` a su clase; si es de un plugin,
+  conservar también su nombre; si es nuestra, quitar la llamada.
+
 ## NO borrar los runtimes de simulador (aunque el proyecto no los use)
 
 **En Xcode 26 el soporte de dispositivo y el runtime del simulador son UN SOLO componente.**
@@ -196,6 +219,15 @@ flutter build appbundle --release
 Gradle comparten `build/` y a veces chocan. Pasó el 2026-09-17 con la 1.0.31+40: el
 `assembleRelease` falló en paralelo y compiló a la primera cuando se lanzó solo. Si solo tampoco
 compila, entonces sí es un fallo de verdad.
+
+**Después de los builds, verificar el binario — OBLIGATORIO antes de subir a Play:**
+
+```bash
+./scripts/verificar_edge_to_edge_dex.sh   # revisa el APK y el AAB de build/
+```
+
+Si falla, **no se sube**: Play daría el aviso de APIs obsoletas de edge-to-edge (ver «Y el aviso
+hermano» en la sección de edge-to-edge).
 
 **Después de los builds: PREGUNTAR antes de instalar en el dispositivo.**
 

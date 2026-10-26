@@ -12,6 +12,22 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-26 — Play: «APIs obsoletas de edge-to-edge» en la 1.0.34+43 (Linux)
+
+- **Causa:** `enableEdgeToEdge()` (puesto el 2026-10-08) llama a `Window.setStatusBarColor` /
+  `setNavigationBarColor` en sus ramas para Android < 15 (`androidx.activity.EdgeToEdgeApi23/26/29`).
+  R8 las ofuscó como `d.s`, `d.t`, `d.v` y Play no las atribuyó a androidx.
+- **Arreglo:** `-keepnames class androidx.activity.EdgeToEdge* { *; }` en `android/app/proguard-rules.pro`.
+  Se conserva `enableEdgeToEdge()`: quitarlo devuelve el otro aviso.
+- **Guardias:** dos tests nuevos en `edge_to_edge_android_test.dart` (la regla existe y no está
+  comentada; ningún `.kt`/`.java` propio llama a esas APIs; `release.sh` verifica el binario) y el
+  script nuevo `scripts/verificar_edge_to_edge_dex.sh`, que revisa con `dexdump` el dex del APK/AAB.
+  `release.sh` lo ejecuta; las instrucciones de release de `CLAUDE.md` lo exigen antes de subir.
+- **Verificado:** APK y AAB release compilados (sin instalar); `mapping.txt` deja las 8 clases
+  `EdgeToEdge*` con su nombre; el script falla con el AAB anterior (`Ld/s; Ld/t; Ld/v;`, lo mismo que
+  Play) y pasa con los nuevos. Test: 11 en verde.
+- **Pendiente:** confirmar en Play al publicar la 1.0.35+44 que el aviso ya no sale.
+
 ### 2026-10-26 — Flutter 3.47.8 (Linux)
 
 - La Linux saltó directo a **3.47.8** (salió el 2026-10-22), sin pasar por la 3.47.7 pendiente.

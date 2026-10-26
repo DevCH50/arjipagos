@@ -10,6 +10,18 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# Edge-to-edge de androidx: NO ofuscar sus nombres.
+# `enableEdgeToEdge()` (MainActivity) llama por dentro a
+# `Window.setStatusBarColor`/`setNavigationBarColor` en sus ramas para Android
+# < 15 (`EdgeToEdgeApi23/26/29`). Ofuscadas como `d.s`, `d.t`, `d.v`, Play
+# Console no las reconoce como de la librería y avisa «Tu aplicación usa APIs o
+# parámetros obsoletos para la vista de extremo a extremo» (1.0.34+43). Las
+# mismas llamadas del motor de Flutter, que conserva su nombre, no las señala.
+# Quitar `enableEdgeToEdge()` no es salida: vuelve el otro aviso de Play.
+# Solo conserva nombres: R8 puede seguir quitando lo que no se use.
+# Test guardián: test/unit/edge_to_edge_android_test.dart
+-keepnames class androidx.activity.EdgeToEdge* { *; }
+
 # Mantener anotaciones
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable

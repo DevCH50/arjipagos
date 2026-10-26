@@ -101,6 +101,16 @@ if [ "$BUNDLE" = true ]; then
     echo -e "${GREEN}  ✓ App Bundle generado: $AAB_PATH ($AAB_SIZE)${NC}"
 fi
 
+# Verificar que R8 no ofuscó las llamadas a APIs obsoletas de edge-to-edge
+# (aviso de Play en la 1.0.34+43). Revisa el APK y, si se generó, el AAB.
+echo -e "\n${YELLOW}► Verificando APIs de edge-to-edge en el binario...${NC}"
+if [ "$BUNDLE" = true ]; then
+    ./scripts/verificar_edge_to_edge_dex.sh "$APK_PATH"
+    ./scripts/verificar_edge_to_edge_dex.sh "$AAB_PATH"
+else
+    ./scripts/verificar_edge_to_edge_dex.sh "$APK_PATH"
+fi
+
 # Instalar en dispositivo si se solicitó
 if [ "$INSTALL" = true ]; then
     echo -e "\n${YELLOW}► Instalando en dispositivo...${NC}"
