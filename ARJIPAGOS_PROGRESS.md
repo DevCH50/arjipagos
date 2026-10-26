@@ -12,6 +12,22 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-26 — Flutter 3.47.8 (Linux)
+
+- La Linux saltó directo a **3.47.8** (salió el 2026-10-22), sin pasar por la 3.47.7 pendiente.
+  `pubspec.lock` actualizado dentro de las restricciones de `pubspec.yaml` (parches y menores:
+  `firebase_core` 4.15.2, `firebase_messaging` 16.7.1, `webview_flutter_wkwebview`, `sqflite`,
+  `local_auth_*`, `shared_preferences_*`…). Bloqueos intactos: `flutter_secure_storage` 10.3.4,
+  `equatable` 2.1.0, `cached_network_image` 3.4.1, `google_fonts` 8.2.1, `cupertino_icons` 1.0.9.
+- `flutter analyze` limpio y suite completa, **1194 en verde**. `flutter build apk --release`
+  compila (66.0 MB). **No se instaló.**
+- **Kotlin Gradle Plugin**: el aviso sigue, con los mismos tres (`firebase_core`, `in_app_review`,
+  `pdfx`). `in_app_review` y `pdfx` no tienen versión nueva; `firebase_core` 5.x existe pero es un
+  salto mayor (Firebase BoM 35 / iOS SDK 13) y su changelog no menciona Built-in Kotlin. No se sube.
+- **Liquid Glass**: sigue sin haberlo (`grep` en el SDK vacío). `cupertino_ui` 1.1.4, solo arreglos
+  (`CupertinoMagnifier`, `CupertinoPicker`).
+- `pubspec.yaml` quedó en **1.0.35+44** (próximo release, aún sin publicar).
+
 ### 2026-10-08 — Flutter 3.47.7 (Mac)
 
 - `flutter upgrade` de 3.47.6 a **3.47.7**. `flutter analyze` limpio y suite completa, **1194 en

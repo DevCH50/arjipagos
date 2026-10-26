@@ -385,7 +385,7 @@ la interfaz de Flutter la pinta la app y no cambia.
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
 
-**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6 y el 2026-10-08 con 3.47.7: sigue sin haberlo, y hay fecha.** Comprobado contra el
+**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6 y el 2026-10-08 con 3.47.7 y el 2026-10-26 con 3.47.8: sigue sin haberlo, y hay fecha.** Comprobado contra el
 SDK instalado, no contra un artículo:
 `grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
 `$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
@@ -400,7 +400,8 @@ estilo nuevo. A partir de ahora, la revisión de cada actualización incluye **e
 `cupertino_ui`**, que es donde aparecerá primero. **2026-10-06:** Flutter 3.47.6 y `cupertino_ui`
 sigue en 1.1.1, sin novedades. **2026-10-07:** `cupertino_ui` 1.1.2, solo arreglos (`CupertinoMagnifier`,
 `showCupertinoSheet`); `grep -i liquid` en su `lib/` no devuelve nada. **2026-10-08:** Flutter 3.47.7 y
-`cupertino_ui` sigue en 1.1.2, sin novedades.
+`cupertino_ui` sigue en 1.1.2, sin novedades. **2026-10-26:** Flutter 3.47.8 y `cupertino_ui` 1.1.4,
+solo arreglos (`CupertinoMagnifier`, `CupertinoPicker`); su changelog no menciona Liquid Glass.
 
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la
@@ -1222,7 +1223,9 @@ Android avisa de que `firebase_core`, `in_app_review` y `pdfx` aplican el Kotlin
 que «futuras versiones de Flutter» dejarán de compilarlos. Hoy **solo es un aviso**: compila,
 instala y los tres funcionan (comprobado en el Oppo el 2026-09-28, ticket con `pdfx` incluido). Lo
 tienen que migrar sus autores; **en cada actualización de Flutter o de esos tres plugins, mirar si
-ya salió la versión migrada**, antes de que Flutter lo convierta en error.
+ya salió la versión migrada**, antes de que Flutter lo convierta en error. **2026-10-26, Flutter
+3.47.8:** el aviso sigue con los tres; `firebase_core` 5.x no menciona Built-in Kotlin y es un salto
+mayor (Firebase BoM 35 / iOS SDK 13), así que no cuenta como «la versión migrada».
 
 ## Reglas del código
 
