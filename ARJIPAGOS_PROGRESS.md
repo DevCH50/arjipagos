@@ -28,6 +28,18 @@ el 2026-09-28. Faltan las llaves de producción (solo backend).
   notificaciones del plugin; iconos 25/21 con 0 huérfanos y 0 fantasmas; `kTemporadaForzada = null`.
 - **No verificado aquí:** el Oppo no estaba conectado (el código Android de `open_filex` no cambió).
   iOS solo de forma estática: en la Mac falta `pod install`, compilar y abrir un ticket en el iPhone.
+- **Binarios rehechos a las 14:48.** Los de las 14:00 eran **anteriores** a la subida de `open_filex`
+  (14:12) y todavía llevaban la 4.7.0: no valían para Play. APK y AAB nuevos, compilados en paralelo a
+  la primera, y `verificar_edge_to_edge_dex.sh` pasa en los dos. El APK se instaló encima del release
+  anterior con `adb install -r` (misma firma, sin desinstalar): **la sesión se conservó** y la app
+  arranca bien.
+- **`open_filex` 5 probado en el Oppo con ese release** (el primer usuario no tenía pagos ni
+  facturas; Carlos entró con otro). Ticket T8929: el visor `pdfx` lo pinta, y **«Abrir en otra app»**
+  lanza el `ACTION_VIEW` por `content://…fileProvider.com.crazecoder.openfile/` con
+  `application/pdf`. Sale el selector «Abrir con», Files de Google lo abre entero y al volver la app
+  sigue en el ticket. Ninguna excepción de la app; las dos `SecurityException: Isolated process` del
+  log son del `system_server`, por el proceso aislado del lector. **Android queda verificado**; falta
+  iOS en la Mac.
 
 ### 2026-10-26 — Play: «APIs obsoletas de edge-to-edge» en la 1.0.34+43 (Linux)
 
