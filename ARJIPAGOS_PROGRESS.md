@@ -12,6 +12,23 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-10-26 — Revisión completa, `open_filex` 5.0.0 y binarios de la 1.0.35+44 (Linux)
+
+- **Flutter:** 3.47.8, la última estable (comprobado contra `origin/stable`).
+- **Dependencias:** todas al máximo de su rango. Subida **`open_filex` 4.7.0 → 5.0.0**: Dart, Android e
+  iOS idénticos; solo añade `Package.swift` (SPM) y sube su mínimo de iOS a 13.0. El resto de saltos
+  mayores siguen sin tocarse por lo que ya documenta `CLAUDE.md` (`flutter_secure_storage` 11,
+  `equatable` 3, `cached_network_image` 4, `google_fonts` 9, `cupertino_icons` 2, Firebase 5/17).
+  `build_runner` 2.17 no resuelve (el SDK fija `test_api`).
+- **Verificado:** `build_runner` sin cambios; `flutter analyze` limpio; **1197 tests en verde**;
+  `ApiConfig.isProduction = true`; 9 permisos Android con INTERNET; ningún
+  `windowDrawsSystemBarBackgrounds` real (solo comentarios); Info.plist con Face ID, UIScene,
+  pantalla completa y solo vertical; `LastUpgradeCheck`/`LastUpgradeVersion` 2700; Launch y Archive
+  en Release; deployment target 15.0; Podfile con `dwarf`, 15.0 y suelo 2700; delegate de
+  notificaciones del plugin; iconos 25/21 con 0 huérfanos y 0 fantasmas; `kTemporadaForzada = null`.
+- **No verificado aquí:** el Oppo no estaba conectado (el código Android de `open_filex` no cambió).
+  iOS solo de forma estática: en la Mac falta `pod install`, compilar y abrir un ticket en el iPhone.
+
 ### 2026-10-26 — Play: «APIs obsoletas de edge-to-edge» en la 1.0.34+43 (Linux)
 
 - **Causa:** `enableEdgeToEdge()` (puesto el 2026-10-08) llama a `Window.setStatusBarColor` /

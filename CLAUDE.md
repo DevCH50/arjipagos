@@ -1250,6 +1250,12 @@ cosas que los tests no ven:
 
 Reconsiderar cuando haya un motivo de verdad, y probándolo en el Oppo y en el iPhone.
 
+**`open_filex` subió a 5.0.0 el 2026-10-26.** Comparada contra la 4.7.0: el Dart, el Java de Android
+y el `OpenFilePlugin.m` de iOS son **idénticos** (solo cambian los fines de línea). Lo único nuevo es el
+empaquetado de iOS: trae `Package.swift`, así que en la Mac el plugin pasa de CocoaPods a **Swift
+Package Manager**, como Firebase. Su mínimo de iOS sube a 13.0, por debajo del 15.0 del proyecto.
+**Pendiente en la Mac:** tras `pod install`, compilar y abrir un ticket PDF en el iPhone.
+
 **Aviso de Gradle «Built-in Kotlin» — no es del proyecto.** Desde Flutter 3.47.5 cada build de
 Android avisa de que `firebase_core`, `in_app_review` y `pdfx` aplican el Kotlin Gradle Plugin y
 que «futuras versiones de Flutter» dejarán de compilarlos. Hoy **solo es un aviso**: compila,

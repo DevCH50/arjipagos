@@ -73,7 +73,7 @@ dependencies:
   # Abrir el PDF del ticket con el visor nativo del dispositivo.
   # En Android lanza un ACTION_VIEW (la hoja de share_plus es ACTION_SEND y no
   # garantiza que haya un lector); en iOS usa el preview de UIDocumentInteraction.
-  open_filex: ^4.7.0
+  open_filex: ^5.0.0
   # Convierte a HTML el cuerpo Markdown de los banners, para que lo pinte el
   # mismo flutter_widget_from_html_core que ya usa Notificaciones. Es Dart puro,
   # sin código nativo: no toca los builds de Android ni de iOS.
