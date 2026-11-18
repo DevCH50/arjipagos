@@ -235,10 +235,22 @@ El Oppo es el teléfono de diario de Carlos, no un banco de pruebas. Y la instal
 inocua: el release y el debug tienen firmas distintas, así que hay que **desinstalar primero**
 —lo que borra la sesión y los datos de la app—. Pasó el 2026-08-25 con la 1.0.27+36.
 
-**Desde el 2026-11-18 el Android conectado es un Galaxy S26 Ultra** (`SM-S948B`, Android 17), no
-el Oppo. Las mismas reglas: lleva la versión de la tienda, y cambiar a un build de otra firma obliga
-a desinstalar y perder la sesión. Donde este documento dice «el Oppo», léase el Android de pruebas
-de ese momento.
+**Desde el 2026-11-18 hay dos Android de pruebas, con reparto fijo** (decisión de Carlos):
+
+| Cuándo | Dónde |
+| --- | --- |
+| Día a día y antes de cada release | **Galaxy S26 Ultra** (`SM-S948B`, Android 17, One UI) |
+| Cambios de ciclo de vida, lanzador, push en segundo plano o biometría | **Galaxy y Oppo** (`CPH2639`, Android 16, ColorOS) |
+| Antes de subir a Play | Pasada rápida en los dos |
+
+El Oppo ya no aporta «Android viejo» (está a una versión del Galaxy); aporta **ColorOS**, donde
+salieron el relanzamiento desde el lanzador y Play reinstalando la versión de la tienda. **Ninguno de
+los dos cubre Android 7–9** (`minSdk` 24, el diálogo propio de huella en API < 28).
+
+Las mismas reglas en los dos: cambiar a un build de otra firma obliga a desinstalar y perder la
+sesión, y nunca se teclea una tarjeta por adb. El Galaxy lleva la 1.0.35+44 release con la firma de
+subida, así que los release nuevos entran encima con `adb install -r` sin perder la sesión. Donde
+este documento cuenta algo «en el Oppo», es lo que se probó allí en su día.
 
 Para verificar en dispositivo, usar el build de `flutter run` (debug). El release solo se
 instala si Carlos lo pide:

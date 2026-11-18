@@ -34,6 +34,12 @@ el 2026-09-28. Faltan las llaves de producción (solo backend).
   pagos vacío con Reintentar (esperado), Pagos Realizados, ticket T9771 en el visor `pdfx`, Facturas,
   Notificaciones, menú lateral (v1.0.35 · Android) y Configuraciones. **Ningún crash** ni excepción
   de la app en el log; el edge-to-edge se ve bien.
+- **Segunda ronda, mismo día (tras el commit `16914d8`):** cierre de sesión con confirmación → login
+  con `ArjiNIM122` → menú con los datos recargados; ticket: «Compartir» abre la hoja del sistema con
+  `ticket_T9771.pdf` y «Abrir en otra app» lanza «Abrir con» y entrega el PDF a Files de Google (se
+  quedó en su bienvenida, que pide permiso de almacenamiento; no se aceptó); modo oscuro en menú,
+  Pagos Pendientes y Pagos Realizados (y se devolvió el teléfono a `night auto`). El proceso fue el
+  mismo de principio a fin y el log no tiene errores de la app.
 - **Pendiente:** la Mac tiene que subir a Flutter 3.50.0 antes del próximo build de iOS (ver
   `CLAUDE.md`).
 
