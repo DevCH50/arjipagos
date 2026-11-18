@@ -12,6 +12,31 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-11-18 — Flutter 3.50.0 y toolchain de Android (Linux)
+
+- **Flutter 3.47.8 → 3.50.0.** `pubspec.lock` re-resuelto (`test_api` 0.7.14, `injectable_generator`
+  3.1.3); `build_runner` regenera el DI sin cambios. `pubspec.yaml` no cambia; versión sigue en
+  **1.0.35+44**, sin publicar.
+- **AGP 9.0.1 → 9.3.1, Gradle 9.3.1 → 9.5.0, KGP 2.3.20 → 2.4.20** (`android/settings.gradle.kts` y
+  el wrapper). Obligatorio: Flutter 3.50 exige AGP ≥ 9.1.1 y con la 9.0.1 el build no arranca. Es la
+  combinación de las plantillas de 3.50.
+- **Verificado:** APK y AAB release compilan (14:51); `verificar_edge_to_edge_dex.sh` pasa en los
+  dos; **1197 tests en verde**; `flutter analyze` sin errores ni avisos, con 136 `info` nuevos, todos
+  la deprecación de `package:flutter/material.dart` (migrar a `material_ui` es tarea aparte, ver
+  `CLAUDE.md`).
+- **Sin subir, a propósito:** `flutter_local_notifications` 23 (API 37; con AGP 9.3.1 quizá ya
+  compile, pero no se ha probado) y el resto de saltos mayores ya documentados.
+- `windows/flutter/generated_*`: solo reordenación automática de `share_plus`, generada por Flutter.
+- **Probado en el Galaxy S26 Ultra** (Android 17, el Android de pruebas desde hoy) con ese APK
+  release, instalado con `adb install -r` encima de la 1.0.35+44 que ya llevaba (misma firma, sin
+  desinstalar). Recorrido con captura por pantalla: menú con avisos y decoración, Pagos Pendientes
+  (seleccionar, desbloqueo en orden, carrito sin pagar, deseleccionar: quedó como estaba), Otros
+  pagos vacío con Reintentar (esperado), Pagos Realizados, ticket T9771 en el visor `pdfx`, Facturas,
+  Notificaciones, menú lateral (v1.0.35 · Android) y Configuraciones. **Ningún crash** ni excepción
+  de la app en el log; el edge-to-edge se ve bien.
+- **Pendiente:** la Mac tiene que subir a Flutter 3.50.0 antes del próximo build de iOS (ver
+  `CLAUDE.md`).
+
 ### 2026-10-26 — Revisión completa, `open_filex` 5.0.0 y binarios de la 1.0.35+44 (Linux)
 
 - **Flutter:** 3.47.8, la última estable (comprobado contra `origin/stable`).

@@ -235,6 +235,11 @@ El Oppo es el teléfono de diario de Carlos, no un banco de pruebas. Y la instal
 inocua: el release y el debug tienen firmas distintas, así que hay que **desinstalar primero**
 —lo que borra la sesión y los datos de la app—. Pasó el 2026-08-25 con la 1.0.27+36.
 
+**Desde el 2026-11-18 el Android conectado es un Galaxy S26 Ultra** (`SM-S948B`, Android 17), no
+el Oppo. Las mismas reglas: lleva la versión de la tienda, y cambiar a un build de otra firma obliga
+a desinstalar y perder la sesión. Donde este documento dice «el Oppo», léase el Android de pruebas
+de ese momento.
+
 Para verificar en dispositivo, usar el build de `flutter run` (debug). El release solo se
 instala si Carlos lo pide:
 
@@ -324,7 +329,11 @@ de iOS. Esa máquina es la que hará Xcode 27.1, las capturas y las pruebas del 
 Mac: *«Flutter is deprecating support for Intel-based Macs. A future version of Flutter will require
 an Apple Silicon Mac to build applications.»* Sin fecha todavía, y puede llegar **antes** de abril de
 2027: el día que una versión de Flutter deje de compilar aquí, **no actualizar Flutter en esta Mac**
-hasta tener la Apple silicon, o la publicación de iOS se corta antes de tiempo.
+hasta tener la Apple silicon, o la publicación de iOS se corta antes de tiempo. **2026-11-18:
+Flutter 3.50.0 todavía compila en Intel**: en su `flutter_tools` sigue siendo solo el aviso de
+`doctor.dart`, sin ningún bloqueo. La Linux ya está en 3.50.0, y **la Mac tiene que subir también**
+antes del próximo build de iOS: el `pubspec.lock` resuelto con 3.50 fija versiones (`test_api` 0.7.14,
+entre otras) que el `flutter_test` de 3.47 no acepta, y un `flutter pub get` allí lo reescribiría.
 
 **El iPhone Duo** (a la venta el 23-oct-2026, con iOS 27; plegable, dos pantallas):
 
@@ -417,7 +426,7 @@ la interfaz de Flutter la pinta la app y no cambia.
 verdad.** Encargo de Carlos del 2026-09-17; no hace falta que lo vuelva a pedir. Hoy el SDK no
 tiene ninguna clase de ese estilo y `cupertino_ui` sigue reproduciendo el iOS anterior.
 
-**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6 y el 2026-10-08 con 3.47.7 y el 2026-10-26 con 3.47.8: sigue sin haberlo, y hay fecha.** Comprobado contra el
+**Revisado el 2026-09-24 con Flutter 3.47.4, el 2026-09-28 con 3.47.5 y el 2026-10-06 y 2026-10-07 con 3.47.6 y el 2026-10-08 con 3.47.7 y el 2026-10-26 con 3.47.8 y el 2026-11-18 con 3.50.0: sigue sin haberlo, y hay fecha.** Comprobado contra el
 SDK instalado, no contra un artículo:
 `grep -rliE "liquidglass|liquid_glass" $FLUTTER/packages/flutter/lib/` **no devuelve nada**, y en
 `$FLUTTER/packages/` no hay ningún `cupertino` suelto. El equipo de Flutter declaró en el issue
@@ -434,6 +443,8 @@ sigue en 1.1.1, sin novedades. **2026-10-07:** `cupertino_ui` 1.1.2, solo arregl
 `showCupertinoSheet`); `grep -i liquid` en su `lib/` no devuelve nada. **2026-10-08:** Flutter 3.47.7 y
 `cupertino_ui` sigue en 1.1.2, sin novedades. **2026-10-26:** Flutter 3.47.8 y `cupertino_ui` 1.1.4,
 solo arreglos (`CupertinoMagnifier`, `CupertinoPicker`); su changelog no menciona Liquid Glass.
+**2026-11-18:** Flutter 3.50.0 y `cupertino_ui` 1.1.7, solo arreglos (`CupertinoSlider`,
+`CupertinoSheetRoute`, `CupertinoActionSheet`); ni el SDK ni el changelog mencionan Liquid Glass.
 
 Lo que hay en pub.dev —`cupertino_liquid_glass`, `liquid_glass_widgets`, `cupertino_native`— es o
 bien una imitación con `BackdropFilter`/shaders, o bien *platform views* nativas. Lo primero es la
@@ -1228,8 +1239,30 @@ y la preferencia del bloqueo biométrico. Una migración fallida cierra la sesi�
 en el backend, en silencio. Subirla es una tarea aparte, decidida por Carlos y probada actualizando
 **encima** de una instalación con sesión en el Oppo y en el iPhone, nunca dentro de un release.
 
-**`injectable_generator` se queda en 3.0.2** — no puede subir a 3.1.x porque el SDK fija
-`test_api` en 0.7.11. No forzar con `dependency_overrides`.
+**`injectable_generator` ya está en 3.1.3** (el `pubspec.yaml` pide `^3.0.2`). Estuvo bloqueado en
+3.0.2 porque el SDK fijaba `test_api` en 0.7.11; con Flutter 3.47.8 el lock pasó solo a 3.1.x, y el
+2026-11-18, con Flutter 3.50.0, `build_runner` regenera el código de DI sin cambiar nada. Si vuelve a
+chocar, no forzar con `dependency_overrides`.
+
+**`flutter_local_notifications` se queda en 22.x.** Revisado el 2026-11-18: la **23.0.0** sube su
+`compileSdk` a **37** y exige **AGP 9.1.1**. Ese mismo día el proyecto subió a AGP 9.3.1 (ver
+abajo), así que el muro de toolchain puede haber caído, **pero no se ha comprobado**: compilar con
+API 37 y probar los avisos en primer plano en Android es una tarea aparte, nunca dentro de un release.
+
+**Toolchain de Android desde el 2026-11-18: AGP 9.3.1 / Gradle 9.5.0 / KGP 2.4.20.** Lo exige
+Flutter 3.50.0 (AGP ≥ 9.1.1; con la 9.0.1 el build no arranca) y es la combinación de sus
+plantillas. Verificado ese día: APK y AAB release compilan, `verificar_edge_to_edge_dex.sh` pasa en
+los dos y los 1197 tests siguen en verde. Donde arriba se habla de «AGP 9.0.1» es el estado de
+entonces.
+
+**Flutter 3.50 depreca `package:flutter/material.dart`.** Desde el 2026-11-18 `flutter analyze` da
+**136 avisos `info`**, todos el mismo: *«'package:flutter/material.dart' is deprecated… Use
+package:material_ui/material_ui.dart instead»* (106 en `lib/`, 30 en `test/`). **No rompe nada**:
+compila, los 1197 tests pasan y `release.sh` analiza con `--no-fatal-infos`. Migrar supone añadir
+`material_ui` como dependencia y cambiar ese import en todos los archivos: es una tarea aparte, que
+decide Carlos y se prueba en Android y en el iPhone, nunca dentro de un release. Cuando se haga, es
+también el momento de revisar `cached_network_image` 4 y `google_fonts` 9 (abajo), que se quedaron
+atrás justamente por depender de `material_ui`.
 
 **`equatable` se queda en 2.x y `cached_network_image` en 3.x.** Revisado el 2026-09-17, al
 actualizar a Flutter 3.47.4. Ninguno de los dos saltos aporta nada a la app, y los dos cambian
