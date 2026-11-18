@@ -130,6 +130,27 @@ void main() {
       ).called(1);
     });
 
+    /// REGRESIÓN — emulador de Android 7, 2026-11-18: con la preferencia
+    /// guardada pero el aparato sin soporte, el interruptor salía encendido y
+    /// deshabilitado a la vez.
+    testWidgets('activado pero sin soporte: apagado, deshabilitado y explicado',
+        (tester) async {
+      when(() => biometria.state).thenReturn(
+        const BiometriaState(
+          estado: EstadoBiometria(
+            disponible: BiometriaDisponible.ninguna,
+            activado: true,
+          ),
+        ),
+      );
+      await montar(tester);
+
+      final Switch interruptor = tester.widget<Switch>(find.byType(Switch));
+      expect(interruptor.value, isFalse);
+      expect(interruptor.onChanged, isNull);
+      expect(find.text(AppStrings.biometriaNoDisponibleEnAparato), findsOneWidget);
+    });
+
     testWidgets('Calificar la app abre la ficha de la tienda', (tester) async {
       await montar(tester);
 

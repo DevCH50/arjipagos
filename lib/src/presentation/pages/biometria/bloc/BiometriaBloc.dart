@@ -41,6 +41,18 @@ class BiometriaBloc extends Bloc<BiometriaEvent, BiometriaState> {
   /// Lo de "por primera vez" no es un matiz: ver [_onAppPausada].
   DateTime? _instantePausa;
 
+  /// Margen tras terminar una autenticación en el que las pausas no cuentan.
+  ///
+  /// El diálogo nativo puede seguir moviendo el ciclo de vida un instante
+  /// después de que Dart ya recibió el resultado. Medido en el emulador de
+  /// Android 7 el 2026-11-18: el resultado llegó y **370 ms después** entró una
+  /// pausa que se anotó como «app al fondo», lista para rebloquear. Dos segundos
+  /// cubren ese rebote sin ocultar una salida real del usuario.
+  static const Duration margenTrasAutenticar = Duration(seconds: 2);
+
+  /// Cuándo terminó la última autenticación, o `null` si no ha habido.
+  DateTime? _finAutenticacion;
+
   BiometriaBloc(
     this.biometriaUseCases,
     this.authUseCases, {
@@ -105,6 +117,13 @@ class BiometriaBloc extends Bloc<BiometriaEvent, BiometriaState> {
     // cerrojo se rebloquearía a sí mismo cada vez que pide la huella.
     if (state.autenticando) {
       AppLogger.debug('Pausa ignorada: diálogo nativo abierto', tag: 'Biometria');
+      return;
+    }
+
+    // Rebote del diálogo nativo justo al cerrarse (ver [margenTrasAutenticar]).
+    final DateTime? fin = _finAutenticacion;
+    if (fin != null && ahora().difference(fin) < margenTrasAutenticar) {
+      AppLogger.debug('Pausa ignorada: rebote tras autenticar', tag: 'Biometria');
       return;
     }
 
@@ -187,6 +206,7 @@ class BiometriaBloc extends Bloc<BiometriaEvent, BiometriaState> {
     final ResultadoBiometria resultado = await biometriaUseCases.autenticar.run(
       motivo: AppStrings.biometriaMotivoDesbloqueo,
     );
+    _finAutenticacion = ahora();
 
     if (resultado == ResultadoBiometria.exito) {
       emit(state.copyWith(bloqueado: false, autenticando: false));
@@ -232,6 +252,7 @@ class BiometriaBloc extends Bloc<BiometriaEvent, BiometriaState> {
       activar: event.activar,
       motivo: AppStrings.biometriaMotivoDesbloqueo,
     );
+    _finAutenticacion = ahora();
 
     // Se vuelve a consultar en vez de asumir: el caso de uso pudo no guardar
     // nada si la comprobación falló, y el interruptor tiene que reflejar lo que

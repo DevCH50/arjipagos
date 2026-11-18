@@ -51,14 +51,17 @@ class InterruptorBiometria extends StatelessWidget {
         final bool habilitado = estado.sePuedeOfrecer && !state.autenticando;
 
         return SwitchListTile(
-          value: estado.activado,
+          // Se pinta encendido solo si el cerrojo funciona de verdad. Con la
+          // preferencia guardada pero el aparato sin soporte, salía encendido y
+          // deshabilitado a la vez (emulador de Android 7, 2026-11-18).
+          value: estado.cerrojoOperativo,
           onChanged: habilitado
               ? (bool activar) => context
                   .read<BiometriaBloc>()
                   .add(BiometriaBloqueoCambiado(activar: activar))
               : null,
           secondary: IconoDeMenu(
-            icono: estado.activado
+            icono: estado.cerrojoOperativo
                 ? Icons.lock_outline
                 : Icons.lock_open_outlined,
             habilitado: habilitado,

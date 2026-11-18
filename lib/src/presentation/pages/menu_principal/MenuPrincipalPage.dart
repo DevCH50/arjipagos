@@ -191,27 +191,38 @@ class _MenuPrincipalBody extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return Column(
-          children: [
-            // Header con información del usuario
-            UserHeader(
-              nombre: state.nombreUsuario ?? AppStrings.loginUsername,
-              email: state.emailUsuario,
+        // La página entera se desplaza, no solo la lista. Antes la lista iba en
+        // un `Expanded` entre la cabecera y el carrusel, y en una pantalla
+        // pequeña (360×640 dp, visto en el emulador de Android 7 el
+        // 2026-11-18) quedaba una franja con «Pagos Realizados» y «Facturas»
+        // escondidos y sin pista de que había más. En pantallas grandes se ve
+        // igual que antes: opciones arriba y avisos al fondo.
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              // Header con información del usuario
+              child: UserHeader(
+                nombre: state.nombreUsuario ?? AppStrings.loginUsername,
+                email: state.emailUsuario,
+              ),
             ),
             // Ocupa el hueco del `Divider` que había aquí, y fuera de temporada
             // devuelve ese mismo `Divider`: en octubre esta pantalla se ve
             // exactamente igual que antes de existir la decoración.
-            const ListonEstacional(),
-            // Lista de items del menú
-            Expanded(
-              child: MenuItemsList(items: state.menuItems),
-            ),
-            // Carrusel de avisos. Se encoge a cero cuando no hay contenido,
-            // así que el menú se ve igual que antes si no llegan avisos. NO va
-            // envuelto en SafeArea: el propio carrusel descuenta el inset con
+            const SliverToBoxAdapter(child: ListonEstacional()),
+            SliverToBoxAdapter(child: MenuItemsList(items: state.menuItems)),
+            // Carrusel de avisos, empujado al fondo cuando sobra sitio. Se
+            // encoge a cero cuando no hay contenido. NO va envuelto en
+            // SafeArea: el propio carrusel descuenta el inset con
             // MediaQuery.viewPaddingOf, que es el único valor fiable si un
             // widget padre ya consumió el padding.
-            const BannersStrip(),
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: BannersStrip(),
+              ),
+            ),
           ],
         );
       },

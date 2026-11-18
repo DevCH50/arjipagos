@@ -76,6 +76,8 @@ void main() {
     final BiometriaBloc bloc = crearBloc();
     bloc.add(const BiometriaIniciada());
     await Future<void>.delayed(Duration.zero);
+    // El usuario ya lleva un rato dentro: fuera del margen tras autenticar.
+    instante = instante.add(BiometriaBloc.margenTrasAutenticar);
     return bloc;
   }
 
@@ -377,6 +379,49 @@ void main() {
       expect(bloc.state.estado.activado, isTrue);
       expect(bloc.state.avisoPendiente, isNull);
       verify(() => repositorio.guardarBloqueoActivado(true)).called(1);
+      await bloc.close();
+    });
+
+    /// REGRESIÓN — emulador de Android 7, 2026-11-18. El diálogo nativo seguía
+    /// moviendo el ciclo de vida 370 ms después de que Dart ya tenía el
+    /// resultado; esa pausa se anotaba como «app al fondo» y el cerrojo volvía
+    /// a pedir el PIN al regresar.
+    test('ignora la pausa de rebote justo después de autenticar', () async {
+      final BiometriaBloc bloc = crearBloc();
+      bloc.add(const BiometriaBloqueoCambiado(activar: true));
+      await Future<void>.delayed(Duration.zero);
+      clearInteractions(repositorio);
+
+      instante = instante.add(const Duration(milliseconds: 370));
+      bloc.add(const BiometriaAppPausada());
+      await Future<void>.delayed(Duration.zero);
+
+      instante = instante.add(BiometriaBloc.gracia * 2);
+      bloc.add(const BiometriaAppReanudada());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(bloc.state.bloqueado, isFalse);
+      verifyNever(() => repositorio.autenticar(motivo: any(named: 'motivo')));
+      await bloc.close();
+    });
+
+    test('una salida real pasado el margen sí bloquea al volver', () async {
+      final BiometriaBloc bloc = crearBloc();
+      bloc.add(const BiometriaBloqueoCambiado(activar: true));
+      await Future<void>.delayed(Duration.zero);
+      clearInteractions(repositorio);
+
+      instante = instante.add(
+          BiometriaBloc.margenTrasAutenticar + const Duration(seconds: 1));
+      bloc.add(const BiometriaAppPausada());
+      await Future<void>.delayed(Duration.zero);
+
+      instante = instante.add(BiometriaBloc.gracia * 2);
+      bloc.add(const BiometriaAppReanudada());
+      await Future<void>.delayed(Duration.zero);
+
+      verify(() => repositorio.autenticar(motivo: any(named: 'motivo')))
+          .called(1);
       await bloc.close();
     });
   });

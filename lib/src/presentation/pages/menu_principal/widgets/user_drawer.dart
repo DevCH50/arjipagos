@@ -198,20 +198,23 @@ class UserDrawer extends StatelessWidget {
                           Navigator.restorablePushNamed(context, 'aviso_de_privacidad');
                         },
                       ),
-                      ListTile(
-                        leading: Icon(
-                          Icons.logout,
-                          color: theme.colorScheme.error,
-                        ),
-                        title: Text(
-                          AppStrings.logoutTitle,
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
-                        onTap: () => _handleLogout(context),
-                      ),
                     ],
                   ),
                 ),
+              ),
+              // «Cerrar Sesión» fijo, fuera de la lista que se desplaza. En una
+              // pantalla pequeña (360×640 dp, emulador de Android 7, 2026-11-18)
+              // quedaba debajo del borde, sin pista de que existía.
+              ListTile(
+                leading: Icon(
+                  Icons.logout,
+                  color: theme.colorScheme.error,
+                ),
+                title: Text(
+                  AppStrings.logoutTitle,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                onTap: () => _handleLogout(context),
               ),
               // Pie con Aviso de Privacidad, versión e indicación de copia
               const DrawerFooter(),

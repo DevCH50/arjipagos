@@ -564,8 +564,12 @@ class AppStrings {
       'Se pide tu identidad al volver a la aplicación';
   static const String biometriaSubtituloDesactivado =
       'La aplicación se abre sin pedir nada';
+  /// Vale para los dos casos en que no se ofrece: aparato sin ningún bloqueo, y
+  /// Android < 11 con solo PIN (ver `ReglaBiometriaAndroid`). En ambos, dar de
+  /// alta la huella o el rostro lo resuelve: para registrarlos, el sistema
+  /// exige además un código.
   static const String biometriaNoDisponibleEnAparato =
-      'Este dispositivo no tiene bloqueo de pantalla configurado';
+      'No disponible: activa la huella o el rostro en los ajustes de tu teléfono';
 
   /// Avisos de fallo. Ninguno muestra el detalle técnico: eso va a AppLogger.
   static const String biometriaErrorTitulo = 'No se pudo desbloquear';

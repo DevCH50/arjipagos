@@ -4,6 +4,8 @@ import 'package:arjipagos/src/core/constants/app_strings.dart';
 import 'package:arjipagos/src/core/utils/app_logger.dart';
 import 'package:arjipagos/src/domain/models/BiometriaDisponible.dart';
 import 'package:arjipagos/src/domain/models/ResultadoBiometria.dart';
+import 'package:arjipagos/src/data/dataSource/local/ReglaBiometriaAndroid.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_darwin/local_auth_darwin.dart';
@@ -29,18 +31,63 @@ import 'package:local_auth_darwin/local_auth_darwin.dart';
 class AutenticadorBiometrico {
   final LocalAuthentication _localAuth;
 
-  AutenticadorBiometrico([LocalAuthentication? localAuth])
-      : _localAuth = localAuth ?? LocalAuthentication();
+  /// Lee la versión de Android (`SDK_INT`); `null` fuera de Android.
+  /// Inyectable para los tests.
+  final Future<int?> Function() _leerSdk;
+
+  /// Canal propio de `MainActivity`; solo responde `sdkInt`.
+  static const MethodChannel _canalPlataforma =
+      MethodChannel('mx.moriah.arjipagos/plataforma');
+
+  /// La versión de Android no cambia mientras la app corre: se lee una vez.
+  int? _sdk;
+  bool _sdkLeido = false;
+
+  AutenticadorBiometrico([
+    LocalAuthentication? localAuth,
+    Future<int?> Function()? leerSdk,
+  ])  : _localAuth = localAuth ?? LocalAuthentication(),
+        _leerSdk = leerSdk ?? _leerSdkDelSistema;
+
+  /// Pregunta el `SDK_INT` a `MainActivity`. Cualquier fallo devuelve `null`:
+  /// la app se comporta entonces como siempre, sin el ajuste de Android viejo.
+  static Future<int?> _leerSdkDelSistema() async {
+    if (!Platform.isAndroid) {
+      return null;
+    }
+    try {
+      return await _canalPlataforma.invokeMethod<int>('sdkInt');
+    } catch (e) {
+      AppLogger.warning('No se pudo leer la versión de Android: $e',
+          tag: 'Biometria');
+      return null;
+    }
+  }
+
+  Future<int?> _sdkAndroid() async {
+    if (!_sdkLeido) {
+      _sdk = await _leerSdk();
+      _sdkLeido = true;
+    }
+    return _sdk;
+  }
 
   // ==========================================================================
   // CONSULTA DE CAPACIDADES
   // ==========================================================================
 
-  /// Qué admite este aparato.
+  /// Qué admite este aparato, ya ajustado a lo que el cerrojo puede usar sin
+  /// fallar (ver [ReglaBiometriaAndroid]).
+  Future<BiometriaDisponible> consultarDisponible() async {
+    final BiometriaDisponible disponible = await _consultarAparato();
+    return ReglaBiometriaAndroid.ajustar(disponible, await _sdkAndroid());
+  }
+
+  /// Qué admite el aparato según el plugin, sin ajustes.
   ///
   /// Devuelve [BiometriaDisponible.ninguna] ante cualquier fallo del canal: si
   /// no se puede saber si hay sensor, lo seguro es no ofrecer el bloqueo.
-  Future<BiometriaDisponible> consultarDisponible() async {
+  Future<BiometriaDisponible> _consultarAparato() async {
     try {
       // `isDeviceSupported` cubre el hardware Y el bloqueo de pantalla. Si es
       // false no hay nada que ofrecer, ni siquiera PIN.
@@ -104,7 +151,10 @@ class AutenticadorBiometrico {
         authMessages: _mensajes,
         // Decidido con el usuario: se permite caer al PIN/patrón del aparato.
         // Con `true` quedarían fuera quienes no registran su huella.
-        biometricOnly: false,
+        // Excepción: Android < 11, donde la pantalla de PIN sale duplicada
+        // (ver ReglaBiometriaAndroid). Ahí solo se pide la huella.
+        biometricOnly:
+            ReglaBiometriaAndroid.evitarCredencial(await _sdkAndroid()),
         sensitiveTransaction: true,
         // Sustituye al `stickyAuth` de la 2.x. Sin esto, una notificación push
         // que llegue con el diálogo abierto cancela la autenticación a media;

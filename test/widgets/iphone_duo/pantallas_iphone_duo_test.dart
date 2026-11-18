@@ -42,6 +42,7 @@ import 'package:arjipagos/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginBloc.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginEvent.dart';
 import 'package:arjipagos/src/presentation/pages/auth/login/bloc/LoginState.dart';
+import 'package:arjipagos/src/domain/models/banner/BannerInfo.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerBloc.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerEvent.dart';
 import 'package:arjipagos/src/presentation/pages/banners/bloc/BannerState.dart';
@@ -191,7 +192,7 @@ void main() {
 
   /// Los BLoC de la raíz, ya cargados, para las pantallas que los leen con
   /// `context.read`.
-  List<BlocProvider> blocsDeLaRaiz() {
+  List<BlocProvider> blocsDeLaRaiz({bool conAvisos = false}) {
     final menu = _MockMenuBloc();
     whenListen(
       menu,
@@ -233,7 +234,11 @@ void main() {
     whenListen(
       banners,
       const Stream<BannerState>.empty(),
-      initialState: const BannerState(),
+      // Con avisos el carrusel ocupa su alto real y le quita sitio al menú,
+      // que es justo lo que hay que medir en pantalla pequeña.
+      initialState: conAvisos
+          ? BannerState(banners: [BannerInfo.fromJson(TestBanner.anualidadJson)])
+          : const BannerState(),
     );
 
     final facturas = _MockFacturaBloc();
@@ -302,6 +307,7 @@ void main() {
     WidgetTester tester,
     Widget pantalla, {
     required ThemeData tema,
+    bool conAvisos = false,
   }) async {
     if (!locator.isRegistered<EdoCtaListBlocPorEmisor>()) {
       registrarEmisores();
@@ -315,7 +321,7 @@ void main() {
     }
     await tester.pumpWidget(
       MultiBlocProvider(
-        providers: blocsDeLaRaiz(),
+        providers: blocsDeLaRaiz(conAvisos: conAvisos),
         child: MaterialApp(theme: tema, home: pantalla),
       ),
     );
@@ -431,4 +437,77 @@ void main() {
       }
     });
   }
+
+  // ==========================================================================
+  // PANTALLA PEQUEÑA — el otro extremo
+  // ==========================================================================
+
+  /// 360 × 640 dp, como el emulador de Android 7 (perfil Nexus 5). Ahí se vio
+  /// el 2026-11-18 que el menú escondía «Pagos Realizados» y «Facturas» en una
+  /// franja desplazable, y el lateral escondía «Cerrar Sesión», sin ninguna
+  /// pista visual de que existían.
+  const PantallaDuo pequena = PantallaDuo('pequeña', Size(1080, 1920));
+
+  /// Que se vea entero sin desplazar nada: dentro de la pantalla **y** dentro
+  /// de la zona visible de la lista que lo contiene. Lo segundo es lo que
+  /// importa: antes las opciones escondidas quedaban debajo del carrusel, dentro
+  /// de la pantalla pero fuera de la franja visible de su lista.
+  void expectVisible(WidgetTester tester, Finder finder) {
+    expect(finder, findsOneWidget);
+    final String texto = (finder.evaluate().first.widget as Text).data!;
+    final Rect r = tester.getRect(finder);
+    double limite = pequena.tamanoLogico.height;
+    final Finder lista =
+        find.ancestor(of: finder, matching: find.byType(Scrollable));
+    if (lista.evaluate().isNotEmpty) {
+      final double finLista = tester.getRect(lista.first).bottom;
+      if (finLista < limite) {
+        limite = finLista;
+      }
+    }
+    expect(r.bottom, lessThanOrEqualTo(limite),
+        reason: '«$texto» queda fuera de la zona visible');
+  }
+
+  group('Pantalla pequeña (360 × 640 dp)', () {
+    for (final MapEntry<String, ThemeData Function()> tema in temas.entries) {
+      testWidgets('Menú: las cuatro opciones a la vista, tema ${tema.key}',
+          (tester) async {
+        fijarPantalla(tester, pequena);
+        await montar(tester, const MenuPrincipalPage(),
+            tema: tema.value(), conAvisos: true);
+
+        expect(tester.takeException(), isNull);
+        for (final item in MenuPrincipalState.defaultMenuItems) {
+          expectVisible(tester, find.text(item.titulo));
+        }
+      });
+
+      testWidgets('Menú lateral: «Cerrar Sesión» a la vista, tema ${tema.key}',
+          (tester) async {
+        fijarPantalla(tester, pequena);
+        await montar(tester, const MenuPrincipalPage(),
+            tema: tema.value(), conAvisos: true);
+
+        await tester.tap(find.byTooltip(AppStrings.menuMiCuenta));
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(tester.takeException(), isNull);
+        expectVisible(tester, find.text(AppStrings.logoutTitle));
+      });
+    }
+
+    testWidgets('Menú con letra al 130 %: «Facturas» se alcanza desplazando',
+        (tester) async {
+      fijarPantalla(tester, pequena, escalaTexto: 1.3);
+      await montar(tester, const MenuPrincipalPage(),
+          tema: AppTheme.light, conAvisos: true);
+
+      final String ultima = MenuPrincipalState.defaultMenuItems.last.titulo;
+      await tester.scrollUntilVisible(find.text(ultima), 100,
+          scrollable: find.byType(Scrollable).first);
+      expect(tester.takeException(), isNull);
+      expectVisible(tester, find.text(ultima));
+    });
+  });
 }

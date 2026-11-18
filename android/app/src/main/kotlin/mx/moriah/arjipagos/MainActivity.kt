@@ -1,9 +1,12 @@
 package mx.moriah.arjipagos
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
 /**
  * Actividad única que hospeda el motor de Flutter.
@@ -74,5 +77,30 @@ class MainActivity : FlutterFragmentActivity() {
         }
 
         enableEdgeToEdge()
+    }
+
+    /**
+     * Canal mínimo para que Dart conozca la versión de Android (`SDK_INT`).
+     *
+     * Lo necesita el bloqueo biométrico: por debajo de Android 11 (API 30),
+     * androidx.biometric 1.1.0 pide el PIN del aparato con una pantalla aparte
+     * que se abre **duplicada** (comprobado en el emulador de Android 7 el
+     * 2026-11-18). Ver `ReglaBiometriaAndroid.dart`. Se usa este canal en vez
+     * de añadir `device_info_plus` solo por un número.
+     */
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CANAL_PLATAFORMA)
+            .setMethodCallHandler { llamada, resultado ->
+                if (llamada.method == "sdkInt") {
+                    resultado.success(Build.VERSION.SDK_INT)
+                } else {
+                    resultado.notImplemented()
+                }
+            }
+    }
+
+    private companion object {
+        const val CANAL_PLATAFORMA = "mx.moriah.arjipagos/plataforma"
     }
 }

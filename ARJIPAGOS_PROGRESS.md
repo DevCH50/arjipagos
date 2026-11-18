@@ -40,6 +40,52 @@ el 2026-09-28. Faltan las llaves de producción (solo backend).
   quedó en su bienvenida, que pide permiso de almacenamiento; no se aceptó); modo oscuro en menú,
   Pagos Pendientes y Pagos Realizados (y se devolvió el teléfono a `night auto`). El proceso fue el
   mismo de principio a fin y el log no tiene errores de la app.
+- **Emulador Android 7.0 (API 24) montado** para cubrir el hueco de Android 7–9: AVD
+  `Android7_API24` (imagen `google_apis` x86_64, perfil Nexus 5, 360×640 dp, 1.5 GB). WebView del
+  sistema 53 (2016). Mismo APK release, login con ArjiNIM122. **Funciona, sin crash:** login (TLS con
+  la X1 de la app; antes se comprobó con `openssl` que la cadena del backend YE2 → Root YE → X2 → X1
+  valida solo con X1), menú, Pagos Pendientes, carrito, **la pasarela de Adquira carga en el
+  WebView 53** (los únicos errores JS son del script Dynatrace `ruxitagentjs` de Adquira; el
+  formulario se pinta) y la ✕ con «Cancelar pago» vuelve al carrito, Pagos Realizados, ticket en
+  `pdfx`, «Abrir en otra app» (lo abre el visor de Drive), Configuraciones.
+- **Hallazgos en el emulador (sin arreglar, a decidir por Carlos):**
+  1. **Bloqueo: el PIN se pide 2–3 veces seguidas en Android 7.** Con solo credencial del aparato,
+     cada petición abre **dos** `ConfirmDeviceCredentialActivity` a la vez (log de eventos:
+     15:54:12.478/.479 y 15:55:39.682/.762), y al activar el interruptor, tras aceptar, se pidió una
+     tercera (15:54:33.737). No es bucle infinito. Probable causa: la confirmación de credencial en
+     API < 30 es otra `Activity`, la app pasa por `paused/stopped` y el cerrojo lo toma como volver
+     del segundo plano. En los teléfonos nuevos no pasa porque `BiometricPrompt` es un fragmento.
+  2. **En Android 7 con huella, la app lo nombra «código del dispositivo»**: `canCheckBiometrics` no
+     ve la huella; la pantalla del sistema sí la ofrece.
+  3. **La disponibilidad se evalúa solo al arrancar**: si el usuario pone un bloqueo de pantalla con
+     la app abierta, el interruptor sigue deshabilitado hasta reiniciarla (en cualquier Android).
+  4. **Pantalla pequeña (360×640 dp):** el menú principal y el lateral muestran una franja corta que
+     se desplaza; «Pagos Realizados», «Facturas» y **«Cerrar Sesión»** quedan ocultos sin pista visual.
+- **Arreglos de los hallazgos 1, 2 y 4 (aprobados por Carlos el mismo día):**
+  - **Causa del PIN repetido, confirmada con el build debug:** es nativa. androidx.biometric 1.1.0
+    (la que fija `local_auth_android` 2.3.0) abre dos `ConfirmDeviceCredentialActivity` por
+    petición y otra al cerrar; Dart pidió una sola vez. Además, la pantalla sobrante movía el ciclo
+    de vida 370 ms después del resultado y el BLoC lo anotaba como «app al fondo».
+  - **B — `ReglaBiometriaAndroid`** (Dart puro, con test): en Android < 11 (`SDK_INT` < 30) el
+    cerrojo solo se ofrece con biometría y pide solo la huella (`biometricOnly`); con solo PIN no
+    se ofrece. Android 11+ e iOS sin cambios. El `SDK_INT` lo da un canal mínimo nuevo en
+    `MainActivity` (`mx.moriah.arjipagos/plataforma`), sin añadir `device_info_plus`.
+  - **A — `BiometriaBloc.margenTrasAutenticar` (2 s):** las pausas justo después de autenticar no
+    cuentan como salida. Tests de regresión en `biometria_bloc_test.dart`.
+  - **Interruptor:** se pinta encendido solo si el cerrojo funciona (`cerrojoOperativo`), y el
+    texto ya no dice «no tiene bloqueo de pantalla» cuando sí lo tiene: «No disponible: activa la
+    huella o el rostro en los ajustes de tu teléfono». Test en `configuraciones_page_test.dart`.
+  - **Menú en pantalla pequeña:** el cuerpo es un `CustomScrollView` (cabecera, las cuatro
+    opciones y los avisos al fondo con `SliverFillRemaining`); en pantallas grandes se ve igual.
+    «Cerrar Sesión» va fijo bajo la lista del menú lateral. Test nuevo «Pantalla pequeña
+    (360 × 640 dp)» en `pantallas_iphone_duo_test.dart`, **con avisos** y midiendo contra la zona
+    visible de la lista: comprobado que falla con el código anterior («Facturas» y «Cerrar
+    Sesión» fuera de la zona visible) y pasa con el nuevo.
+  - **Verificado:** 1211 tests en verde; `flutter analyze` solo con los 136 `info` de
+    `material.dart`; en el emulador, menú con las cuatro opciones, «Cerrar Sesión» a la vista,
+    interruptor apagado con el texto nuevo, y la guarda del relanzamiento de `MainActivity`
+    (ticket en otra app → volver por el lanzador → atrás regresa, una sola instancia).
+  - **Sin hacer:** el hallazgo 3 (la disponibilidad se evalúa solo al arrancar), no aprobado.
 - **Pendiente:** la Mac tiene que subir a Flutter 3.50.0 antes del próximo build de iOS (ver
   `CLAUDE.md`).
 
