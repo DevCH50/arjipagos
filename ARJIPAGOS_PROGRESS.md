@@ -32,8 +32,13 @@ el 2026-09-28. Faltan las llaves de producción (solo backend).
 - **Dispositivos:**
   - **Galaxy S26 Ultra** y **Oppo**: release instalado con `adb install -r` encima de su 1.0.35+44
     release (misma firma, sin desinstalar ni perder sesión), `Success` en los dos. El Galaxy arrancó
-    la app detrás del bloqueo sin ningún error en el logcat. **Los dos estaban bloqueados con código**,
-    así que el recorrido visual queda pendiente de que Carlos los desbloquee.
+    la app detrás del bloqueo sin ningún error en el logcat. Ya desbloqueados por Carlos, recorrido
+    con captura por pantalla en los dos: menú con avisos y decoración, Estados de Cuenta, Otros
+    pagos, Pagos Realizados, Facturas y Notificaciones. Todo bien y sin desbordes; el logcat no tiene
+    errores de la app (el único «app died» del Galaxy es el `force-stop` lanzado a mano antes de
+    abrirla). Galaxy con ArjiNIM122 (Otros pagos vacío con Reintentar); Oppo con HERNANDEZ CABAL
+    (Pagos Pendientes vacío; **Otros pagos sí trae cargos del EF2**, «CLUB DE TAREAS PRIMARIA», así
+    que el backend ya tiene encendido ese concepto; no se pulsó «Pagar»).
   - **Emulador `Android7_API24`**: build debug del código actual (`adb install -r` encima del debug
     que llevaba, conserva la sesión). Menú con la decoración de noviembre, Estados de Cuenta, Pagos
     Realizados y Facturas, con captura por pantalla: todo bien, sin desbordes, y el logcat sin
