@@ -44,6 +44,14 @@ ver el primer cobro real de producción por OpenPay desde la app.
   `.zshrc`, el enlace `~/Developer/arjipagos → /Volumes/T7/Developer/arjipagos` y el `AUTO_CD` de
   oh-my-zsh— y añade una función para que funcione desde cualquier carpeta. Enlazado desde
   «Abril de 2027» en `CLAUDE.md`.
+- **`scripts/preparar_nueva_mac.sh`:** automatiza la parte mecánica del plan en la Mac nueva
+  (Homebrew, CocoaPods, oh-my-zsh, enlaces de `~/Developer`, `.zshrc` con `arjipagos`, Flutter,
+  plataforma iOS, SSH, memoria de Claude Code). Pregunta antes de cada cambio grande, respalda el
+  `.zshrc`, es idempotente y tiene modo `--comprobar`. Se niega a correr en Intel. Probado aquí: en
+  Intel se detiene en el primer paso; con `uname`/`sw_vers` simulados (arm64, 26.6) recorre los diez
+  pasos en `--comprobar` sin errores ni cambios. El plan tiene ahora una sección «Lo primero que hay
+  que hacer con la Mac nueva». Además, el `Package.resolved` de `Runner.xcodeproj/project.xcworkspace`
+  se igualó al del `.xcworkspace` (`app-check` 11.3.2, `GoogleUtilities` 8.1.5).
 
 ### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
 

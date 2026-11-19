@@ -13,6 +13,49 @@
 
 ---
 
+## ⭐ Lo primero que hay que hacer con la Mac nueva — en este orden
+
+Antes de esto, la §2 tiene que estar hecha **en la Mac vieja** (exportar certificados, mover archives,
+respaldar el T7 y la memoria de Claude Code). Si no, parar y hacerla primero.
+
+1. **Encender y crear el usuario.** Nombre corto recomendado: `carlosmanuelhidalgoruiz`. Cuando
+   ofrezca el **Asistente de Migración, decir que no** (§3.1).
+2. **Actualizar macOS** hasta la última Tahoe (26.6 o posterior).
+3. **Instalar Xcode** desde el App Store y **abrirlo una vez** hasta que termine de instalar sus
+   componentes.
+4. **Dar permisos a Terminal:** Ajustes del Sistema → Privacidad y seguridad → **Acceso total al
+   disco** → añadir Terminal. Sin esto, el paso siguiente puede no ver el T7.
+5. **Conectar el SSD T7** y comprobar en el Finder que aparece como **T7** (no «T7 1»).
+6. **Abrir Terminal y ejecutar el script** que hace todo lo mecánico:
+
+   ```bash
+   bash /Volumes/T7/Developer/arjipagos/scripts/preparar_nueva_mac.sh
+   ```
+
+   Va por pasos y **pregunta antes de cada cosa grande**. Instala Homebrew, CocoaPods, git-lfs,
+   oh-my-zsh y la fuente del tema; configura git; crea los enlaces de `~/Developer`; escribe el
+   `.zshrc` con la función `arjipagos` (guardando antes un respaldo del que hubiera); instala
+   Flutter en la versión que le digas; baja la plataforma iOS de Xcode; genera la clave SSH y
+   restaura la memoria de Claude Code. Al final imprime **lo que quedó pendiente a mano**.
+
+   - Se puede ejecutar **varias veces**: lo que ya está hecho lo salta.
+   - `--comprobar` solo informa, sin cambiar nada:
+     `bash /Volumes/T7/Developer/arjipagos/scripts/preparar_nueva_mac.sh --comprobar`
+   - Para no teclear la versión de Flutter:
+     `FLUTTER_VERSION=3.50.0 bash /Volumes/T7/.../preparar_nueva_mac.sh` (la de la **Linux** ese día).
+   - Se llama con `bash` delante porque el T7 es exFAT y no guarda el permiso de ejecución.
+   - En una Mac Intel se niega a correr: no hace nada.
+
+7. **Cerrar Terminal, abrir una nueva y escribir `arjipagos`.** Tiene que llevar al proyecto.
+8. **Lo que el script no puede hacer por ti:** importar los `.p12` (§8.2), iniciar sesión en Xcode
+   con el Apple ID (§8.3), pegar la clave SSH en GitHub (§8.1) y elegir la fuente en Terminal (§6.2).
+9. **Abrir el proyecto** (§9.3) y pasar **la verificación completa** (§11).
+
+Las secciones de abajo explican cada paso con detalle, por si el script falla en algo o se prefiere
+hacerlo a mano.
+
+---
+
 ## 0. Resumen en una página
 
 | # | Fase | Dónde | Tiempo aprox. |
