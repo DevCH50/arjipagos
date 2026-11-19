@@ -12,6 +12,36 @@
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
 el 2026-09-28. Faltan las llaves de producción (solo backend).
 
+### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
+
+- **Tiendas comprobadas:** App Store y `GET /api/v1/app/version` (android e ios) en **1.0.34**. La
+  1.0.35+44 sigue sin publicar → **no se crea versión nueva** (regla 2 de versionado).
+- **Flutter:** 3.50.0 es la estable más reciente; no hay nada que subir. Al no haber actualización de
+  Flutter, no toca la revisión de Liquid Glass.
+- **Dependencias:** todas las directas ya están en lo máximo que permiten sus restricciones. Lo que
+  `pub outdated` marca son los saltos mayores bloqueados a propósito (`equatable` 3,
+  `cached_network_image` 4, `google_fonts` 9, `cupertino_icons` 2, `flutter_secure_storage` 11,
+  `flutter_local_notifications` 23, `firebase_core` 5 / `firebase_messaging` 17). Único cambio
+  aplicado: **`dbus` 0.8.0 → 0.8.1**, parche transitivo que solo usan los plugins en escritorio Linux;
+  no entra en Android ni en iOS.
+- **Verificado antes y después de actualizar:** `flutter analyze` sin errores ni avisos (los 136
+  `info` conocidos de `material.dart`); **1211 tests en verde**. `ApiConfig.isProduction = true`,
+  permiso `INTERNET`, `kTemporadaForzada = null`.
+- **Binarios (08:49):** APK 64.7 MB y AAB 64.3 MB release; `verificar_edge_to_edge_dex.sh` pasa en
+  los dos.
+- **Dispositivos:**
+  - **Galaxy S26 Ultra** y **Oppo**: release instalado con `adb install -r` encima de su 1.0.35+44
+    release (misma firma, sin desinstalar ni perder sesión), `Success` en los dos. El Galaxy arrancó
+    la app detrás del bloqueo sin ningún error en el logcat. **Los dos estaban bloqueados con código**,
+    así que el recorrido visual queda pendiente de que Carlos los desbloquee.
+  - **Emulador `Android7_API24`**: build debug del código actual (`adb install -r` encima del debug
+    que llevaba, conserva la sesión). Menú con la decoración de noviembre, Estados de Cuenta, Pagos
+    Realizados y Facturas, con captura por pantalla: todo bien, sin desbordes, y el logcat sin
+    errores de la app.
+- **iOS:** no verificable desde la Linux. Este cambio no toca nada de iOS (`dbus` no se usa ahí).
+  En la Mac sigue pendiente lo de la 1.0.35: subir Flutter a 3.50.0, limpieza, `pod install`
+  (`open_filex` 5 pasa a SPM), abrir un ticket en el iPhone y Archive.
+
 ### 2026-11-18 — Flutter 3.50.0 y toolchain de Android (Linux)
 
 - **Flutter 3.47.8 → 3.50.0.** `pubspec.lock` re-resuelto (`test_api` 0.7.14, `injectable_generator`
