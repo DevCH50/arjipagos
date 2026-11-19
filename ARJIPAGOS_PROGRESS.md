@@ -10,7 +10,9 @@
 ### En progreso
 
 **OpenPay en «Otros pagos» (EF2)** — **cobro en SANDBOX verificado de punta a punta en el Oppo**
-el 2026-09-28. Faltan las llaves de producción (solo backend).
+el 2026-09-28. **Llaves de producción puestas** (confirmado por Carlos el 2026-11-19; viven solo en
+el `.env` del backend). Ese día los conceptos del EF2 ya llegaban a un tutor normal en el Oppo. Falta
+ver el primer cobro real de producción por OpenPay desde la app.
 
 ### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
 
@@ -38,7 +40,17 @@ el 2026-09-28. Faltan las llaves de producción (solo backend).
     errores de la app (el único «app died» del Galaxy es el `force-stop` lanzado a mano antes de
     abrirla). Galaxy con ArjiNIM122 (Otros pagos vacío con Reintentar); Oppo con HERNANDEZ CABAL
     (Pagos Pendientes vacío; **Otros pagos sí trae cargos del EF2**, «CLUB DE TAREAS PRIMARIA», así
-    que el backend ya tiene encendido ese concepto; no se pulsó «Pagar»).
+    que el backend ya tiene encendido ese concepto; no se pulsó «Pagar»). Es lo esperado: Carlos
+    confirma ese mismo día que las llaves de producción de OpenPay ya están puestas.
+  - **Con `CATutorP533` (CAMACHO GONZALEZ, alumno GUSTAVO ENRIQUE) en el Galaxy y el Oppo:** cierre
+    de sesión con confirmación, login, y las cuatro secciones con los mismos datos en los dos. Cobro
+    por OpenPay **con las llaves de producción**: «CLUB DE TAREAS PRIM 25-26» Pago #6 ($1,000) →
+    carrito → Pagar → el formulario de OpenPay abre con importe y concepto correctos. Cerrado con la
+    ✕ **sin teclear tarjeta** → «No se completó el pago» (consulta de estado `pendiente`) → vuelve al
+    carrito con la selección. Igual en los dos. Carritos vaciados al terminar; los dos teléfonos
+    quedan con la sesión de P533. Quedan dos `order_id` sin pagar en OpenPay.
+  - **No probado hoy en teléfono:** el cerrojo biométrico de `e34f8e3` (solo se probó en el
+    emulador), un cobro pagado de verdad y el formulario de Adquira.
   - **Emulador `Android7_API24`**: build debug del código actual (`adb install -r` encima del debug
     que llevaba, conserva la sesión). Menú con la decoración de noviembre, Estados de Cuenta, Pagos
     Realizados y Facturas, con captura por pantalla: todo bien, sin desbordes, y el logcat sin
