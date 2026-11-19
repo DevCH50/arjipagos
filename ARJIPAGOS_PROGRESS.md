@@ -33,6 +33,17 @@ ver el primer cobro real de producción por OpenPay desde la app.
   true`, `kTemporadaForzada = null`, `LastUpgradeCheck`/`LastUpgradeVersion` en 2700, Launch y
   Archive del esquema en `Release`, `NSFaceIDUsageDescription` presente, `AppIcon` con 0 huérfanos y
   0 fantasmas, `Package.swift` en `.iOS("15.0")`. Lista para Archive.
+- **Archive y subida de la 1.0.35+44:** antes, en el iPhone 17 con el botón Run, se abrió un ticket
+  PDF (`open_filex` 5 por SPM: abre bien) y la webview del pago; la consola solo tuvo ruido conocido
+  y ninguna línea `flutter:`. La subida pidió aceptar un acuerdo pendiente de Apple («You do not have
+  required contracts») y después avisó del SDK: *«built with the iOS 26.2 SDK. Starting April 2027…
+  iOS 27 SDK»*. Es solo aviso.
+- **`MIGRAR_A_NUEVA_MAC_2027.md`:** plan completo para pasar a una Mac con Apple silicon antes de
+  abril de 2027, con el inventario real de esta Mac (Xcode, Flutter, Homebrew, firma, SSH, shell).
+  Documenta cómo funciona hoy el comando `arjipagos` —no es un alias: `cd ~/Developer` en el
+  `.zshrc`, el enlace `~/Developer/arjipagos → /Volumes/T7/Developer/arjipagos` y el `AUTO_CD` de
+  oh-my-zsh— y añade una función para que funcione desde cualquier carpeta. Enlazado desde
+  «Abril de 2027» en `CLAUDE.md`.
 
 ### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
 

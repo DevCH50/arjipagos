@@ -337,6 +337,10 @@ Hasta abril de 2027 se sigue publicando desde aquí con Xcode 26.3 sin problemas
 fecha hace falta una Mac con Apple silicon** (M1 o posterior); sin ella no sale ni una versión más
 de iOS. Esa máquina es la que hará Xcode 27.1, las capturas y las pruebas del Duo.
 
+**El plan de migración, paso a paso, está en `MIGRAR_A_NUEVA_MAC_2027.md`** (2026-11-19): qué preparar
+en esta Mac, cómo instalar la nueva desde cero, el comando `arjipagos`, la firma, Claude Code y la
+verificación completa antes de retirar la Intel.
+
 **Y Flutter también se va de Intel.** Desde la 3.47.7 (2026-10-08), `flutter doctor` avisa en esta
 Mac: *«Flutter is deprecating support for Intel-based Macs. A future version of Flutter will require
 an Apple Silicon Mac to build applications.»* Sin fecha todavía, y puede llegar **antes** de abril de
