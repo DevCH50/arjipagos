@@ -103,6 +103,24 @@ void main() {
       );
     });
 
+    // El primer aviso volvió en la 1.0.35+44: la llamada de MainActivity
+    // seguía en el dex, pero como `enable$default(Lxh;Lxu0;Lxu0;…)`, con los
+    // tipos de su firma ofuscados. Se conservan sus nombres.
+    test('R8 conserva los tipos de la firma de EdgeToEdge.enable', () {
+      final String reglas = _sinComentariosProguard(
+        File('android/app/proguard-rules.pro').readAsStringSync(),
+      );
+
+      expect(
+        reglas,
+        contains('-keepnames class androidx.activity.ComponentActivity'),
+      );
+      expect(
+        reglas,
+        contains('-keepnames class androidx.activity.SystemBarStyle'),
+      );
+    });
+
     test('release.sh verifica el binario con verificar_edge_to_edge_dex.sh',
         () {
       // El test de arriba solo ve las reglas; lo que R8 produce de verdad lo

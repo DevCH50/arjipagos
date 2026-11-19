@@ -22,6 +22,14 @@
 # Test guardián: test/unit/edge_to_edge_android_test.dart
 -keepnames class androidx.activity.EdgeToEdge* { *; }
 
+# Y los tipos de la FIRMA de `EdgeToEdge.enable(ComponentActivity, SystemBarStyle,
+# SystemBarStyle)`. Con la regla de arriba sola, la llamada de MainActivity quedó
+# en el dex como `EdgeToEdge.enable$default(Lxh;Lxu0;Lxu0;…)`, y Play volvió a
+# avisar «Es posible que la vista de extremo a extremo no funcione para todos los
+# usuarios» en la 1.0.35+44 (2026-11-19), aunque la llamada esté. Solo nombres.
+-keepnames class androidx.activity.ComponentActivity
+-keepnames class androidx.activity.SystemBarStyle
+
 # Mantener anotaciones
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable

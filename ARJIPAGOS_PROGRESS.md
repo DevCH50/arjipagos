@@ -14,6 +14,33 @@ el 2026-09-28. **Llaves de producción puestas** (confirmado por Carlos el 2026-
 el `.env` del backend). Ese día los conceptos del EF2 ya llegaban a un tutor normal en el Oppo. Falta
 ver el primer cobro real de producción por OpenPay desde la app.
 
+### 2026-11-19 — 1.0.36+45: vuelve el aviso de edge-to-edge de Play y se conserva la firma (Linux)
+
+- **El aviso:** con la 1.0.35+44 ya publicada, Play Console volvió a dar «Es posible que la vista de
+  extremo a extremo no funcione para todos los usuarios» (acción recomendada, sin más detalle).
+- **El binario publicado sí llamaba:** `MainActivity.onCreate` invoca `EdgeToEdge.enable$default`
+  (visto con `dexdump` en el AAB de las 08:49) y ningún `styles.xml` lleva
+  `windowDrawsSystemBarBackgrounds`. Pero la llamada quedaba como `enable$default(Lxh;Lxu0;Lxu0;…)`:
+  la regla `-keepnames` de la 1.0.35 conservó el nombre de `EdgeToEdge` y R8 seguía ofuscando los
+  tipos de su firma. **Hipótesis:** Play busca la firma completa y no la reconoce así.
+- **Arreglo:** `-keepnames class androidx.activity.ComponentActivity` y `…SystemBarStyle` en
+  `proguard-rules.pro`. Solo nombres. Test nuevo en `edge_to_edge_android_test.dart`.
+- **Comprobado en el AAB nuevo:** la llamada sale como
+  `EdgeToEdge.enable$default(Landroidx/activity/ComponentActivity;Landroidx/activity/SystemBarStyle;…)`
+  y `verificar_edge_to_edge_dex.sh` pasa en APK y AAB (el aviso hermano sigue fuera).
+  **Si Play deja de avisar con la 1.0.36, la hipótesis queda confirmada.**
+- **Versión:** 1.0.35+44 ya está en las dos tiendas → **1.0.36+45**. Flutter 3.50.0 sigue siendo la
+  última estable y `pub upgrade` no cambia nada. 1212 tests en verde; `analyze` solo con los 136
+  `info` conocidos de `material.dart`.
+- **Galaxy:** Play lo había actualizado solo a su 1.0.35 (firma de Play, `installerPackageName =
+  com.android.vending`), así que `install -r` falló por firma: se desinstaló, se instaló la 1.0.36 y
+  se entró con P533. Login, menú y los cuatro módulos bien, de extremo a extremo, sin errores en el
+  log.
+- **Sin probar:** el **Oppo** no estaba conectado por adb, y el **emulador de Android 7** no arrancó
+  porque una VM de VirtualBox (`VBoxHeadless`) tenía tomada la virtualización (`KVM_CREATE_VM:
+  Device or resource busy`). El cambio es solo de nombres en R8, sin efecto en el comportamiento.
+- **iOS:** nada cambia; si se publica la 1.0.36 también ahí, basta con la limpieza y el Archive.
+
 ### 2026-11-19 — Flutter 3.50.0 en la Mac y build iOS de la 1.0.35+44 (Mac)
 
 - **Pull de los 10 commits de la Linux** (`374cbe0`…`053585f`), fast-forward sin conflictos.

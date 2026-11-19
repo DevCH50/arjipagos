@@ -129,6 +129,12 @@ de Flutter, que conserva su nombre, no las señala.
 - **Si un día falla con otra clase**, es que una actualización de androidx, de un plugin o de AGP
   metió otro llamador: si es de androidx, ampliar el `-keepnames` a su clase; si es de un plugin,
   conservar también su nombre; si es nuestra, quitar la llamada.
+- **Y los tipos de la firma de `enable` también conservan nombre** (`ComponentActivity` y
+  `SystemBarStyle`), desde la 1.0.36+45. Con solo la regla de `EdgeToEdge*`, la 1.0.35+44 llevaba la
+  llamada como `enable$default(Lxh;Lxu0;Lxu0;…)` y Play volvió a dar el **primer** aviso, el de «no
+  funcione para todos los usuarios». Comprobarlo en el AAB: `dexdump -d` sobre `base/dex/*.dex` y
+  buscar `EdgeToEdge;.enable$default:(Landroidx/activity/ComponentActivity;…`. Es la hipótesis más
+  probable, no algo que Play haya confirmado: si el aviso vuelve con la 1.0.36, la causa es otra.
 
 ## NO borrar los runtimes de simulador (aunque el proyecto no los use)
 
@@ -248,8 +254,11 @@ salieron el relanzamiento desde el lanzador y Play reinstalando la versión de l
 los dos cubre Android 7–9** (`minSdk` 24, el diálogo propio de huella en API < 28).
 
 Las mismas reglas en los dos: cambiar a un build de otra firma obliga a desinstalar y perder la
-sesión, y nunca se teclea una tarjeta por adb. El Galaxy lleva la 1.0.35+44 release con la firma de
-subida, así que los release nuevos entran encima con `adb install -r` sin perder la sesión. Donde
+sesión, y nunca se teclea una tarjeta por adb. **Ojo: Play
+actualiza solo** a la versión de la tienda, firmada con la llave de Play: desde ese momento un
+release nuestro ya no entra con `adb install -r` (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) y hay que
+desinstalar. Pasó en el Galaxy el 2026-11-19, en cuanto salió la 1.0.35+44. Se mira con
+`dumpsys package mx.moriah.arjipagos | grep installerPackageName` (`com.android.vending` = Play). Donde
 este documento cuenta algo «en el Oppo», es lo que se probó allí en su día.
 
 Para verificar en dispositivo, usar el build de `flutter run` (debug). El release solo se
