@@ -14,6 +14,20 @@ el 2026-09-28. **Llaves de producción puestas** (confirmado por Carlos el 2026-
 el `.env` del backend). Ese día los conceptos del EF2 ya llegaban a un tutor normal en el Oppo. Falta
 ver el primer cobro real de producción por OpenPay desde la app.
 
+### 2026-11-19 — Flutter 3.50.0 en la Mac y build iOS de la 1.0.35+44 (Mac)
+
+- **Pull de los 10 commits de la Linux** (`374cbe0`…`053585f`), fast-forward sin conflictos.
+- **Flutter 3.47.7 → 3.50.0** (Dart 3.14.0). Sigue compilando en Intel: solo el aviso de `doctor`.
+- **Limpieza obligatoria:** `flutter clean`, `flutter pub get` —**`pubspec.lock` sin cambios**,
+  idéntico al de la Linux—, `pod install`. `Package.swift` queda en `.iOS("15.0")`.
+- **`open_filex` 5.0.0 pasa a SPM:** `pod install` quita su pod de `Podfile.lock` y la fase
+  «[CP] Embed Pods Frameworks» de `project.pbxproj`. Era lo que faltaba de la subida hecha en la
+  Linux, donde no hay `pod install`.
+- **SPM resolvió `firebase-ios-sdk` 12.19.0 → 12.19.3** (parche) en los dos `Package.resolved`.
+- **Verificado:** **1211 tests en verde**; `./scripts/build_ios.sh` compila `Runner.app` (26.6 MB)
+  en ~2 min, `LastUpgradeCheck`/`LastUpgradeVersion` en 2700.
+- **Pendiente en la Mac:** abrir un ticket en el iPhone y Archive de la 1.0.35+44.
+
 ### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
 
 - **Tiendas comprobadas:** App Store y `GET /api/v1/app/version` (android e ios) en **1.0.34**. La

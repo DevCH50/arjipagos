@@ -343,9 +343,10 @@ an Apple Silicon Mac to build applications.»* Sin fecha todavía, y puede llega
 2027: el día que una versión de Flutter deje de compilar aquí, **no actualizar Flutter en esta Mac**
 hasta tener la Apple silicon, o la publicación de iOS se corta antes de tiempo. **2026-11-18:
 Flutter 3.50.0 todavía compila en Intel**: en su `flutter_tools` sigue siendo solo el aviso de
-`doctor.dart`, sin ningún bloqueo. La Linux ya está en 3.50.0, y **la Mac tiene que subir también**
-antes del próximo build de iOS: el `pubspec.lock` resuelto con 3.50 fija versiones (`test_api` 0.7.14,
-entre otras) que el `flutter_test` de 3.47 no acepta, y un `flutter pub get` allí lo reescribiría.
+`doctor.dart`, sin ningún bloqueo. **Las dos máquinas están en 3.50.0** (la Mac desde el
+2026-11-19, con el build iOS comprobado). Tienen que ir siempre a la par: el `pubspec.lock` resuelto
+con una versión fija paquetes (`test_api` 0.7.14 con la 3.50) que el `flutter_test` de otra no acepta,
+y un `flutter pub get` en la máquina atrasada lo reescribiría.
 
 **El iPhone Duo** (a la venta el 23-oct-2026, con iOS 27; plegable, dos pantallas):
 
