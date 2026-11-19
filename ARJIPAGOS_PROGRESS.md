@@ -27,6 +27,12 @@ ver el primer cobro real de producción por OpenPay desde la app.
 - **Verificado:** **1211 tests en verde**; `./scripts/build_ios.sh` compila `Runner.app` (26.6 MB)
   en ~2 min, `LastUpgradeCheck`/`LastUpgradeVersion` en 2700.
 - **Pendiente en la Mac:** abrir un ticket en el iPhone y Archive de la 1.0.35+44.
+- **Segunda limpieza obligatoria, tras el push de `3ee5c5c`** (`git fetch` sin nada que bajar):
+  `flutter clean`, `flutter pub get`, `pod install` y `./scripts/build_ios.sh` → `Runner.app`
+  (26.6 MB) en ~96 s, **sin ningún cambio en git**. Comprobado además: `ApiConfig.isProduction =
+  true`, `kTemporadaForzada = null`, `LastUpgradeCheck`/`LastUpgradeVersion` en 2700, Launch y
+  Archive del esquema en `Release`, `NSFaceIDUsageDescription` presente, `AppIcon` con 0 huérfanos y
+  0 fantasmas, `Package.swift` en `.iOS("15.0")`. Lista para Archive.
 
 ### 2026-11-19 — Revisión completa, actualización y binarios de la 1.0.35+44 (Linux)
 
