@@ -18,8 +18,10 @@
 Antes de esto, la §2 tiene que estar hecha **en la Mac vieja** (exportar certificados, mover archives,
 respaldar el T7 y la memoria de Claude Code). Si no, parar y hacerla primero.
 
-1. **Encender y crear el usuario.** Nombre corto recomendado: `carlosmanuelhidalgoruiz`. Cuando
-   ofrezca el **Asistente de Migración, decir que no** (§3.1).
+1. **Encender y crear el usuario de macOS.** Es la cuenta que pide el asistente de configuración
+   la primera vez —**no** el Apple ID ni la cuenta de desarrollador—. Nombre corto recomendado:
+   `carlosmanuelhidalgoruiz` (ver §3.2). Cuando ofrezca el **Asistente de Migración, decir que no**
+   (§3.1).
 2. **Actualizar macOS** hasta la última Tahoe (26.6 o posterior).
 3. **Instalar Xcode** desde el App Store y **abrirlo una vez** hasta que termine de instalar sus
    componentes.
@@ -225,11 +227,25 @@ instala **limpio**.
 Si se quiere el Asistente para documentos, fotos o el correo, usarlo desmarcando **Aplicaciones** y
 **Otros archivos y carpetas**, y nunca para la carpeta de usuario completa.
 
-### 3.2 Crear el usuario
+### 3.2 Crear el usuario de macOS
 
-- **Recomendado:** usar el mismo nombre corto de usuario, `carlosmanuelhidalgoruiz`. Así las rutas
-  que salgan en documentos, notas y la memoria de Claude Code siguen valiendo.
-- Si se elige otro nombre, no pasa nada grave: el `.zshrc` de la §6 usa `$HOME` y no la ruta fija.
+Es la **cuenta de usuario de macOS** que el asistente de configuración pide crear al encender la
+Mac por primera vez. **No** es el Apple ID ni la cuenta de desarrollador de Apple. Pide dos nombres:
+
+| Campo | Qué es | En la Mac Intel |
+| --- | --- | --- |
+| **Nombre completo** | El que se ve en la pantalla de inicio | Libre |
+| **Nombre de la cuenta** (nombre corto) | El de la carpeta personal: `/Users/<nombre>` | `carlosmanuelhidalgoruiz` |
+
+- **Recomendado:** usar el mismo nombre corto, `carlosmanuelhidalgoruiz`, para que la carpeta
+  personal vuelva a ser `/Users/carlosmanuelhidalgoruiz`. Así siguen valiendo las rutas que salen en
+  notas y documentos, y la memoria de Claude Code ligada a `~/Developer/arjipagos` (que se nombra
+  con esa ruta, §10).
+- **Revisarlo antes de continuar:** el asistente **propone el nombre corto él solo** a partir del
+  nombre completo, y puede salir otro (por ejemplo `carloshidalgo`). Cambiarlo después de crear la
+  cuenta es engorroso.
+- Si se elige otro nombre, no pasa nada grave: el `.zshrc` de la §6 y el script usan `$HOME`, así
+  que `arjipagos` funciona igual. Solo cambian esas rutas.
 
 ### 3.3 Actualizar macOS
 
