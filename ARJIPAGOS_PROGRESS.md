@@ -37,7 +37,11 @@ ver el primer cobro real de producción por OpenPay desde la app.
   PDF (`open_filex` 5 por SPM: abre bien) y la webview del pago; la consola solo tuvo ruido conocido
   y ninguna línea `flutter:`. La subida pidió aceptar un acuerdo pendiente de Apple («You do not have
   required contracts») y después avisó del SDK: *«built with the iOS 26.2 SDK. Starting April 2027…
-  iOS 27 SDK»*. Es solo aviso.
+  iOS 27 SDK»*. Es solo aviso. **Subida terminada con éxito** (confirmado por Carlos el mismo día):
+  la 1.0.35+44 está en App Store Connect.
+- **1.0.35+44 PUBLICADA en las dos tiendas** (App Store y Google Play), confirmado por Carlos el
+  2026-11-19. El próximo release sube a **1.0.36+45** (regla 1 de versionado), solo cuando Carlos lo
+  pida.
 - **`MIGRAR_A_NUEVA_MAC_2027.md`:** plan completo para pasar a una Mac con Apple silicon antes de
   abril de 2027, con el inventario real de esta Mac (Xcode, Flutter, Homebrew, firma, SSH, shell).
   Documenta cómo funciona hoy el comando `arjipagos` —no es un alias: `cd ~/Developer` en el
